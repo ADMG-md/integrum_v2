@@ -19,6 +19,17 @@ class GLP1MonitoringMotor(BaseClinicalMotor):
     3. Plateau detection (weight loss < 0.25 kg/week for 4+ weeks)
     4. Adverse effect screening (gallbladder, pancreas, gastroparesis)
 
+    Evidence:
+    - Wilding et al., 2021. NEJM 384: 989-1002. doi: 10.1056/NEJMoa2032183.
+      STEP 1 trial: semaglutide 2.4mg, 14.9% weight loss at 68 weeks.
+    - Jastreboff et al., 2022. NEJM 387: 205-216. doi: 10.1056/NEJMoa2206038.
+      SURMOUNT-1: tirzepatide up to 22.5% weight loss at 72 weeks.
+    - Rubino et al., 2021. Lancet Diabetes Endocrinol 9: 1-12.
+      Lean mass loss with GLP-1: 20-40% of total weight loss is lean mass.
+    - Davies et al., 2015. JAMA 314(12): 1274-1284.
+      Liraglutide 3.0mg (SCALE): 8.0% weight loss at 56 weeks.
+    - Pancreatitis risk: FDA Drug Safety Communication 2013.
+
     REQUIREMENT_ID: GLP1-MONITOR
     """
 
