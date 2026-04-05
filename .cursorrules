@@ -1,0 +1,66 @@
+# Integrum V2 — Cursor Rules
+
+## Project Context
+- **CDSS for Obesity and Cardiometabolic Health** (SaMD Class B, IEC 62304)
+- **Version:** 3.0 (Sprint 6 completed)
+- **Monorepo:** `apps/backend/` (FastAPI) + `apps/frontend/` (Next.js 14)
+- **30 registered clinical motors** across 43 engine files
+- **193 tests** — 100% coverage of registered motors
+
+## Architecture Rules
+
+### Clean Architecture (MANDATORY)
+- Engines in `apps/backend/src/engines/` MUST be pure Python
+- NO FastAPI, SQLAlchemy, or network imports in engines
+- Same input → same output (deterministic)
+- Every engine MUST have a `REQUIREMENT_ID`
+
+### Data Flow
+- `Encounter` → `specialty_runner.run_all()` → `Dict[str, AdjudicationResult]`
+- Engines read from `Encounter` domain model, never from database
+- All clinical calculations use `calculators.py` value objects
+
+### Testing
+- 100% test coverage for ALL registered motors
+- Each motor needs: validation test, normal test, abnormal test
+- Tests in `tests/unit/engines/`
+
+## Key Paths
+- **Engines:** `apps/backend/src/engines/` (7 top-level + 36 specialty/)
+- **Tests:** `apps/backend/tests/unit/engines/`
+- **Schemas:** `apps/backend/src/schemas/encounter.py`
+- **Domain:** `apps/backend/src/domain/models.py`
+- **Risk Mgmt:** `docs/qms/risk_management_file.md`
+- **Agents:** `.agents/` (7 skills, 2 workflows, 3 scripts)
+
+## Skills (7 total)
+1. `iec62304-auditor` — IEC 62304 Class B compliance (VETO)
+2. `iso13485-qms` — Change control and traceability
+3. `clinical-validity-engineer` — Clinical evidence to code
+4. `repo-structure-auditor` — Clean Architecture enforcement
+5. `test-coverage-auditor` — 100% engine test coverage
+6. `clinical-safety-officer` — FDA 21 CFR Part 11, HIPAA, drug safety
+7. `data-contracts-auditor` — Frontend/backend contract enforcement
+
+## Workflows
+- `quality-gate-iec62304` — Pre-merge quality gate
+- `workflow-change-control` — ISO 13485 change control
+
+## Enforcement Scripts
+```bash
+# Check engines are pure Python
+bash .agents/scripts/check_pure_python.sh
+
+# Verify 100% test coverage
+python3 .agents/scripts/check_test_coverage.py
+
+# Verify risk file sync
+python3 .agents/scripts/check_risk_sync.py
+```
+
+## Code Style
+- No comments unless asked
+- Concise, direct code
+- Follow existing patterns exactly
+- Type hints required for all public APIs
+- Pydantic V2 for all schemas

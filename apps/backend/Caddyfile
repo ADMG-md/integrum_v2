@@ -1,0 +1,20 @@
+# Caddyfile — Reverse proxy with automatic TLS (Let's Encrypt)
+# For local/dev: replace clinical.integrum.ai with localhost
+
+{$INTEGRUM_DOMAIN:-localhost} {
+    reverse_proxy backend:8000
+
+    encode gzip
+
+    header {
+        Strict-Transport-Security "max-age=31536000; includeSubDomains"
+        X-Content-Type-Options "nosniff"
+        X-Frame-Options "DENY"
+        Referrer-Policy "strict-origin-when-cross-origin"
+    }
+
+    log {
+        output stdout
+        format json
+    }
+}

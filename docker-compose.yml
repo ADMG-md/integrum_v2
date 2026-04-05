@@ -1,0 +1,96 @@
+services:
+  database:
+    image: postgres:16-alpine
+    container_name: integrum-v2-db
+    environment:
+      POSTGRES_USER: integrum_user
+      POSTGRES_PASSWORD: integrum_password
+      POSTGRES_DB: integrum_v2
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U integrum_user -d integrum_v2"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    stop_grace_period: 30s
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    container_name: integrum-v2-redis
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 3
+    stop_grace_period: 15s
+    restart: unless-stopped
+
+  hapi-fhir:
+    image: hapiproject/hapi:latest
+    container_name: integrum-v2-fhir
+    ports:
+      - "8080:8080"
+    environment:
+      HAPI_FHIR_VERSION: R4
+      HAPI_FHIR_TESTSERVER_ENABLED: "false"
+      HAPI_FHIR_SUBSCRIPTION_ENABLED: "true"
+      HAPI_FHIR_SUBSCRIPTION_WEBSOCKET_ENABLED: "false"
+      HAPI_FHIR_SUBSCRIPTION_RESTHOOK_ENABLED: "true"
+      HAPI_FHIR_CORS_ENABLED: "true"
+      HAPI_FHIR_CORS_ALLOWED_ORIGIN: "*"
+      HAPI_FHIR_CR_ENABLED: "true"
+      HAPI_FHIR_PERSISTENCE_UNIT_NAME: HAPI_PU
+      SPRING_DATASOURCE_URL: jdbc:postgresql://fhir-db:5432/hapi_fhir
+      SPRING_DATASOURCE_USERNAME: hapi_fhir
+      SPRING_DATASOURCE_PASSWORD: hapi_fhir_password
+      SPRING_DATASOURCE_DRIVERCLASSNAME: org.postgresql.Driver
+      SPRING_JPA_PROPERTIES_HIBERNATE_DIALECT: ca.uhn.fhir.jpa.model.dialect.HapiFhirPostgres94Dialect
+      SPRING_JPA_PROPERTIES_HIBERNATE_SEARCH_ENABLED: "false"
+      SPRING_BATCH_JOB_ENABLED: "false"
+      HAPI_FHIR_INDEX_MISSING_SEARCH_INDEX_ENABLED: "true"
+      HAPI_FHIR_REUSE_CACHED_SEARCH_RESULTS_MILLIS: "60000"
+      HAPI_FHIR_ENFORCE_REFERENTIAL_INTEGRITY_ON_DELETE: "true"
+      HAPI_FHIR_ENFORCE_REFERENTIAL_INTEGRITY_ON_WRITE: "true"
+      HAPI_FHIR_ALLOW_EXTERNAL_REFERENCES: "false"
+      HAPI_FHIR_ALLOW_PLACE_REFERENCES: "false"
+      HAPI_FHIR_AUTO_CREATE_PLACEHOLDER_REFERENCES: "NEVER"
+      HAPI_FHIR_DATALOADER: "false"
+      HAPI_FHIR_PARTITIONING_PARTITIONING_ENABLED: "false"
+      HAPI_FHIR_CLIENT_ID_STRATEGY: ALPHANUMERIC
+      HAPI_FHIR_RESOURCE_DBSEARCH_ENABLED: "true"
+      HAPI_FHIR_RESOURCE_DBSEARCH_MAX_RESULTS: "10000"
+      HAPI_FHIR_MAX_PAGE_SIZE: "200"
+      HAPI_FHIR_DEFAULT_PAGE_SIZE: "100"
+    depends_on:
+      fhir-db:
+        condition: service_healthy
+    restart: unless-stopped
+
+  fhir-db:
+    image: postgres:16-alpine
+    container_name: integrum-v2-fhir-db
+    environment:
+      POSTGRES_USER: hapi_fhir
+      POSTGRES_PASSWORD: hapi_fhir_password
+      POSTGRES_DB: hapi_fhir
+    ports:
+      - "5433:5432"
+    volumes:
+      - fhir_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U hapi_fhir -d hapi_fhir"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    stop_grace_period: 30s
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  fhir_postgres_data:
