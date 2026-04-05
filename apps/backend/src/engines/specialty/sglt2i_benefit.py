@@ -16,12 +16,18 @@ class SGLT2iBenefitMotor(BaseClinicalMotor):
     and CKD progression based on patient profile.
 
     Evidence from:
-    - EMPA-REG OUTCOME (empagliflozin)
-    - CANVAS (canagliflozin)
-    - DECLARE-TIMI 58 (dapagliflozin)
-    - CREDENCE (canagliflozin + CKD)
-    - DAPA-CKD (dapagliflozin + CKD)
-    - DAPA-HF / EMPEROR-Reduced (HF)
+    - Zinman et al., 2015. NEJM 373: 2117-2128. doi: 10.1056/NEJMoa1504720.
+      EMPA-REG OUTCOME: 14% MACE reduction, 38% CV death reduction.
+    - Neal et al., 2017. NEJM 377: 644-657. doi: 10.1056/NEJMoa1611925.
+      CANVAS: 14% MACE reduction, 33% HF hospitalization reduction.
+    - Wiviott et al., 2019. NEJM 380: 347-357. doi: 10.1056/NEJMoa1812389.
+      DECLARE-TIMI 58: 17% CV death/HF hospitalization reduction.
+    - Perkovic et al., 2019. NEJM 380: 2295-2306. doi: 10.1056/NEJMoa1904119.
+      CREDENCE: 30% ESRD/dialysis/death reduction in CKD.
+    - Heerspink et al., 2020. NEJM 383: 1436-1446. doi: 10.1056/NEJMoa2024816.
+      DAPA-CKD: 39% CKD progression reduction.
+    - McMurray et al., 2019. NEJM 381: 1995-2008. doi: 10.1056/NEJMoa1911303.
+      DAPA-HF: 26% HF hospitalization/CV death reduction (non-diabetic HF).
 
     REQUIREMENT_ID: SGLT2I-BENEFIT
     """
