@@ -16,13 +16,14 @@ class VitaminDMotor(BaseClinicalMotor):
     Vitamin D affects: bone health, immunity, mood, insulin sensitivity,
     cardiovascular risk, cancer risk.
 
-    Endocrine Society 2011 guidelines:
-    <10 ng/mL: Severe deficiency
-    10-20 ng/mL: Deficiency
-    20-30 ng/mL: Insufficiency
-    30-100 ng/mL: Sufficient
-    >100 ng/mL: Potential toxicity
-    >150 ng/mL: Toxicity
+    Evidence:
+    - Holick et al., 2011. JCEM 96(7): 1911-1930. doi: 10.1210/jc.2011-0385.
+      Endocrine Society Clinical Practice Guideline.
+      Deficiency < 20 ng/mL, Insufficiency 20-30, Sufficiency 30-100.
+    - Rosen et al., 2012. N Engl J Med 367: 1096-1097.
+      Vitamin D toxicity threshold > 150 ng/mL with hypercalcemia.
+    - Pilz et al., 2018. Nutrients 10(12): 1870.
+      Vitamin D and obesity: adipose sequestration reduces bioavailability.
 
     REQUIREMENT_ID: VITD-STATUS
     """
