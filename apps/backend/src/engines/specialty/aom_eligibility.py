@@ -99,6 +99,22 @@ class ObesityPharmaEligibilityMotor(BaseClinicalMotor):
             if h.pregnancy_status == "pregnant":
                 findings.append("GLP-1/GIP contraindicado: embarazo")
                 glp1_contraindicated = True
+            if getattr(h, "has_history_medullary_thyroid_carcinoma", False):
+                findings.append(
+                    "GLP-1/GIP CONTRAINDICADO: historia de carcinoma medular de tiroides (TCM)"
+                )
+                glp1_contraindicated = True
+            if getattr(h, "has_history_men2", False):
+                findings.append(
+                    "GLP-1/GIP CONTRAINDICADO: Neoplasia Endocrina Múltiple tipo 2 (MEN2)"
+                )
+                glp1_contraindicated = True
+            if getattr(h, "has_history_pancreatitis", False):
+                findings.append("GLP-1/GIP: precaución — historia de pancreatitis")
+            if getattr(h, "has_gastroparesis", False):
+                findings.append(
+                    "GLP-1/GIP: precaución — gastroparesis (puede exacerbar vaciamiento gástrico lento)"
+                )
             if h.has_eating_disorder_history:
                 findings.append("GLP-1/GIP: precaución con historia de TCA")
             if h.has_seizures_history:
@@ -138,14 +154,32 @@ class ObesityPharmaEligibilityMotor(BaseClinicalMotor):
                     "Naltrexona/bupropión contraindicado (convulsiones/TCA)"
                 )
             else:
-                actions.append(
-                    ActionItem(
-                        category="pharmacological",
-                        priority="medium",
-                        task="Naltrexona/bupropión como alternativa para hambre emocional",
-                        rationale="Eficaz para fenotipo de hambre emocional/cerebro hambriento.",
+                # FDA Black Box Warning: Suicide risk gate (PHQ-9 Item 9)
+                phq9_item_9 = None
+                if hasattr(h, "phq9_item_9_score"):
+                    phq9_item_9 = h.phq9_item_9_score
+                if phq9_item_9 is not None and phq9_item_9 > 0:
+                    findings.append(
+                        f"ALERTA RIESGO SUICIDA: PHQ-9 Item 9 = {phq9_item_9}. "
+                        f"Bupropión contraindicado — FDA Black Box Warning para suicidio en adultos jóvenes."
                     )
-                )
+                    actions.append(
+                        ActionItem(
+                            category="pharmacological",
+                            priority="critical",
+                            task="CONTRAINDICADO: Naltrexona/bupropión — riesgo suicida detectado",
+                            rationale=f"PHQ-9 Item 9 = {phq9_item_9}. Requiere revisión clínica antes de cualquier prescripción con bupropión.",
+                        )
+                    )
+                else:
+                    actions.append(
+                        ActionItem(
+                            category="pharmacological",
+                            priority="medium",
+                            task="Naltrexona/bupropión como alternativa para hambre emocional",
+                            rationale="Eficaz para fenotipo de hambre emocional/cerebro hambriento.",
+                        )
+                    )
 
             confidence = 0.92
 

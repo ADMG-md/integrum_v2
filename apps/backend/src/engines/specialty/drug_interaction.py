@@ -240,6 +240,31 @@ class DrugInteractionMotor(BaseClinicalMotor):
                         )
                     )
 
+        # 4b. Suicide risk gate for bupropion-containing medications
+        # FDA Black Box Warning: suicidality in young adults
+        bupropion_meds = [
+            m
+            for m in med_names
+            if "bupropion" in m.lower() or "naltrexone_bupropion" in m.lower()
+        ]
+        if bupropion_meds:
+            phq9_item_9 = None
+            if h and hasattr(h, "phq9_item_9_score"):
+                phq9_item_9 = h.phq9_item_9_score
+            if phq9_item_9 is not None and phq9_item_9 > 0:
+                for med_name in bupropion_meds:
+                    critical_alerts.append(
+                        f"{med_name} CONTRAINDICADO: PHQ-9 Item 9 = {phq9_item_9} (riesgo suicida)"
+                    )
+                    actions.append(
+                        ActionItem(
+                            category="pharmacological",
+                            priority="critical",
+                            task=f"CONTRAINDICADO: {med_name} — riesgo suicida detectado (PHQ-9 Item 9 = {phq9_item_9})",
+                            rationale="FDA Black Box Warning: bupropion aumenta riesgo de suicidio en adultos jóvenes. Requiere revisión clínica.",
+                        )
+                    )
+
         # 5. QT prolongation aggregation
         qt_meds = []
         if med_names:

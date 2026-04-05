@@ -807,6 +807,44 @@ class TestObesityPharmaEligibilityMotor:
         assert isinstance(result, AdjudicationResult)
         assert result.metadata["eligible"] is False
 
+    def test_glp1_contraindicated_mtc(self, encounter_with_metabolic_data):
+        from src.engines.specialty.aom_eligibility import ObesityPharmaEligibilityMotor
+
+        enc = encounter_with_metabolic_data
+        enc.history = ClinicalHistory(has_history_medullary_thyroid_carcinoma=True)
+        motor = ObesityPharmaEligibilityMotor()
+        result = motor.compute(enc)
+        assert isinstance(result, AdjudicationResult)
+        assert any(
+            "carcinoma medular" in f.lower() for f in result.explanation.split("; ")
+        )
+
+    def test_glp1_contraindicated_men2(self, encounter_with_metabolic_data):
+        from src.engines.specialty.aom_eligibility import ObesityPharmaEligibilityMotor
+
+        enc = encounter_with_metabolic_data
+        enc.history = ClinicalHistory(has_history_men2=True)
+        motor = ObesityPharmaEligibilityMotor()
+        result = motor.compute(enc)
+        assert isinstance(result, AdjudicationResult)
+        assert any("men2" in f.lower() for f in result.explanation.split("; "))
+
+    def test_bupropion_contraindicated_suicide_risk(
+        self, encounter_with_metabolic_data
+    ):
+        from src.engines.specialty.aom_eligibility import ObesityPharmaEligibilityMotor
+
+        enc = encounter_with_metabolic_data
+        enc.history = ClinicalHistory(phq9_item_9_score=2)
+        motor = ObesityPharmaEligibilityMotor()
+        result = motor.compute(enc)
+        assert isinstance(result, AdjudicationResult)
+        assert any(
+            "riesgo suicida" in str(a.task).lower()
+            or "contraindicado" in str(a.task).lower()
+            for a in result.action_checklist
+        )
+
 
 class TestGLP1TitrationMotor:
     def test_validate_returns_false_without_glp1(self, minimal_encounter):
@@ -863,12 +901,39 @@ class TestDrugInteractionMotor:
 
         enc = encounter_with_metabolic_data
         enc.medications = [
-            MedicationSchema(name="semaglutide", dose_amount="1.0mg", frequency="weekly"),
-            MedicationSchema(name="insulin_glargine", dose_amount="20U", frequency="daily"),
+            MedicationSchema(
+                name="semaglutide", dose_amount="1.0mg", frequency="weekly"
+            ),
+            MedicationSchema(
+                name="insulin_glargine", dose_amount="20U", frequency="daily"
+            ),
         ]
         motor = DrugInteractionMotor()
         result = motor.compute(enc)
         assert isinstance(result, AdjudicationResult)
+
+    def test_bupropion_contraindicated_suicide_risk(
+        self, encounter_with_metabolic_data
+    ):
+        from src.engines.specialty.drug_interaction import DrugInteractionMotor
+        from src.schemas.encounter import MedicationSchema
+        from src.domain.models import ClinicalHistory
+
+        enc = encounter_with_metabolic_data
+        enc.medications = [
+            MedicationSchema(
+                name="naltrexone_bupropion", dose_amount="8mg-90mg", frequency="daily"
+            ),
+        ]
+        enc.history = ClinicalHistory(phq9_item_9_score=1)
+        motor = DrugInteractionMotor()
+        result = motor.compute(enc)
+        assert isinstance(result, AdjudicationResult)
+        assert any(
+            "riesgo suicida" in str(a.task).lower()
+            or "contraindicado" in str(a.task).lower()
+            for a in result.action_checklist
+        )
 
 
 class TestProteinEngineMotor:
@@ -883,12 +948,18 @@ class TestProteinEngineMotor:
         from src.engines.protein_engine import ProteinEngineMotor
 
         enc = encounter_with_metabolic_data
-        enc.observations = [o for o in enc.observations if o.code not in ("29463-7", "8302-2", "MMA-001", "MUSCLE-KG", "BIA-FFM-KG")]
-        enc.observations.extend([
-            Observation(code="29463-7", value=80.0, unit="kg"),
-            Observation(code="8302-2", value=175.0, unit="cm"),
-            Observation(code="MMA-001", value=30.0, unit="kg"),
-        ])
+        enc.observations = [
+            o
+            for o in enc.observations
+            if o.code not in ("29463-7", "8302-2", "MMA-001", "MUSCLE-KG", "BIA-FFM-KG")
+        ]
+        enc.observations.extend(
+            [
+                Observation(code="29463-7", value=80.0, unit="kg"),
+                Observation(code="8302-2", value=175.0, unit="cm"),
+                Observation(code="MMA-001", value=30.0, unit="kg"),
+            ]
+        )
         motor = ProteinEngineMotor()
         result = motor.compute(enc)
         assert isinstance(result, AdjudicationResult)
@@ -898,13 +969,27 @@ class TestProteinEngineMotor:
 
         enc = encounter_with_metabolic_data
         enc.metabolic_panel.creatinine_mg_dl = 3.0
-        enc.observations = [o for o in enc.observations if o.code not in ("29463-7", "8302-2", "MMA-001", "MUSCLE-KG", "BIA-FFM-KG", "UACR-001")]
-        enc.observations.extend([
-            Observation(code="29463-7", value=80.0, unit="kg"),
-            Observation(code="8302-2", value=175.0, unit="cm"),
-            Observation(code="MMA-001", value=30.0, unit="kg"),
-            Observation(code="UACR-001", value=150.0, unit="mg/g"),
-        ])
+        enc.observations = [
+            o
+            for o in enc.observations
+            if o.code
+            not in (
+                "29463-7",
+                "8302-2",
+                "MMA-001",
+                "MUSCLE-KG",
+                "BIA-FFM-KG",
+                "UACR-001",
+            )
+        ]
+        enc.observations.extend(
+            [
+                Observation(code="29463-7", value=80.0, unit="kg"),
+                Observation(code="8302-2", value=175.0, unit="cm"),
+                Observation(code="MMA-001", value=30.0, unit="kg"),
+                Observation(code="UACR-001", value=150.0, unit="mg/g"),
+            ]
+        )
         motor = ProteinEngineMotor()
         result = motor.compute(enc)
         assert isinstance(result, AdjudicationResult)

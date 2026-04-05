@@ -121,6 +121,15 @@ class ClinicalHistory(BaseModel):
     has_eating_disorder_history: bool = False
     family_history_thyroid_cancer: bool = False
 
+    # GLP-1/GIP contraindication screening (FDA labeling)
+    has_history_medullary_thyroid_carcinoma: bool = False
+    has_history_men2: bool = False
+    has_history_pancreatitis: bool = False
+    has_gastroparesis: bool = False
+
+    # Suicide risk gate (FDA Black Box Warning for bupropion)
+    phq9_item_9_score: Optional[int] = None
+
     has_ckd: bool = False
     has_heart_failure: bool = False
     has_coronary_disease: bool = False

@@ -158,6 +158,12 @@ class ClinicalHistorySchema(BaseModel):
     family_history_thyroid_cancer: bool = False
     has_active_substance_abuse: bool = False
 
+    # GLP-1/GIP contraindication screening (FDA labeling)
+    has_history_medullary_thyroid_carcinoma: bool = False
+    has_history_men2: bool = False
+    has_history_pancreatitis: bool = False
+    has_gastroparesis: bool = False
+
 
 class BiometricsSchema(BaseModel):
     weight_kg: float = Field(..., ge=20, le=500)
@@ -191,6 +197,12 @@ class BiometricsSchema(BaseModel):
 
 class PsychometricsSchema(BaseModel):
     phq9_score: Optional[int] = Field(None, ge=0, le=27)
+    phq9_item_9_score: Optional[int] = Field(
+        None,
+        ge=0,
+        le=3,
+        description="PHQ-9 Item 9: Suicidal ideation (0=not at all, 3=nearly every day). FDA Black Box Warning gate for bupropion/naltrexone.",
+    )
     gad7_score: Optional[int] = Field(None, ge=0, le=21)
     atenas_insomnia_score: Optional[int] = Field(None, ge=0, le=24)
     tfeq_cognitive_restraint: Optional[float] = None
