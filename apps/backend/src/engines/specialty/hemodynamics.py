@@ -14,6 +14,14 @@ class PulsePressureMotor(BaseClinicalMotor):
     independent predictor of cardiovascular events, especially
     in patients over 50.
 
+    Evidence:
+    - Domanski et al., 1999. JAMA 281(11): 1007-1012.
+      PP is an independent predictor of CVD mortality in >300,000 patients.
+    - Franklin et al., 1999. Hypertension 33(1): 374-380.
+      PP > 60 mmHg is the best BP predictor of CVD in adults > 50 years.
+    - Rivers et al., 2002. Crit Care Med 30(6): S186-S191.
+      MAP < 65 mmHg threshold for organ perfusion in sepsis (adopted broadly).
+
     REQUIREMENT_ID: PP-HEMODYNAMIC
     """
 

@@ -19,6 +19,12 @@ class CMIMotor(BaseClinicalMotor):
 
     High CMI: > 0.7 (M) or > 0.5 (F)
 
+    Evidence:
+    - Wakabayashi I, 2015. J Atheroscler Thromb 22(10): 1001-1009.
+      CMI predicts CVD risk better than BMI, WC, WHtR in Japanese adults.
+    - Tao et al., 2022. Front Cardiovasc Med 9: 896134.
+      Meta-analysis confirming CMI as independent CVD predictor.
+
     REQUIREMENT_ID: CMI-2015
     """
 
