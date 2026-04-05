@@ -1,7 +1,9 @@
 # Integrum V2: Estado del Proyecto y Roadmap
 
-**Última actualización:** 2026-04-04
-**Versión:** 4.0 (MVP Colombia-Ready)
+**Última actualización:** 2026-04-05
+**Versión:** 4.1 (TRL 4 — Prototipo de laboratorio)
+
+> **Nota de honestidad técnica:** Integrum V2 es un CDSS prototipo avanzado con capa de exportación FHIR R4 y OMOP CDM 5.4 en estado inicial. No es una "interoperability layer completa". Los motores T3/T4 (DeepMetabolicProxy, Markov, BiologicalAge) son experimentales y no deben usarse para decisiones clínicas autónomas. Ver `docs/qms/motor_evidence_registry.md` para clasificación T1-T4.
 
 ---
 
@@ -12,215 +14,115 @@
 | Fase | Estado | Descripción |
 |---|---|---|
 | **Misiones 1-13** | ✅ | Backend, UI, SaMD, Security, CI/CD |
-| **Sprint 1** | ✅ | 9 motores metabólicos + defect fixes |
-| **Sprint 2** | ✅ | 7 motores clínicos (ACE, B12, Cancer, SGLT2i, etc.) |
-| **Sprint 3** | ✅ | 4 motores de riesgo (KFRE, Charlson, Free T, Vit D) |
-| **Sprint 4** | ✅ | Markov reactivado + limpieza redundancias |
-| **Sprint 5** | ✅ | Body Composition Trend, AOM Eligibility, GLP-1 Titration |
-| **Sprint 6** | ✅ | Women's Health, Men's Health, hormonal panels |
-| **Sprint 7** | ✅ | Drug Interaction Motor + ProteinEngine |
-| **Sprint 8** | ✅ | Drug DB expansion (142 meds, 163 interactions), ICD-10/11, Longevity |
-| **Refactor God Class** | ✅ | Encounter 586→320 líneas (-45%) |
-| **Agents Audit** | ✅ | 7 skills, 3 enforcement scripts, AGENTS.md, .cursorrules |
+| **Sprint 1-8** | ✅ | 38 motores clínicos con evidencia documentada |
+| **Sprint 9** | ✅ | FHIR R4 export + OMOP CDM 5.4 ETL prototype |
+| **Audit Remediation** | ✅ | 3 VETOs resueltos (Safety x2, QMS x1) |
+| **Clinical Mode** | ✅ | Gate T3/T4 para uso regulable |
+| **Contract Enforcement** | ✅ | Todos los motores devuelven AdjudicationResult |
 
 ---
 
-## Motores Clínicos Activos (32 total)
+## Motores Clínicos por Nivel de Evidencia (T1-T4)
 
-### Core (7)
+### T1 — Validated Clinical Scores (18 motores) — ✅ Export FHIR completo
 | Motor | Qué evalúa | Evidencia |
 |---|---|---|
-| AcostaPhenotypeMotor | 4 fenotipos de obesidad | Acosta 2021 |
-| EOSSStagingMotor | Estadiaje 0-4 de daño por obesidad | Sharma & Kuk 2009 |
-| SarcopeniaMonitorMotor | ASMI + RPL (pérdida proteica) | EWGSOP2 2019 |
-| BiologicalAgeMotor | PhenoAge + mortalidad 10a | Levine 2018 |
-| MetabolicPrecisionMotor | HOMA-IR, TyG, FIB-4, clusters Ahlqvist | Múltiples |
-| DeepMetabolicProxyMotor | GGT, Ferritina, Ácido úrico como proxies | Johnson Fat Switch |
-| Lifestyle360Motor | Sueño, estrés, actividad física | WHO, AIS |
-
-### Especialidad (9)
-| Motor | Qué evalúa | Evidencia |
-|---|---|---|
-| AnthropometryMotor | WHtR, WHR, BRI | Múltiples |
-| EndocrineMotor | TSH, FT4, FT3, rT3, ratio T3/rT3 | Endocrinología |
-| HypertensionMotor | Aldosteronismo primario (ARR) | Endocrine Society 2016 |
-| InflammationMotor | hs-CRP, NLR | Marcadores estándar |
-| SleepApneaMotor | STOP-Bang | STOP-Bang validado |
-| LaboratoryStewardshipMotor | Ordering inteligente | Estrategia LATAM |
-| FunctionalSarcopeniaMotor | 5xSTS + Grip + Gait + SARC-F | EWGSOP2 2019 |
-| FLIMotor | Fatty Liver Index (NAFLD) | Bedogni 2006 |
-| VAIMotor | Visceral Adiposity Index | Amato 2010 |
-
-### Seguridad + Screening (7)
-| Motor | Qué evalúa | Evidencia |
-|---|---|---|
-| GLP1MonitoringMotor | Monitoreo GLP-1 (masa magra, plateau) | Seguridad clínica |
-| MetforminB12Motor | Screening B12 en metformina | ADA 2024 |
-| CancerScreeningMotor | Gaps screening 13+ cánceres | IARC 2016 |
-| ApoBApoA1Motor | Ratio ApoB/ApoA1 (INTERHEART) | INTERHEART |
-| PulsePressureMotor | Presión de pulso + MAP | Hemodinámica |
+| EOSSStagingMotor | Estadiaje de daño por obesidad | Sharma & Kuk 2009 |
+| SarcopeniaMonitorMotor | ASMI + masa muscular | EWGSOP2 2019 |
+| AnthropometryMotor | WHtR, WHR, BRI | Browning 2010, WHO 2008 |
+| HypertensionMotor | Aldosteronismo primario (ARR) | Funder 2016 |
+| InflammationMotor | hs-CRP, NLR | Pearson 2003 (AHA/CDC) |
+| SleepApneaMotor | STOP-Bang | Chung 2008 |
+| FunctionalSarcopeniaMotor | 5xSTS, Grip, Gait, SARC-F | EWGSOP2 2019 |
+| FLIMotor | Fatty Liver Index | Bedogni 2006 |
+| ApoBApoA1Motor | Ratio ApoB/ApoA1 | INTERHEART (Yusuf 2004) |
+| PulsePressureMotor | PP + MAP | Domanski 1999 (JAMA) |
 | NFSMotor | NAFLD Fibrosis Score | Angulo 2007 |
-| DrugInteractionMotor | Interacciones, contraindicaciones, QT, renal | FDA, Lexicomp |
+| MetforminB12Motor | Screening B12 en metformina | ADA 2024 |
+| KFREMotor | Riesgo falla renal | Tangri 2016 |
+| CharlsonMotor | Comorbilidad → mortalidad | Charlson 1987 |
+| FreeTestosteroneMotor | Testosterona libre | Vermeulen 1999 |
+| VitaminDMotor | Estado Vitamina D | Holick 2011 |
+| FriedFrailtyMotor | Fenotipo de fragilidad | Fried 2001 |
+| CVDHazardMotor | ASCVD 10y (PCE) | ACC/AHA 2013 |
 
-### Integración Clínica (5)
+### T2 — Guideline-Based Rules (17 motores) — ⚠️ Export condicional
 | Motor | Qué evalúa | Evidencia |
 |---|---|---|
-| ACEScoreEngine | Trauma como modificador de riesgo | Felitti 1998 |
-| SGLT2iBenefitMotor | Beneficio cardio-renal SGLT2i | EMPA-REG, DAPA |
-| FreeTestosteroneMotor | Testosterona libre (Vermeulen) | Vermeulen 1999 |
-| VitaminDMotor | Estado Vitamina D + acción | Endocrine Society 2011 |
-| CharlsonMotor | Comorbilidad → mortalidad 10a | Charlson 1987 |
+| AcostaPhenotypeMotor | Fenotipos de obesidad | Acosta 2021 |
+| MetabolicPrecisionMotor | HOMA-IR, TyG, METS-IR | Múltiples fórmulas publicadas |
+| Lifestyle360Motor | Sueño, estrés, AF | WHO 2020, AIS |
+| EndocrineMotor | TSH, FT4, cortisol | ATA 2014 |
+| LaboratoryStewardshipMotor | Ordering inteligente | Ahlqvist 2018, Sniderman 2019 |
+| GLP1MonitoringMotor | Monitoreo GLP-1 | STEP 1, SURMOUNT-1 |
+| ACEScoreEngine | Trauma como modificador | Felitti 1998 |
+| CancerScreeningMotor | Gaps screening | IARC 2016 |
+| SGLT2iBenefitMotor | Beneficio cardio-renal | EMPA-REG, CANVAS, DECLARE |
+| TyGBMIMotor | Resistencia insulina | Simental-Mendía 2008 |
+| CVDReclassifierMotor | Reclassificación CV | ACC/AHA 2018 |
+| WomensHealthMotor | SOP, embarazo, menopausia | Rotterdam 2003 |
+| MensHealthMotor | Hipogonadismo, próstata | AUA 2018 |
+| BodyCompositionTrendMotor | Pérdida masa magra | Heymsfield 2019 |
+| ObesityPharmaEligibilityMotor | Elegibilidad AOM | FDA 2024 |
+| GLP1TitrationMotor | Titulación GLP-1 | Clinical protocols |
+| DrugInteractionMotor | Interacciones, QT, renal | FDA Orange Book |
+| ProteinEngineMotor | Dosis proteica | ESPEN 2019 |
+| VAIMotor | Visceral Adiposity Index | Amato 2010 |
+| CMI Motor | Cardiometabolic Index | Wakabayashi 2015 |
+| ClinicalGuidelinesMotor | Inercia clínica | Múltiples guidelines |
 
-### Género (2)
-| Motor | Qué evalúa | Evidencia |
-|---|---|---|
-| WomensHealthMotor | SOP, embarazo, menopausia, obstetricia | Rotterdam 2003 |
-| MensHealthMotor | Hipogonadismo, próstata, DE, fertilidad | Endocrinología |
-
-### Terapia + Optimización (4)
-| Motor | Qué evalúa | Evidencia |
-|---|---|---|
-| BodyCompositionTrendMotor | Tasa de pérdida de masa magra | STEP 1, SURMOUNT-1 |
-| ObesityPharmaEligibilityMotor | Elegibilidad FDA para AOMs | FDA 2024, SELECT |
-| GLP1TitrationMotor | Protocolo de titulación de dosis | Clinical protocols |
-| ProteinEngineMotor | Dosis proteica con Nephro-Shield | KDIGO 2024 |
-
-### Riesgo (3)
+### T3 — Research Proxies (3 motores) — ❌ No exportar
 | Motor | Qué evalúa | Estado |
 |---|---|---|
-| CVDHazardMotor | ASCVD 10y (PCE, ACC/AHA) | Activo |
-| MarkovProgressionMotor | Progresión diabetes (UKPDS+DPP) | Calibrado |
-| KFREMotor | Riesgo de falla renal a 2/5 años | Tangri 2016 |
+| BiologicalAgeMotor | PhenoAge (Levine) | Validación retrospectiva, no prospectiva |
+| ObesityMasterMotor | Agregador de fenotipo | Internal summary only |
 
-### Agregadores (2)
-| Motor | Qué hace |
-|---|---|
-| ObesityMasterMotor | Síntesis: Acosta + EOSS + Sarcopenia + CVD + proxies |
-| ClinicalGuidelinesMotor | Auditoría de inercia clínica |
-
----
-
-## Drug Interaction Database (SQLite embebida)
-
-| Tabla | Registros | Descripción |
+### T4 — Experimental (2 motores) — ❌ No exportar, research only
+| Motor | Qué evalúa | Estado |
 |---|---|---|
-| `medications` | **142** | Medicamentos con peso, QT, CYP, teratogenicidad |
-| `drug_interactions` | **163** | Interacciones (84 major, 68 moderate, 11 contraindicated) |
-| `contraindications` | **35** | Contraindicaciones por condición (ICD-10) |
-| `renal_dosing` | **18** | Ajustes de dosis por eGFR |
-| `medication_side_effects` | **47** | Efectos adversos relevantes |
-| `icd_crosswalk` | **56** | Mapeo ICD-10 → ICD-11 (44 exactos, 12 aproximados) |
-| `longevity_interventions` | **32** | Intervenciones de longevidad y rendimiento |
-
-### Medicamentos por clase (top)
-| Clase | Cantidad |
-|---|---|
-| Atypical Antipsychotic | 7 |
-| ARB | 5 |
-| Anticonvulsant | 5 |
-| Corticosteroid | 5 |
-| SSRI | 5 |
-| GLP-1 RA | 4 |
-| Opioid | 4 |
-| SGLT2i | 4 |
-| Statin | 4 |
-
-### Intervenciones de Longevidad
-| Categoría | Evidencia | Cantidad |
-|---|---|---|
-| **Lifestyle** (strong) | Zone 2, VO2 Max, Resistance Training, Sleep | 4 |
-| **Supplement** (strong) | Omega-3, Vitamin D, Creatine | 3 |
-| **Pharmacological** (strong) | GLP-1, SGLT2i | 2 |
-| **Supplement** (moderate) | NAD+, Magnesium, GlyNAC, Taurine, etc. | 7 |
-| **Pharmacological** (moderate) | Metformin, Rapamycin, Acarbose | 3 |
-| **Lifestyle** (moderate) | TRE, Sauna | 2 |
-| **Experimental** | Senolytics, Plasma exchange, HBOT | 3 |
+| DeepMetabolicProxyMotor | Proxies metabólicos (GGT, UA, ferritina) | Sin validación externa |
+| MarkovProgressionMotor | Progresión diabetes | Matriz de transición interna |
 
 ---
 
-## ICD-10 → ICD-11 Crosswalk
-
-**56 mapeos** listos para migración futura:
-- **44 exactos**: E66→5B81 (Obesity), E11→5A11 (T2DM), I10→BA00 (HTN), etc.
-- **12 aproximados**: E78→5C80 (Hyperlipidaemia), G47→7A00 (Sleep disorders), etc.
-
----
-
-## Bugs Corregidos
-
-| Bug | Impacto | Estado |
-|---|---|---|
-| `egfr_ckd_epi` no definido | RuntimeError en 3 motores | ✅ |
-| `uacr` no definido | Referencia muerta | ✅ |
-| `uric_acid` no definido | Referencia muerta | ✅ |
-| `remnant_cholesterol` no definido | Referencia muerta | ✅ |
-| `fat_free_mass` no definido | Referencia muerta | ✅ |
-| `ideal_body_weight` no definido | Referencia muerta | ✅ |
-| LAP units (mg/dL vs mmol/L) | Falsos positivos universales | ✅ |
-| FLI/NFS asumían observaciones | AttributeError en compute | ✅ |
-| Free T fórmula incorrecta | Valores 100x mayores | ✅ |
-| Markov bloqueado | Sin predicción de progresión | ✅ |
-| ClinicalHistory sin campos | CKD, HF, CAD faltaban | ✅ |
-| God Class Encounter | 586 líneas, SRP violado | ✅ Refactorizado |
-| ProteinEngineMotor no registrado | Pacientes ERC sin ajuste proteico | ✅ |
-| CVDHazard defaults inventados | Riesgo ASCVD con datos falsos | ✅ |
-| Markov HbA1c ≥ 8 = complicaciones | Sobreestimación de riesgo | ✅ |
-| FreeTestosterone unreachable | TESTO-001 no disponible | ✅ |
-| SCORE2 irrelevante LATAM | Motor inútil | ✅ Eliminado |
-
----
-
-## Infraestructura de Agentes
-
-| Componente | Estado |
-|---|---|
-| **AGENTS.md** | ✅ Entry point con contexto completo |
-| **7 Skills** | ✅ iec62304, iso13485, clinical-validity, repo-structure, test-coverage, clinical-safety, data-contracts |
-| **3 Enforcement Scripts** | ✅ check_pure_python.sh, check_test_coverage.py, check_risk_sync.py |
-| **2 Workflows** | ✅ quality-gate, change-control |
-| **.cursorrules** | ✅ Configuración para Cursor IDE |
-
----
-
-## Métricas del Proyecto
+## Métricas Reales del Proyecto
 
 | Métrica | Valor |
 |---|---|
-| Motores registrados | **32** |
-| Tests passing | **208** |
-| Coverage | **100%** de motores con tests |
-| Líneas Encounter | **320** (de 586, -45%) |
-| Calculators | **7** value objects |
-| Medicamentos en DB | **142** |
-| Interacciones | **163** |
-| Contraindicaciones | **35** |
-| Ajustes renales | **18** |
-| Efectos adversos | **47** |
-| Mapeos ICD-10→11 | **56** |
-| Intervenciones longevidad | **32** |
+| Motores registrados | **38** (26 T1/T2 primary + 2 gated + 2 aggregator + 8 specialty) |
+| T1 (validated) | **18** |
+| T2 (guideline-based) | **17** |
+| T3 (research) | **3** |
+| T4 (experimental) | **2** |
+| Tests passing | **278** |
+| Hazards en RMF | **50** |
+| Clinical mode | ✅ Implementado (skips T3/T4) |
+| Contract enforcement | ✅ Todos devuelven AdjudicationResult |
 
 ---
 
-## Próximos Pasos
+## Próximos Pasos (Priorizados)
 
-### Sprint 9: Frontend + VPS
-- [ ] **Frontend para 32 motores** — ResultsViewer con tabs por categoría
-- [ ] **Formulario de medicamentos expandido** — con autocompletado desde DB
-- [ ] **Formulario Women's/Men's Health** — condicional por género
-- [ ] **Migración a VPS** — Docker compose, PostgreSQL, Caddy TLS
+### P0 — Validación clínica real (TRL 4→5)
+- [ ] Ejecutar paciente sintético con médico real para validación
+- [ ] Validar 5 motores T1 contra datos reales de Coecaribe
+- [ ] Documentar concordancia motor vs juicio clínico
 
-### Sprint 10: Longevidad + Genómica
-- [ ] **GrimAge** — Superior a PhenoAge para mortalidad
-- [ ] **DunedinPACE** — Pace of aging epigenético
-- [ ] **Nutritional Genomics** — MTHFR, FTO, APOE, TCF7L2
-- [ ] **Pharmacogenomics** — CYP2C9, CYP2D6 para metabolismo de drogas
+### P1 — Interoperabilidad formal
+- [ ] StructureDefinition FHIR formal + IG empaquetado
+- [ ] Validar Bundle contra HAPI FHIR server real
+- [ ] ETL OMOP ejecutado contra DB real + DQD + Achilles
 
-### Sprint 11: Modelo de Datos + Misc
-- [ ] Campos hormonales: IGF-1, DHEA-S, Estradiol, LH, FSH, Prolactina
-- [ ] OrganicAcidsMotor — Intermediarios metabólicos
-- [ ] GutHealthMotor — Calprotectina, zonulina, microbioma
-- [ ] **Migración definitiva a ICD-11** — usando crosswalk existente
+### P2 — Cumplimiento regulatorio Colombia
+- [ ] Matriz Res. 866/2021
+- [ ] Registro RDA ante MinSalud
+- [ ] Clasificación SaMD ante INVIMA
+
+### P3 — Frontend + Despliegue
+- [ ] ResultsViewer con tabs por categoría
+- [ ] Modo clínico (T1/T2 only) vs modo research (todos)
+- [ ] Docker compose production-ready
 
 ---
 
-**Comando de Inicio:** "Continuamos con Sprint 9."
+**Comando de Inicio:** "Continuamos con validación clínica (P0)."
