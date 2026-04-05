@@ -42,7 +42,7 @@ from src.engines.specialty.aom_eligibility import ObesityPharmaEligibilityMotor
 from src.engines.specialty.glp1_titration import GLP1TitrationMotor
 from src.engines.specialty.drug_interaction import DrugInteractionMotor
 from src.engines.protein_engine import ProteinEngineMotor
-from src.engines.domain import Encounter
+from src.engines.domain import Encounter, AdjudicationResult
 from typing import Dict, Any, List, Optional, Literal
 import structlog
 import re
@@ -117,7 +117,22 @@ class SpecialtyRunner:
     Executes multiple specialized clinical audits in two phases:
     1. Primary Engines (Independent)
     2. Aggregator Engines (Dependent on Primary Outputs)
+
+    Clinical Mode (T1/T2 only):
+    When clinical_mode=True, only T1 (validated clinical scores) and
+    T2 (guideline-based rules) motors are executed. T3 (research proxies)
+    and T4 (experimental) motors are skipped. This is the mode required
+    for regulatory submissions and production clinical use.
+
+    See: docs/qms/motor_evidence_registry.md for T1-T4 classification.
     """
+
+    # T3/T4 motors excluded from clinical mode
+    _RESEARCH_MOTORS = {
+        "DeepMetabolicProxyMotor",  # T4: Experimental metabolic proxies
+        "BiologicalAgeMotor",  # T3: Research proxy (PhenoAge)
+        "ObesityMasterMotor",  # T3: Internal aggregation
+    }
 
     _instance = None
     _primary_motors: Dict[str, Any] = {}
@@ -138,12 +153,23 @@ class SpecialtyRunner:
             }
         return cls._instance
 
-    def run_all(self, encounter: Encounter) -> Dict[str, Any]:
+    def run_all(
+        self, encounter: Encounter, clinical_mode: bool = False
+    ) -> Dict[str, Any]:
         results = {}
         h = encounter.history
 
         # 1. Primary Engines (Independent Phase)
         for name, motor in self._primary_motors.items():
+            # Clinical mode: skip T3/T4 research/experimental motors
+            if clinical_mode and name in self._RESEARCH_MOTORS:
+                logger.info(
+                    "motor_clinical_mode_skip",
+                    motor=name,
+                    reason="T3/T4 motor excluded",
+                )
+                continue
+
             try:
                 if hasattr(motor, "run"):
                     results[name] = motor.run(encounter)
@@ -151,6 +177,16 @@ class SpecialtyRunner:
                     is_valid, reason = motor.validate(encounter)
                     if is_valid:
                         results[name] = motor.compute(encounter)
+
+                # Contract validation: all motors must return AdjudicationResult
+                if name in results and results[name] is not None:
+                    if not isinstance(results[name], AdjudicationResult):
+                        logger.error(
+                            "motor_contract_violation",
+                            motor=name,
+                            expected="AdjudicationResult",
+                            actual=type(results[name]).__name__,
+                        )
             except Exception as e:
                 logger.error("motor_execution_error", motor=name, error=str(e))
 
