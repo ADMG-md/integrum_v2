@@ -140,6 +140,7 @@ class SpecialtyRunner:
 
     def run_all(self, encounter: Encounter) -> Dict[str, Any]:
         results = {}
+        h = encounter.history
 
         # 1. Primary Engines (Independent Phase)
         for name, motor in self._primary_motors.items():
@@ -157,6 +158,45 @@ class SpecialtyRunner:
         cvd_risk_category = None
         for name, motor in self._gated_motors.items():
             try:
+                # Gate: CVDHazardMotor runs only if patient has CVD risk factors
+                if name == "CVDHazardMotor":
+                    has_risk = (
+                        (
+                            h
+                            and (
+                                h.has_type2_diabetes
+                                or h.has_hypertension
+                                or h.has_dyslipidemia
+                            )
+                        )
+                        or encounter.bmi >= 30
+                        or (
+                            encounter.demographics.age_years
+                            and encounter.demographics.age_years >= 40
+                        )
+                    )
+                    if not has_risk:
+                        logger.info(
+                            "motor_gated_skip", motor=name, reason="No CVD risk factors"
+                        )
+                        continue
+
+                # Gate: MarkovProgressionMotor runs only if DM2 or prediabetes
+                if name == "MarkovProgressionMotor":
+                    has_dm = (
+                        encounter.has_condition("E11")
+                        or encounter.has_condition("E11.9")
+                        or (h and h.has_type2_diabetes)
+                        or (h and h.has_prediabetes)
+                    )
+                    if not has_dm:
+                        logger.info(
+                            "motor_gated_skip",
+                            motor=name,
+                            reason="No diabetes/prediabetes",
+                        )
+                        continue
+
                 if hasattr(motor, "run"):
                     res = motor.run(encounter)
                     results[name] = res

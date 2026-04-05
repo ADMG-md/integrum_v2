@@ -243,20 +243,28 @@ class TestPrimaryMotors:
         if "VitaminDMotor" in results:
             assert isinstance(results["VitaminDMotor"], AdjudicationResult)
 
+
 class TestGatedMotors:
     def test_gated_motors_run(self, minimal_encounter):
         results = specialty_runner.run_all(minimal_encounter)
-        # CVDHazardMotor and MarkovProgressionMotor should execute
+        # CVDHazardMotor runs because patient has HTN + BMI >= 30
         assert "CVDHazardMotor" in results
-        assert "MarkovProgressionMotor" in results
+        # MarkovProgressionMotor is gated: requires DM2/prediabetes (not present in minimal)
+        assert "MarkovProgressionMotor" not in results
 
     def test_cvd_hazard(self, minimal_encounter):
         results = specialty_runner.run_all(minimal_encounter)
         r = results["CVDHazardMotor"]
         assert isinstance(r, AdjudicationResult)
 
-    def test_markov_progression(self, minimal_encounter):
-        results = specialty_runner.run_all(minimal_encounter)
+    def test_markov_progression_with_diabetes(self, minimal_encounter):
+        """MarkovProgressionMotor only runs when patient has DM2 or prediabetes."""
+        from src.domain.models import ClinicalHistory
+
+        enc = minimal_encounter
+        enc.history = ClinicalHistory(has_type2_diabetes=True)
+        results = specialty_runner.run_all(enc)
+        assert "MarkovProgressionMotor" in results
         r = results["MarkovProgressionMotor"]
         assert isinstance(r, AdjudicationResult)
 
@@ -271,9 +279,10 @@ class TestAggregatorMotors:
         results = specialty_runner.run_all(minimal_encounter)
         assert "ObesityMasterMotor" in results
         r = results["ObesityMasterMotor"]
-        # ObesityMaster returns ObesityClinicalStoryOutput, not AdjudicationResult
-        assert hasattr(r, "clinical_profile")
-        assert hasattr(r, "headline_verdict")
+        # ObesityMaster now returns AdjudicationResult (V2.7 contract fix)
+        assert isinstance(r, AdjudicationResult)
+        assert "clinical_profile" in r.metadata
+        assert r.calculated_value is not None
 
     def test_clinical_guidelines(self, minimal_encounter):
         results = specialty_runner.run_all(minimal_encounter)
