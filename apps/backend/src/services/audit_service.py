@@ -40,7 +40,14 @@ class AuditService:
             import json
             import os
 
-            secret = os.getenv("SECRET_KEY", "unsafe-dev-salt")
+            secret = os.getenv("SECRET_KEY")
+            if not secret or secret == "unsafe-dev-salt":
+                if os.getenv("ENVIRONMENT") == "production":
+                    raise RuntimeError(
+                        "SECRET_KEY must be set in production for audit integrity. "
+                        "Refusing to generate HMAC with default salt."
+                    )
+            secret = secret or "unsafe-dev-salt"
             calc_val = getattr(
                 res, "calculated_value", getattr(res, "clinical_profile", str(res))
             )

@@ -231,47 +231,63 @@ class LifestyleSchema(BaseModel):
 class MetabolicPanelInput(BaseModel):
     model_config = {"populate_by_name": True}
 
-    glucose_mg_dl: Optional[float] = Field(None, alias="glucose_mgdl")
-    creatinine_mg_dl: Optional[float] = Field(None, alias="creatinine_mgdl")
-    hba1c_percent: Optional[float] = None
-    insulin_mu_u_ml: Optional[float] = Field(None, alias="insulin_muUml")
-    c_peptide_ng_ml: Optional[float] = Field(None, alias="c_peptide")
+    glucose_mg_dl: Optional[float] = Field(None, ge=40, le=600, alias="glucose_mgdl")
+    creatinine_mg_dl: Optional[float] = Field(
+        None, ge=0.2, le=10.0, alias="creatinine_mgdl"
+    )
+    hba1c_percent: Optional[float] = Field(None, ge=3.0, le=18.0)
+    insulin_mu_u_ml: Optional[float] = Field(
+        None, ge=0.5, le=500, alias="insulin_muUml"
+    )
+    c_peptide_ng_ml: Optional[float] = Field(None, ge=0.1, le=50, alias="c_peptide")
 
-    total_cholesterol_mg_dl: Optional[float] = Field(None, alias="total_chol_mgdl")
-    triglycerides_mg_dl: Optional[float] = Field(None, alias="triglycerides_mgdl")
-    hdl_mg_dl: Optional[float] = Field(None, alias="hdl_mgdl")
-    ldl_mg_dl: Optional[float] = Field(None, alias="ldl_mgdl")
-    vldl_mg_dl: Optional[float] = Field(None, alias="vldl_mgdl")
-    apob_mg_dl: Optional[float] = Field(None, alias="apob_mgdl")
-    lpa_mg_dl: Optional[float] = Field(None, alias="lpa_mgdl")
-    apoa1_mg_dl: Optional[float] = Field(None, alias="apoa1_mgdl")
+    total_cholesterol_mg_dl: Optional[float] = Field(
+        None, ge=70, le=400, alias="total_chol_mgdl"
+    )
+    triglycerides_mg_dl: Optional[float] = Field(
+        None, ge=0, le=1200, alias="triglycerides_mgdl"
+    )
+    hdl_mg_dl: Optional[float] = Field(None, ge=0, le=150, alias="hdl_mgdl")
+    ldl_mg_dl: Optional[float] = Field(None, ge=0, le=400, alias="ldl_mgdl")
+    vldl_mg_dl: Optional[float] = Field(None, ge=0, le=300, alias="vldl_mgdl")
+    apob_mg_dl: Optional[float] = Field(None, ge=0, le=300, alias="apob_mgdl")
+    lpa_mg_dl: Optional[float] = Field(None, ge=0, le=300, alias="lpa_mgdl")
+    apoa1_mg_dl: Optional[float] = Field(None, ge=0, le=300, alias="apoa1_mgdl")
 
-    tsh_u_iu_ml: Optional[float] = Field(None, alias="tsh_uIUmL")
-    ft4_ng_dl: Optional[float] = Field(None, alias="ft4_ngdL")
-    ft3_pg_ml: Optional[float] = Field(None, alias="ft3_pgmL")
-    rt3_ng_dl: Optional[float] = Field(None, alias="rt3_ngdL")
-    shbg_nmol_l: Optional[float] = Field(None, alias="shbg_nmolL")
-    cortisol_am_mcg_dl: Optional[float] = Field(None, alias="cortisol_am_mcgdl")
+    tsh_u_iu_ml: Optional[float] = Field(None, ge=0.01, le=100, alias="tsh_uIUmL")
+    ft4_ng_dl: Optional[float] = Field(None, ge=0.1, le=10, alias="ft4_ngdL")
+    ft3_pg_ml: Optional[float] = Field(None, ge=1.0, le=20, alias="ft3_pgmL")
+    rt3_ng_dl: Optional[float] = Field(None, ge=5, le=200, alias="rt3_ngdL")
+    shbg_nmol_l: Optional[float] = Field(None, ge=1, le=300, alias="shbg_nmolL")
+    cortisol_am_mcg_dl: Optional[float] = Field(
+        None, ge=1, le=100, alias="cortisol_am_mcgdl"
+    )
 
-    ast_u_l: Optional[float] = Field(None, alias="ast_uL")
-    alt_u_l: Optional[float] = Field(None, alias="alt_uL")
-    ggt_u_l: Optional[float] = Field(None, alias="ggt_uL")
-    uric_acid_mg_dl: Optional[float] = Field(None, alias="uric_acid_mgdl")
-    platelets_k_u_l: Optional[float] = Field(None, alias="platelets_k_uL")
+    ast_u_l: Optional[float] = Field(None, ge=5, le=5000, alias="ast_uL")
+    alt_u_l: Optional[float] = Field(None, ge=5, le=5000, alias="alt_uL")
+    ggt_u_l: Optional[float] = Field(None, ge=1, le=2000, alias="ggt_uL")
+    uric_acid_mg_dl: Optional[float] = Field(None, ge=1, le=20, alias="uric_acid_mgdl")
+    platelets_k_u_l: Optional[float] = Field(
+        None, ge=10, le=1000, alias="platelets_k_uL"
+    )
 
     # Hypertension workup
-    aldosterone_ng_dl: Optional[float] = Field(None, alias="aldosterone_ngdL")
-    renin_ng_ml_h: Optional[float] = Field(None, alias="renin_ngmLh")
+    aldosterone_ng_dl: Optional[float] = Field(
+        None, ge=1, le=200, alias="aldosterone_ngdL"
+    )
+    renin_ng_ml_h: Optional[float] = Field(None, ge=0.1, le=500, alias="renin_ngmLh")
 
-    albumin_g_dl: Optional[float] = Field(None, alias="albumin_gdl")
-    alkaline_phosphatase_u_l: Optional[float] = Field(None, alias="alk_phos_ul")
-    mcv_fl: Optional[float] = None
-    rdw_percent: Optional[float] = None
-    wbc_k_ul: Optional[float] = None
-    lymphocyte_percent: Optional[float] = None
-    neutrophil_percent: Optional[float] = None
-    ferritin_ng_ml: Optional[float] = None
-    hs_crp_mg_l: Optional[float] = None
+    albumin_g_dl: Optional[float] = Field(None, ge=2.0, le=6.0, alias="albumin_gdl")
+    alkaline_phosphatase_u_l: Optional[float] = Field(
+        None, ge=20, le=1000, alias="alk_phos_ul"
+    )
+    mcv_fl: Optional[float] = Field(None, ge=60, le=120)
+    rdw_percent: Optional[float] = Field(None, ge=8, le=30)
+    wbc_k_ul: Optional[float] = Field(None, ge=1, le=100)
+    lymphocyte_percent: Optional[float] = Field(None, ge=1, le=80)
+    neutrophil_percent: Optional[float] = Field(None, ge=10, le=95)
+    ferritin_ng_ml: Optional[float] = Field(None, ge=5, le=2000)
+    hs_crp_mg_l: Optional[float] = Field(None, ge=0.0, le=50.0)
     gada_antibodies: Optional[bool] = None
 
 
