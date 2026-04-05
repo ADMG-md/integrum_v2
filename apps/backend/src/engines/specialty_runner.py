@@ -245,10 +245,17 @@ class SpecialtyRunner:
         if "AcostaPhenotypeMotor" in results and "EOSSStagingMotor" in results:
             try:
                 ob_motor = self._aggregator_motors["ObesityMasterMotor"]
-                ob_input = self._build_obesity_input(
-                    encounter, results, cvd_risk_category
-                )
-                results["ObesityMasterMotor"] = ob_motor(ob_input)
+                if clinical_mode:
+                    logger.info(
+                        "motor_clinical_mode_skip",
+                        motor="ObesityMasterMotor",
+                        reason="T3 motor excluded from clinical mode",
+                    )
+                else:
+                    ob_input = self._build_obesity_input(
+                        encounter, results, cvd_risk_category
+                    )
+                    results["ObesityMasterMotor"] = ob_motor(ob_input)
             except Exception as e:
                 logger.error(
                     "aggregator_error", motor="ObesityMasterMotor", error=str(e)
