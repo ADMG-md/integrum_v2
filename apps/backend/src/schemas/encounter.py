@@ -8,7 +8,7 @@ from src.domain.models to maintain a single source of truth.
 
 from typing import List, Optional, Any, Dict, Literal
 from datetime import datetime
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 
 # --- Re-export domain types (single source of truth) ---
 from src.domain.models import (
@@ -193,6 +193,38 @@ class BiometricsSchema(BaseModel):
     gait_speed_m_s: Optional[float] = Field(None, ge=0.1, le=3.0)
     sarcf_score: Optional[int] = Field(None, ge=0, le=10)
     five_x_sts_seconds: Optional[float] = Field(None, ge=3.0, le=120.0)
+
+    @model_validator(mode="after")
+    def validate_biometric_coherence(self) -> "BiometricsSchema":
+        """
+        Cross-field coherence validation.
+        Hard blocks: physically/logically impossible values that indicate data entry error.
+        These run server-side as defense-in-depth (frontend also validates).
+        """
+        sbp = self.systolic_bp
+        dbp = self.diastolic_bp
+        wt = self.weight_kg
+        ht = self.height_cm
+
+        # Rule 1: Systolic BP must always exceed diastolic
+        if sbp is not None and dbp is not None:
+            if sbp <= dbp:
+                raise ValueError(
+                    f"Coherence error: systolic_bp ({sbp}) must be greater than diastolic_bp ({dbp}). "
+                    f"Pulse pressure ≤ 0 is physiologically impossible."
+                )
+
+        # Rule 2: BMI < 10 is physiologically impossible — likely unit error (m vs cm)
+        if wt is not None and ht is not None and ht > 0:
+            bmi = wt / (ht / 100) ** 2
+            if bmi < 10:
+                raise ValueError(
+                    f"Coherence error: resulting BMI ({bmi:.1f} kg/m²) is physiologically impossible. "
+                    f"Likely height entered in meters instead of centimeters "
+                    f"(weight={wt}kg, height={ht}cm → BMI={bmi:.1f})."
+                )
+
+        return self
 
 
 class PsychometricsSchema(BaseModel):
