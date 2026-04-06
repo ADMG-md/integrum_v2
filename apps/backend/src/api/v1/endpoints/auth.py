@@ -4,7 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from src.database import get_db
 from src.models.user import UserModel, UserRole
-from src.services.auth_service import AuthService
+from src.services.auth_service import AuthService, ACCESS_TOKEN_EXPIRE_MINUTES
 from pydantic import BaseModel, EmailStr
 from slowapi import Limiter
 from slowapi.util import get_remote_address
@@ -89,7 +89,7 @@ async def login(
         "access_token": access_token,
         "token_type": "bearer",
         "role": user.role,
-        "expires_in": AuthService.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
+        "expires_in": ACCESS_TOKEN_EXPIRE_MINUTES * 60,
         "refresh_token": refresh_token,
     }
 
