@@ -37,6 +37,7 @@ typeCheckingMode = "strict"
 testpaths = ["tests"]
 python_files = ["test_*.py"]
 asyncio_mode = "auto"
+addopts = "-m 'not integration'"
 markers = [
     "integration: marks tests that require a running server or database",
 ]
