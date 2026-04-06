@@ -313,6 +313,7 @@ def export_dataset(
     format: str = "csv",
     status_filter: Optional[str] = "FINALIZED",
     limit: Optional[int] = None,
+    include_deltas: bool = True,
 ) -> Dict[str, Any]:
     """
     Query finalized encounters and export as ML-ready dataset.
@@ -323,6 +324,7 @@ def export_dataset(
         format: "csv" or "parquet" (parquet requires pandas)
         status_filter: Only export encounters with this status. None = all.
         limit: Max number of encounters to export
+        include_deltas: Compute delta vs previous encounter per patient (T0, T1, T2...)
 
     Returns:
         Summary dict with row count, columns, and file path
@@ -333,7 +335,7 @@ def export_dataset(
             selectinload(EncounterModel.observations),
             selectinload(EncounterModel.patient),
         )
-        .order_by(EncounterModel.created_at.desc())
+        .order_by(EncounterModel.patient_id, EncounterModel.created_at)
     )
 
     if status_filter:
@@ -354,15 +356,45 @@ def export_dataset(
         }
 
     rows = []
+    prev_rows_by_patient: Dict[str, Dict[str, Any]] = {}
+
     for enc in encounters:
         try:
             row = encounter_to_row(enc)
-            rows.append(row)
         except Exception as e:
             print(f"  SKIP encounter {enc.id}: {e}")
+            continue
+
+        patient_id = row.get("patient_id", "")
+
+        if include_deltas and patient_id in prev_rows_by_patient:
+            prev = prev_rows_by_patient[patient_id]
+            delta_t = _compute_deltas(prev, row)
+            row = {**row, **delta_t}
+            prev_t = prev.get("encounter_number", "T0")
+            current_t = int(prev_t.replace("T", "")) + 1
+            row["encounter_number"] = f"T{current_t}"
+            row["delta_vs_previous"] = prev_t
+        else:
+            row["encounter_number"] = "T0"
+            row["delta_vs_previous"] = None
+
+        rows.append(row)
+        prev_rows_by_patient[patient_id] = row
 
     all_cols = get_all_columns(rows)
-    cols_to_write = [c for c in all_cols if c not in ("reason_for_visit",)]
+    priority_cols = [
+        "encounter_id",
+        "patient_id",
+        "encounter_number",
+        "delta_vs_previous",
+        "encounter_date",
+        "age",
+        "gender",
+        "status",
+        "agreement_rate",
+    ]
+    cols_to_write = priority_cols + [c for c in all_cols if c not in priority_cols]
 
     if format == "parquet":
         if not HAS_PANDAS:
@@ -385,6 +417,39 @@ def export_dataset(
         "format": format,
         "status": "success",
     }
+
+
+def _compute_deltas(prev: Dict[str, Any], current: Dict[str, Any]) -> Dict[str, Any]:
+    """Compute delta (current - previous) for key clinical metrics."""
+    deltas = {}
+    metrics = [
+        "weight_kg",
+        "bmi",
+        "waist_cm",
+        "hip_cm",
+        "glucose_mg_dl",
+        "hba1c_percent",
+        "triglycerides_mg_dl",
+        "ldl_mg_dl",
+        "hdl_mg_dl",
+        "systolic_bp",
+        "diastolic_bp",
+        "whr",
+        "tg_hdl_ratio",
+        "non_hdl_chol",
+    ]
+    for metric in metrics:
+        prev_val = prev.get(metric)
+        curr_val = current.get(metric)
+        if prev_val is not None and curr_val is not None:
+            try:
+                deltas[f"delta_{metric}"] = round(float(curr_val) - float(prev_val), 3)
+            except (ValueError, TypeError):
+                deltas[f"delta_{metric}"] = None
+        else:
+            deltas[f"delta_{metric}"] = None
+
+    return deltas
 
 
 if __name__ == "__main__":
