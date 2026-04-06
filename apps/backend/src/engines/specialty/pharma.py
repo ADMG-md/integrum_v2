@@ -1,3 +1,16 @@
+"""
+DEPRECATED: PharmacologicalAuditMotor
+======================================
+Este motor está OBSOLETO. Su funcionalidad (auditoría de medicamentos
+obesogénicos) está completamente superada por DrugInteractionMotor,
+que incluye detección de obesogénicos, riesgo QT, interacciones
+medicamentosas y medicamentos que afectan peso de forma más completa.
+
+Ubicación de reemplazo: src.engines.specialty.drug_interaction.py
+Requiere: nada — DrugInteractionMotor se ejecuta automáticamente.
+Fecha de deprecación: 2026-04-05
+"""
+
 from src.engines.base import BaseClinicalMotor
 from src.engines.domain import Encounter, AdjudicationResult, ClinicalEvidence
 from typing import Tuple

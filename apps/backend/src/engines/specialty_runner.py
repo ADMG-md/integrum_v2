@@ -22,6 +22,7 @@ from src.engines.specialty.fatty_liver import FLIMotor
 from src.engines.specialty.visceral_adiposity import VAIMotor
 from src.engines.specialty.cardiometabolic import CMIMotor
 from src.engines.specialty.apob_ratio import ApoBApoA1Motor
+from src.engines.specialty.lipid_risk import LipidRiskPrecisionMotor
 from src.engines.specialty.hemodynamics import PulsePressureMotor
 from src.engines.specialty.nafld_fibrosis import NFSMotor
 from src.engines.specialty.glp1_monitor import GLP1MonitoringMotor
@@ -75,6 +76,8 @@ PRIMARY_MOTORS = {
     "ApoBApoA1Motor": ApoBApoA1Motor,
     "PulsePressureMotor": PulsePressureMotor,
     "NFSMotor": NFSMotor,
+    # Lipid risk (ACC/AHA 2026)
+    "LipidRiskPrecisionMotor": LipidRiskPrecisionMotor,
     # Safety + screening
     "GLP1MonitoringMotor": GLP1MonitoringMotor,
     "ACEScoreEngine": ACEScoreEngine,
