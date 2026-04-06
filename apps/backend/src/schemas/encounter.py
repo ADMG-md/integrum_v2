@@ -373,3 +373,24 @@ class EncounterFinalizeSchema(BaseModel):
     clinical_notes: Optional[str] = None
     plan_of_action: Optional[Dict[str, Any]] = None
     audit_payload: Optional[List[Dict[str, Any]]] = None
+
+    # Outcome tracking — optional, but critical for research dataset quality.
+    # Captures what happened TO the patient at this visit / since last encounter.
+    weight_current_kg: Optional[float] = Field(
+        None, ge=20, le=500,
+        description="Patient weight at this encounter (enables longitudinal delta)"
+    )
+    outcome_status: Optional[str] = Field(
+        None,
+        description="Physician global assessment: MEJORADO | ESTABLE | DETERIORO"
+    )
+    adverse_event: Optional[str] = Field(
+        None, max_length=500,
+        description="Adverse event since last encounter (hospitalization, CV event, severe side effect)"
+    )
+    medication_changed: Optional[bool] = Field(
+        None, description="Prescription changed at this encounter"
+    )
+    adherence_reported: Optional[str] = Field(
+        None, description="Patient-reported adherence: ALTA | MEDIA | BAJA"
+    )

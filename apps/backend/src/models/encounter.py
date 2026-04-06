@@ -151,6 +151,13 @@ class EncounterModel(Base):
     personal_history: Mapped[Optional[str]] = mapped_column(String(5000), nullable=True)
     family_history: Mapped[Optional[str]] = mapped_column(String(5000), nullable=True)
 
+    # --- Outcome tracking (research dataset quality) ---
+    weight_current_kg: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    outcome_status: Mapped[Optional[str]] = mapped_column(String(20), nullable=True)  # MEJORADO / ESTABLE / DETERIORO
+    adverse_event: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
+    medication_changed: Mapped[Optional[bool]] = mapped_column(nullable=True, default=None)
+    adherence_reported: Mapped[Optional[str]] = mapped_column(String(10), nullable=True)  # ALTA / MEDIA / BAJA
+
     patient: Mapped["Patient"] = relationship("Patient", back_populates="encounters")
     observations: Mapped[List["ObservationModel"]] = relationship(
         "ObservationModel", back_populates="encounter", cascade="all, delete-orphan"

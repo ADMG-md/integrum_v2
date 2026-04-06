@@ -726,6 +726,18 @@ async def finalize_encounter(
     encounter.plan_of_action = payload.plan_of_action
     encounter.physician_id = current_user.id
 
+    # Persist outcome tracking fields (research dataset quality)
+    if payload.weight_current_kg is not None:
+        encounter.weight_current_kg = payload.weight_current_kg
+    if payload.outcome_status is not None:
+        encounter.outcome_status = payload.outcome_status
+    if payload.adverse_event is not None:
+        encounter.adverse_event = payload.adverse_event
+    if payload.medication_changed is not None:
+        encounter.medication_changed = payload.medication_changed
+    if payload.adherence_reported is not None:
+        encounter.adherence_reported = payload.adherence_reported
+
     await db.commit()
     return {"status": "finalized", "encounter_id": encounter_id}
 

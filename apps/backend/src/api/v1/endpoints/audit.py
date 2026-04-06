@@ -30,15 +30,19 @@ async def override_adjudication(
         raise HTTPException(status_code=404, detail="Adjudication log not found")
 
     # Update with override data
+    # override_reason_code is the structured field for research analysis.
+    # override_reason stores the enum value as string for backward compatibility.
     log_entry.is_overridden = True
     log_entry.physician_value = payload.physician_value
-    log_entry.override_reason = payload.override_reason
+    log_entry.override_reason = payload.override_reason_code.value  # structured, not free text
     log_entry.physician_id = payload.physician_id
 
     await db.commit()
-    
+
     return {
         "status": "overridden",
         "log_id": str(log_entry.id),
-        "new_value": log_entry.physician_value
+        "new_value": log_entry.physician_value,
+        "override_reason_code": payload.override_reason_code.value,
+        "override_reason_text": payload.override_reason_text,
     }
