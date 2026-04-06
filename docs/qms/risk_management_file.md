@@ -96,6 +96,7 @@
 | **H-048** | **DeepMetabolicProxy Error** | Proxies metabólicos mal calculados | Fenotipado metabólico incorrecto | P2 | S2 | ALARP | Proxies validados contra literatura. Confidence scoring. | **Unit Test**: `test_specialty_motors` (Verified) | P1 (ACC) |
 | **H-049** | **Lifestyle360 Error** | Recomendaciones de estilo de vida inadecuadas | Intervención inefectiva o contraproducente | P3 | S1 | ACC | Recomendaciones basadas en guías AHA/ACC. No farmacológicas. | **Unit Test**: `test_specialty_motors` (Verified) | P1 (ACC) |
 | **H-050** | **FHIR Bundle Validation Gap** | Bundle FHIR exportado sin observaciones requeridas | Interoperabilidad incompleta con sistemas externos | P2 | S2 | ALARP | validate_fhir_bundle verifica 12 observaciones requeridas + 15 recomendadas. | **Unit Test**: `test_fhir_validator.py` (37 tests, Verified) | P1 (ACC) |
+| **H-051** | **SOAP Text Generation Liability** | Nota SOAP autogenerada (ResultsViewer.tsx:120-173) copiada directamente al expediente médico legal con errores u omisiones | Responsabilidad médica directa por texto clínico generado algorítmicamente | P3 | S4 | UNA | 1) Disclaimer obligatorio "Nota preliminar — requiere revisión y firma del médico tratante". 2) Médico debe editar/confirmar antes de guardar. 3) TODO: auditoría de versionado de notas SOAP. | Sin test unitario — riesgo de proceso, no de cálculo. Requiere validación clínica. | P1 (ACC) |
 
 ---
 
