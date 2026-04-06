@@ -768,6 +768,48 @@ async def get_encounter(
     }
 
 
+@router.get("/patient/{patient_id}/latest")
+async def get_latest_encounter(
+    patient_id: str,
+    db: AsyncSession = Depends(get_db),
+    current_user: UserModel = Depends(
+        check_role([UserRole.PHYSICIAN, UserRole.SUPERADMIN])
+    ),
+):
+    """
+    Returns the most recent finalized/analysed encounter for a patient.
+    Used to pre-populate follow-up consultation forms (control mode).
+    """
+    from src.models.encounter import EncounterModel
+
+    stmt = (
+        select(EncounterModel)
+        .where(EncounterModel.patient_id == patient_id)
+        .where(EncounterModel.phenotype_result.isnot(None))
+        .order_by(EncounterModel.created_at.desc())
+        .limit(1)
+    )
+    result = await db.execute(stmt)
+    encounter = result.scalar_one_or_none()
+
+    if not encounter:
+        return None
+
+    return {
+        "id": encounter.id,
+        "status": encounter.status,
+        "reason_for_visit": encounter.reason_for_visit,
+        "phenotype_result": encounter.phenotype_result,
+        "clinical_notes": encounter.clinical_notes,
+        "plan_of_action": encounter.plan_of_action,
+        "personal_history": encounter.personal_history,
+        "family_history": encounter.family_history,
+        "created_at": encounter.created_at.isoformat()
+        if encounter.created_at
+        else None,
+    }
+
+
 @router.get("/patient/{patient_id}")
 async def get_patient_encounters(
     patient_id: str,
