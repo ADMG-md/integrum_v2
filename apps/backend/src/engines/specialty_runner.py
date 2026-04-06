@@ -20,6 +20,7 @@ from src.engines.specialty.stewardship import LaboratoryStewardshipMotor
 from src.engines.specialty.functional_sarcopenia import FunctionalSarcopeniaMotor
 from src.engines.specialty.fatty_liver import FLIMotor
 from src.engines.specialty.visceral_adiposity import VAIMotor
+from src.engines.specialty.cardiometabolic import CMIMotor
 from src.engines.specialty.apob_ratio import ApoBApoA1Motor
 from src.engines.specialty.hemodynamics import PulsePressureMotor
 from src.engines.specialty.nafld_fibrosis import NFSMotor
@@ -70,6 +71,7 @@ PRIMARY_MOTORS = {
     # NAFLD screening + staging
     "FLIMotor": FLIMotor,
     "VAIMotor": VAIMotor,
+    "CMIMotor": CMIMotor,
     "ApoBApoA1Motor": ApoBApoA1Motor,
     "PulsePressureMotor": PulsePressureMotor,
     "NFSMotor": NFSMotor,
