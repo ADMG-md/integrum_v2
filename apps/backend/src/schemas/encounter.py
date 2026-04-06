@@ -364,6 +364,9 @@ class AdjudicationResultSchema(BaseModel):
 class ProcessResponseSchema(BaseModel):
     encounter_id: str
     results: Dict[str, Any]  # Flexible: motors return different output types
+    data_readiness: Optional[Dict[str, Any]] = (
+        None  # ClinicalDataReadinessEngine output
+    )
 
 
 class EncounterFinalizeSchema(BaseModel):

@@ -16,6 +16,7 @@ from src.engines.domain import (
     AdjudicationResult,
 )
 from src.engines.specialty_runner import specialty_runner
+from src.engines.specialty.readiness import readiness_engine
 from src.engines.acosta import AcostaPhenotypeMotor
 from src.engines.eoss import EOSSStagingMotor
 from src.services.report_service import report_service
@@ -589,7 +590,13 @@ async def process_encounter_t0(
         db, patient.id, encounter_id, domain_encounter.observations
     )
 
-    # 4. Run Unified Clinical Engines (Mission 2.2 Hardening)
+    # 4. ClinicalDataReadinessEngine — score data readiness before running motors
+    readiness = readiness_engine.score(
+        domain_encounter, specialty_runner.PRIMARY_MOTORS
+    )
+    readiness_report = readiness.to_dict()
+
+    # 5. Run Unified Clinical Engines (Mission 2.2 Hardening)
     results = specialty_runner.run_all(domain_encounter)
 
     # 5. SaMD Audit Trail (Inmutable Logging)
@@ -615,10 +622,16 @@ async def process_encounter_t0(
 
     # 6. Generate Full Report if requested
     if generate_report:
-        return report_service.generate_report(results, domain_encounter, encounter_id)
+        report = report_service.generate_report(results, domain_encounter, encounter_id)
+        report["data_readiness"] = readiness_report
+        return report
 
-    # 7. Return raw results (Fallback)
-    return {"encounter_id": encounter_id, "results": persistent_results}
+    # 8. Return raw results (Fallback)
+    return {
+        "encounter_id": encounter_id,
+        "results": persistent_results,
+        "data_readiness": readiness_report,
+    }
 
 
 @router.patch("/{encounter_id}/finalize")

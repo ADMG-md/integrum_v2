@@ -357,15 +357,17 @@ class DrugInteractionMotor(BaseClinicalMotor):
             confidence = 0.85
         else:
             estado = "INDETERMINATE_LOCKED"
-            verdict = "Sin interacciones significativas detectadas"
-            confidence = 0.88
+            verdict = "No evaluable — base de datos limitada"
+            confidence = 0.30
+            explanation = (
+                "La combinación de medicamentos no se encuentra en la base de datos "
+                "embebida. Consultar base de datos completa (Lexicomp/Micromedex) antes "
+                "de prescribir. Esta evaluación NO garantiza ausencia de interacciones."
+            )
 
         all_findings = critical_alerts + major_alerts + moderate_alerts
-        explanation = (
-            "; ".join(all_findings)
-            if all_findings
-            else "No se detectaron interacciones significativas."
-        )
+        if all_findings:
+            explanation = "; ".join(all_findings)
 
         conn.close()
 
@@ -375,6 +377,9 @@ class DrugInteractionMotor(BaseClinicalMotor):
             evidence=evidence,
             requirement_id=self.REQUIREMENT_ID,
             estado_ui=estado,
+            dato_faltante="Base de datos de interacciones: cobertura limitada a 53 fármacos. No sustituye Lexicomp ni Micromedex."
+            if estado == "INDETERMINATE_LOCKED"
+            else None,
             explanation=explanation,
             action_checklist=actions,
             metadata={
@@ -384,5 +389,6 @@ class DrugInteractionMotor(BaseClinicalMotor):
                 "qt_meds": qt_meds,
                 "obesity_meds": obesity_meds,
                 "n_medications_evaluated": len(med_names),
+                "db_coverage": "limited",
             },
         )
