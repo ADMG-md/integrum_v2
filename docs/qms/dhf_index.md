@@ -12,7 +12,7 @@
 - Requirements and Implementation logic are traced in the [Traceability Matrix](./traceability_matrix.md).
 
 ## 3. Risk Management
-- [Risk Management File](./risk_management_file.md): Hazard analysis and mitigation (50 hazards, all 38 motors covered).
+- [Risk Management File](./risk_management_file.md): Hazard analysis and mitigation (51 hazards, all 48 motors covered).
 
 ## 4. Software Specifics (IEC 62304)
 - [SOUP Manifest](./soup_manifest.md): External software provenance and risk assessment.
@@ -20,7 +20,7 @@
 ## 5. Verification & Validation
 - Verification scripts are located in `apps/backend/tests/`.
 - Automated test logs serve as verification evidence.
-- 278 tests passing (100% motor coverage).
+- **526 tests passing (100% motor coverage).**
 
 ## 6. Interoperability Layer (Sprint 9 — FHIR R4 + OMOP CDM 5.4)
 - **FHIR R4:** `apps/backend/src/fhir/` — 56 LOINC + 42 SNOMED + 78 ATC mappings, Bundle generator, profile validation (37 tests).
@@ -31,4 +31,4 @@
 
 ---
 *Este índice constituye el registro maestro del proceso de diseño de Integrum V2.*
-*Última actualización: 2026-04-05 — Sprint 9 FHIR/OMOP + VETO remediation.*
+*Última actualización: 2026-04-07 — Sprint 6 validation + 526 tests*

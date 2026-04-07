@@ -1,6 +1,6 @@
 # INITIAL DRAFT — Risk Management File (Integrum V2.5)
 # ISO 14971:2019 — Preliminary Hazard Analysis
-# Revision: 2026.03.29.C | Status: INITIAL DRAFT — UNDER REVIEW
+# Revision: 2026.04.07.A | Status: ACTIVE — FULL COVERAGE — 48 MOTORS
 
 > [!CAUTION]
 > **ESTADO DE MADUREZ:** Este documento es un borrador inicial en expansión. Los valores de Probabilidad (P) e Impacto (S) son estimaciones preliminares sujetas a validación por un comité clínico formal. No se considera un RMF completo para certificación Clase B.
@@ -104,9 +104,10 @@
 
 - **Implemented:** H-001, H-002, H-007, H-014, H-015 (Golden Motors + V2.6 Remediation).
 - **Implemented:** H-016, H-017 (VETO-SAFETY-01/02 remediation, 2026-04-05).
-- **Implemented:** H-018 through H-050 (Full motor hazard coverage, 2026-04-05).
+- **Implemented:** H-018 through H-051 (Full motor hazard coverage, 2026-04-07).
 - **SOUP:** H-043 — Drug interaction DB classified as SOUP (SQLite + clinical data).
+- **Test Coverage:** 526 unit tests covering all 48 motors.
 
 ---
 
-**Revision:** 2026.04.05.E | **Status:** ACTIVE — VETO REMEDIATION APPLIED | 50 hazards covering all 38 motors
+**Revision:** 2026.04.07.A | **Status:** ACTIVE — FULL COVERAGE — 48 MOTORS | 526 TESTS

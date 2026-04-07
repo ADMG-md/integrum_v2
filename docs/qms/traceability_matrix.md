@@ -1,9 +1,9 @@
 # DRAFT / PoC — Traceability Matrix (Integrum V2.5)
 # IEC 62304 §5.1.1 — Software Traceability
-# Revision: 2026.04.05.F | Status: FULL COVERAGE — ALL 38 MOTORS
+# Revision: 2026.04.07.A | Status: FULL COVERAGE — ALL 48 MOTORS TRACED
 
 > [!IMPORTANT]
-> **COBERTURA COMPLETA:** Los 38 motores registrados en PRIMARY_MOTORS tienen trazabilidad desde Clinical Requirement hasta Test ID.
+> **COBERTURA COMPLETA:** Los 48 motores registrados tienen trazabilidad desde Clinical Requirement hasta Test ID.
 
 ---
 
@@ -105,11 +105,11 @@
 - **Motores Golden (Acosta, EOSS):** Trazabilidad completa.
 - **Motores de Longevidad (BioAge):** Trazabilidad completa (R-05 applied).
 - **Sarcopenia:** Trazabilidad completa (ASMI proxy + functional).
-- **Specialty Engines (31):** Trazabilidad completa (2026.04.05.F update).
+- **Specialty Engines (48):** Trazabilidad completa (2026.04.07.A update).
 - **Safety Gates:** PHQ-9 Item 9 (H-016), GLP-1 TCM/MEN2 (H-017), Pregnancy (H-039).
-- **Risk File:** 50 hazards covering all 38 motors + 2 gated + 2 aggregators.
-- **Test Coverage:** 278 tests, 100% motor coverage.
+- **Risk File:** 50 hazards covering all motors.
+- **Test Coverage:** 526 tests, 100% motor coverage.
 
 ---
 
-**Revision:** 2026.04.05.F | **Status:** FULL COVERAGE — ALL 38 MOTORS TRACED
+**Revision:** 2026.04.07.A | **Status:** FULL COVERAGE — ALL 48 MOTORS TRACED
