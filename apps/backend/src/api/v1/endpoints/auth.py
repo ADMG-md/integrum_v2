@@ -26,6 +26,7 @@ class Token(BaseModel):
     role: str
     expires_in: int
     refresh_token: str
+    full_name: str
 
 
 class TokenRefresh(BaseModel):
@@ -81,6 +82,11 @@ async def login(
             headers={"WWW-Authenticate": "Bearer"},
         )
 
+    try:
+        user_name = user.full_name
+    except Exception:
+        user_name = "Usuario"
+
     access_token = AuthService.create_access_token(
         data={"sub": user.email, "role": user.role}
     )
@@ -91,6 +97,7 @@ async def login(
         "role": user.role,
         "expires_in": ACCESS_TOKEN_EXPIRE_MINUTES * 60,
         "refresh_token": refresh_token,
+        "full_name": user_name,
     }
 
 
