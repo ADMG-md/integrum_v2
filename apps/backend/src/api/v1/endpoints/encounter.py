@@ -597,7 +597,24 @@ async def process_encounter_t0(
     readiness_report = readiness.to_dict()
 
     # 5. Run Unified Clinical Engines (Mission 2.2 Hardening)
-    results = specialty_runner.run_all(domain_encounter)
+    # run_all() has per-motor try/except internally — individual motor failures are logged
+    # and omitted from results without crashing. This outer guard handles runner-level failures.
+    try:
+        results = specialty_runner.run_all(domain_encounter)
+    except Exception as e:
+        import logging
+        logging.getLogger("integrum.encounter").error(
+            f"specialty_runner.run_all() critical failure for encounter {encounter_id}: {e}",
+            exc_info=True,
+        )
+        raise HTTPException(
+            status_code=500,
+            detail=(
+                f"Clinical engine pipeline failed for encounter {encounter_id}. "
+                f"The encounter was saved but motor results are unavailable. "
+                f"Error: {str(e)}"
+            ),
+        )
 
     # 5. SaMD Audit Trail (Inmutable Logging)
     # Map engine instances for version/requirement tracking

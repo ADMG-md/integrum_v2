@@ -19,7 +19,7 @@ from src.database import get_db
 from src.models.encounter import EncounterModel, Patient
 from src.fhir.bundle_generator import encounter_to_fhir_bundle
 
-router = APIRouter(prefix="/fhir", tags=["FHIR R4"])
+router = APIRouter(tags=["FHIR R4"])  # prefix="/fhir" applied in api.py include_router()
 
 
 @router.get("/encounter/{encounter_id}")
