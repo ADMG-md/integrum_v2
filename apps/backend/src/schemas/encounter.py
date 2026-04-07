@@ -322,6 +322,58 @@ class MetabolicPanelInput(BaseModel):
     hs_crp_mg_l: Optional[float] = Field(None, ge=0.0, le=50.0)
     gada_antibodies: Optional[bool] = None
 
+    @model_validator(mode="after")
+    def validate_metabolic_coherence(self) -> "MetabolicPanelInput":
+        """
+        Cross-field coherence for metabolic panel.
+        Hard blocks for results that are logically/analytically impossible.
+        Defense-in-depth: frontend validates first; backend catches API-direct calls.
+        """
+        tg = self.triglycerides_mg_dl
+        hdl = self.hdl_mg_dl
+        ldl = self.ldl_mg_dl
+        vldl = self.vldl_mg_dl
+        total_chol = self.total_cholesterol_mg_dl
+        hba1c = self.hba1c_percent
+        gluc = self.glucose_mg_dl
+
+        # Rule: LDL > total cholesterol is logically impossible
+        if ldl is not None and total_chol is not None and ldl > total_chol:
+            raise ValueError(
+                f"Coherence error: ldl_mg_dl ({ldl}) cannot exceed total_cholesterol_mg_dl ({total_chol}). "
+                f"LDL is a fraction of total cholesterol."
+            )
+
+        # Rule: TG < VLDL — VLDL = TG/5 by definition, VLDL cannot exceed TG
+        if tg is not None and vldl is not None and tg < vldl:
+            raise ValueError(
+                f"Coherence error: triglycerides_mg_dl ({tg}) cannot be less than vldl_mg_dl ({vldl}). "
+                f"VLDL is estimated as TG/5 (Friedewald). Likely field inversion."
+            )
+
+        # Rule: TG > 400 + HbA1c — assay interference (ion exchange method)
+        # TG > ~400 mg/dL invalidates HbA1c by ion exchange chromatography.
+        if tg is not None and hba1c is not None and tg > 400:
+            raise ValueError(
+                f"Coherence error: triglycerides_mg_dl ({tg}) > 400 invalidates HbA1c by ion exchange assay "
+                f"(most common method in Colombian labs). The HbA1c result of {hba1c}% is analytically unreliable. "
+                f"Reconfirm HbA1c by HPLC or boronate affinity after normalizing TG, or remove HbA1c from this encounter."
+            )
+
+        # Rule: Glucose vs eAG discordance (Wheeler formula)
+        # eAG (mg/dL) = 28.7 × HbA1c(%) − 46.7 [ADAG study, ADA 2008]
+        # Threshold 120 mg/dL allows for postprandial vs fasting variation.
+        if gluc is not None and hba1c is not None:
+            eag = hba1c * 28.7 - 46.7
+            if eag > 0 and abs(gluc - eag) > 120:
+                raise ValueError(
+                    f"Coherence error: glucose_mg_dl ({gluc}) deviates >120 mg/dL from eAG implied by hba1c_percent ({hba1c}%) "
+                    f"[eAG = {eag:.0f} mg/dL, Wheeler formula]. "
+                    f"Possible causes: unit error (mmol/L vs mg/dL), lab from different time period, "
+                    f"or hemolytic anemia affecting HbA1c."
+                )
+
+        return self
 
 class ConditionSchema(BaseModel):
     code: str
