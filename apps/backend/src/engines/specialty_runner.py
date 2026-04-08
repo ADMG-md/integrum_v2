@@ -17,6 +17,7 @@ from src.engines.specialty.hypertension import HypertensionSecondaryMotor
 from src.engines.specialty.inflammation import InflammationMotor
 from src.engines.specialty.sleep_apnea import SleepApneaPrecisionMotor
 from src.engines.specialty.stewardship import LaboratoryStewardshipMotor
+from src.engines.specialty.lab_suggestion import LaboratorySuggestionMotor
 from src.engines.specialty.functional_sarcopenia import FunctionalSarcopeniaMotor
 from src.engines.specialty.fatty_liver import FLIMotor
 from src.engines.specialty.visceral_adiposity import VAIMotor
@@ -68,6 +69,7 @@ PRIMARY_MOTORS = {
     "InflammationMotor": InflammationMotor,
     "SleepApneaMotor": SleepApneaPrecisionMotor,
     "LaboratoryStewardshipMotor": LaboratoryStewardshipMotor,
+    "LaboratorySuggestionMotor": LaboratorySuggestionMotor,
     "FunctionalSarcopeniaMotor": FunctionalSarcopeniaMotor,
     # NAFLD screening + staging
     "FLIMotor": FLIMotor,
@@ -193,7 +195,9 @@ class SpecialtyRunner:
                             actual=type(results[name]).__name__,
                         )
             except Exception as e:
-                logger.error("motor_execution_error", motor=name, error=str(e))
+                logger.error(
+                    "motor_execution_error", motor=name, error_type=type(e).__name__
+                )
 
         # 2. Risk Engines (Gated / Experimental Phase)
         cvd_risk_category = None
@@ -244,7 +248,9 @@ class SpecialtyRunner:
                     if name == "CVDHazardMotor" and hasattr(res, "risk_category"):
                         cvd_risk_category = res.risk_category
             except Exception as e:
-                logger.warning("gated_motor_error", motor=name, error=str(e))
+                logger.warning(
+                    "gated_motor_error", motor=name, error_type=type(e).__name__
+                )
 
         # 3. Aggregator Engines (Decision Support Phase)
         if "AcostaPhenotypeMotor" in results and "EOSSStagingMotor" in results:
@@ -263,7 +269,9 @@ class SpecialtyRunner:
                     results["ObesityMasterMotor"] = ob_motor(ob_input)
             except Exception as e:
                 logger.error(
-                    "aggregator_error", motor="ObesityMasterMotor", error=str(e)
+                    "aggregator_error",
+                    motor="ObesityMasterMotor",
+                    error_type=type(e).__name__,
                 )
 
         if "ClinicalGuidelinesMotor" in self._aggregator_motors:
@@ -275,7 +283,9 @@ class SpecialtyRunner:
                 )
             except Exception as e:
                 logger.error(
-                    "aggregator_error", motor="ClinicalGuidelinesMotor", error=str(e)
+                    "aggregator_error",
+                    motor="ClinicalGuidelinesMotor",
+                    error_type=type(e).__name__,
                 )
 
         return results
