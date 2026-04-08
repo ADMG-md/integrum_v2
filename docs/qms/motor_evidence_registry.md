@@ -29,6 +29,7 @@
 | **InflammationMotor** | T1 | Pearson 2003 (AHA/CDC), Zahorec 2001 | ✅ Validated (Sprint 8) | Observation (hs-CRP, NLR) | Clinical decision trigger |
 | **SleepApneaPrecisionMotor** | T1 | Chung 2008 (STOP-Bang), Nagappa 2015 | ✅ Validated (Sprint 8) | Observation (STOP-Bang score) | Clinical decision trigger |
 | **LaboratoryStewardshipMotor** | T2 | Ahlqvist 2018, Sniderman 2019 | Not validated | ❌ Internal recommendation | Supportive |
+| **LaboratorySuggestionMotor** | T2 | Choosing Wisely (ABIM) | ✅ Validated (Sprint 6) | ActionItem (lab suggestion) | Supportive |
 | **FunctionalSarcopeniaMotor** | T1 | EWGSOP2 2019, Malmstrom 2016 | Not validated | Observation (grip, gait, SARC-F) | Clinical decision trigger |
 | **FLIMotor** | T1 | Bedogni et al., 2006 | ✅ Validated (Sprint 8) | Observation (FLI) | Clinical decision trigger |
 | **VAIMotor** | T2 | Amato et al., 2010 | ✅ Validated (Sprint 6) | Observation (VAI) | Supportive |
