@@ -230,6 +230,12 @@ class LaboratorySuggestionMotor(BaseClinicalMotor):
     }
 
     AGE_BASED_SCREENING = {
+        (18, 40): {
+            "exam": "Perfil metabólico básico",
+            "codes": ["2339-0", "2093-3"],
+            "rationale": "Adultos jóvenes sin factores de riesgo: perfil metabólico básico.",
+            "guideline": "USPSTF 2021",
+        },
         (40, 45): {
             "exam": "Perfil lipídico",
             "codes": ["2093-3", "2085-9"],
@@ -261,6 +267,29 @@ class LaboratorySuggestionMotor(BaseClinicalMotor):
             "guideline": "CMS Annual Wellness Visit",
         },
     }
+
+    PEDIATRIC_SCREENING = {
+        (0, 2): {
+            "exam": "Panel metabólico neonatal",
+            "codes": ["PHENYLALANINE", "TSH-NEWBORN", "GALACTOSE"],
+            "rationale": "Screening neonatal obligatorio: fenilcetonuria, hipotiroidismo congenital, galactosemia.",
+            "guideline": "AAP Newborn Screening 2023",
+        },
+        (2, 10): {
+            "exam": "Hemograma + perfil férrico",
+            "codes": ["718-7", "FER-001"],
+            "rationale": "Niños 1-5 años: anemia ferropénica es común. Screening si factores de riesgo.",
+            "guideline": "AAP Pediatric Preventive Care 2023",
+        },
+        (10, 18): {
+            "exam": "Perfil lipídico (niños con riesgo)",
+            "codes": ["2093-3", "2085-9"],
+            "rationale": "NCEP 2023: screening lipídico 9-11 años y 17-21 años si factores de riesgo u historial familiar.",
+            "guideline": "NCEP Guidelines 2023, AAP",
+        },
+    }
+
+    MIN_ADULT_AGE = 18
 
     def validate(self, encounter: Encounter) -> Tuple[bool, str]:
         return True, ""
@@ -491,6 +520,31 @@ class LaboratorySuggestionMotor(BaseClinicalMotor):
                             }
                         )
                     break
+
+        if age and age < self.MIN_ADULT_AGE:
+            for (age_start, age_end), exam_info in self.PEDIATRIC_SCREENING.items():
+                if age_start <= age < age_end:
+                    suggestions.append(
+                        {
+                            "exam": f"Pediatría ({age_start}-{age_end} años): {exam_info['exam']}",
+                            "components": exam_info["codes"],
+                            "rationale": f"{exam_info['rationale']} {exam_info['guideline']}",
+                            "priority": "high",
+                            "codes": exam_info["codes"],
+                        }
+                    )
+                    break
+
+        if age and age < self.MIN_ADULT_AGE and not suggestions:
+            suggestions.append(
+                {
+                    "exam": "Consulta pediátrica",
+                    "components": ["Evaluación integral"],
+                    "rationale": "Menores de 18 años requieren evaluación pediátrica especializada. Las guías adultas no aplican.",
+                    "priority": "high",
+                    "codes": [],
+                }
+            )
 
         action_checklist = []
         for s in suggestions:

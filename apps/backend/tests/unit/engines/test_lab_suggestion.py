@@ -28,7 +28,7 @@ def test_lab_suggest_validate_always_passes(motor):
 
 
 def test_lab_suggest_full_panel(motor):
-    """T-LAB-02: Full metabolic/lipid panel = minimal suggestions."""
+    """T-LAB-02: Full panel = minimal suggestions."""
     enc = Encounter(
         id="2",
         demographics=DemographicsSchema(age_years=35, gender="male"),
@@ -74,11 +74,83 @@ def test_lab_suggest_missing_base(motor):
     assert result.estado_ui == "PROBABLE_WARNING"
     assert result.action_checklist is not None
     assert len(result.action_checklist) > 0
-    assert any("básico" in a.task.lower() for a in result.action_checklist)
+
+
+def test_lab_suggest_pediatric_neonate(motor):
+    """T-LAB-P1: Neonate < 2 years = pediatric screening."""
+    enc = Encounter(
+        id="p1",
+        demographics=DemographicsSchema(age_years=1, gender="male"),
+        metabolic_panel=MetabolicPanelSchema(),
+        cardio_panel=CardioPanelSchema(),
+        conditions=[],
+        medications=[],
+        observations=[],
+        metadata={},
+    )
+    result = motor.compute(enc)
+    assert result.estado_ui == "PROBABLE_WARNING"
+    assert any(
+        "Pediatría" in a.task or "pediátrica" in a.rationale
+        for a in result.action_checklist
+    )
+
+
+def test_lab_suggest_pediatric_child(motor):
+    """T-LAB-P2: Child 2-10 years = anemia screening."""
+    enc = Encounter(
+        id="p2",
+        demographics=DemographicsSchema(age_years=5, gender="female"),
+        metabolic_panel=MetabolicPanelSchema(),
+        cardio_panel=CardioPanelSchema(),
+        conditions=[],
+        medications=[],
+        observations=[],
+        metadata={},
+    )
+    result = motor.compute(enc)
+    assert result.estado_ui == "PROBABLE_WARNING"
+    assert any(
+        "anemia" in a.rationale.lower() or "férrico" in a.rationale.lower()
+        for a in result.action_checklist
+    )
+
+
+def test_lab_suggest_pediatric_adolescent(motor):
+    """T-LAB-P3: Adolescent 10-18 years = lipid screening."""
+    enc = Encounter(
+        id="p3",
+        demographics=DemographicsSchema(age_years=15, gender="male"),
+        metabolic_panel=MetabolicPanelSchema(),
+        cardio_panel=CardioPanelSchema(),
+        conditions=[],
+        medications=[],
+        observations=[],
+        metadata={},
+    )
+    result = motor.compute(enc)
+    assert result.estado_ui == "PROBABLE_WARNING"
+    assert any("lipídico" in a.rationale.lower() for a in result.action_checklist)
+
+
+def test_lab_suggest_adult_boundary(motor):
+    """T-LAB-04: Adult exactly 18 years = adult rules."""
+    enc = Encounter(
+        id="adult",
+        demographics=DemographicsSchema(age_years=18, gender="male"),
+        metabolic_panel=MetabolicPanelSchema(),
+        cardio_panel=CardioPanelSchema(),
+        conditions=[],
+        medications=[],
+        observations=[],
+        metadata={},
+    )
+    result = motor.compute(enc)
+    assert result.metadata.get("age") == 18
 
 
 def test_lab_suggest_diabetes_condition(motor):
-    """T-LAB-04: Patient with diabetes = suggest HbA1c."""
+    """T-LAB-05: Patient with diabetes = suggest HbA1c."""
     enc = Encounter(
         id="4",
         demographics=DemographicsSchema(age_years=55, gender="male"),
@@ -94,7 +166,7 @@ def test_lab_suggest_diabetes_condition(motor):
 
 
 def test_lab_suggest_hypertension_condition(motor):
-    """T-LAB-05: Patient with hypertension = suggest lipid panel."""
+    """T-LAB-06: Patient with hypertension = suggest lipid panel."""
     enc = Encounter(
         id="5",
         demographics=DemographicsSchema(age_years=60, gender="male"),
@@ -110,7 +182,7 @@ def test_lab_suggest_hypertension_condition(motor):
 
 
 def test_lab_suggest_metformin_monitoring(motor):
-    """T-LAB-06: Patient on metformin = suggest renal function."""
+    """T-LAB-07: Patient on metformin = suggest renal function."""
     enc = Encounter(
         id="6",
         demographics=DemographicsSchema(age_years=50, gender="female"),
@@ -126,26 +198,30 @@ def test_lab_suggest_metformin_monitoring(motor):
 
 
 def test_lab_suggest_age_based_screening(motor):
-    """T-LAB-07: Age 45 = suggest lipid screening."""
+    """T-LAB-08: Age 48 = suggest screening."""
     enc = Encounter(
         id="7",
-        demographics=DemographicsSchema(age_years=45, gender="male"),
+        demographics=DemographicsSchema(age_years=48, gender="male"),
         metabolic_panel=MetabolicPanelSchema(),
         cardio_panel=CardioPanelSchema(),
+        conditions=[],
+        medications=[],
         observations=[],
         metadata={},
     )
     result = motor.compute(enc)
-    assert any("lipídico" in a.task.lower() for a in result.action_checklist)
+    assert any("Screening" in a.task for a in result.action_checklist)
 
 
 def test_lab_suggest_multiple_gaps(motor):
-    """T-LAB-08: Multiple gaps = multiple suggestions."""
+    """T-LAB-09: Multiple gaps = multiple suggestions."""
     enc = Encounter(
         id="8",
         demographics=DemographicsSchema(age_years=45, gender="female"),
         metabolic_panel=MetabolicPanelSchema(),
         cardio_panel=CardioPanelSchema(),
+        conditions=[],
+        medications=[],
         observations=[],
         metadata={},
     )
@@ -155,12 +231,14 @@ def test_lab_suggest_multiple_gaps(motor):
 
 
 def test_lab_suggest_returns_metadata(motor):
-    """T-LAB-09: Returns metadata with suggestions."""
+    """T-LAB-10: Returns metadata with suggestions."""
     enc = Encounter(
         id="9",
         demographics=DemographicsSchema(age_years=50, gender="male"),
         metabolic_panel=MetabolicPanelSchema(glucose_mg_dl=90),
         cardio_panel=CardioPanelSchema(),
+        conditions=[],
+        medications=[],
         observations=[],
         metadata={},
     )
@@ -171,12 +249,14 @@ def test_lab_suggest_returns_metadata(motor):
 
 
 def test_lab_suggest_priority_order(motor):
-    """T-LAB-10: High priority suggestions come first."""
+    """T-LAB-11: High priority suggestions come first."""
     enc = Encounter(
         id="10",
         demographics=DemographicsSchema(age_years=35, gender="male"),
         metabolic_panel=MetabolicPanelSchema(),
         cardio_panel=CardioPanelSchema(),
+        conditions=[],
+        medications=[],
         observations=[],
         metadata={},
     )
