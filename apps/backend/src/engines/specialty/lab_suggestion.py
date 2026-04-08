@@ -5,22 +5,24 @@ from src.engines.domain import (
     ClinicalEvidence,
     ActionItem,
 )
-from typing import Tuple, Dict, List, Any
+from typing import Tuple, Dict, List, Any, Set
 
 
 class LaboratorySuggestionMotor(BaseClinicalMotor):
     """
-    Sugiere exámenes complementarios basados en datos disponibles y gaps clínicos.
+    Sugiere exámenes complementarios basados en datos disponibles, contexto clínico y gaps.
 
     Estrategias:
-    1. Analiza qué datosTiene el paciente (panel base)
-    2. Evalúa qué motores firing y qué datos requieren
-    3. Identifica gaps críticos para completar la evaluación
-    4. Sugiere exámenes específicos con justificación clínica
+    1. Analiza qué datos tiene el paciente (panel base)
+    2. Considera contexto: edad, género, condiciones, medicamentos
+    3. Evalúa qué motores firing y qué datos requieren
+    4. Identifica gaps críticos para completar la evaluación
+    5. Sugiere exámenes específicos con justificación clínica y prioridad
 
     Evidence:
     - Choosing Wisely: Don't order lab tests without clear clinical indication.
     - American Board of Internal Medicine: Reduced unnecessary testing.
+    - USPSTF: Screening guidelines by age and risk factors.
 
     REQUIREMENT_ID: LAB-SUGGESTION
     """
@@ -52,6 +54,23 @@ class LaboratorySuggestionMotor(BaseClinicalMotor):
         "CRP": "30522-7",
     }
 
+    CBC_CODES = {
+        "HEMOGLOBIN": "718-7",
+        "WBC": "6690-2",
+        "PLATELETS": "777-3",
+    }
+
+    LIVER_CODES = {
+        "ALBUMIN": "1754-0",
+        "TOTAL_BILIRUBIN": "1975-2",
+        "ALKALINE_PHOSPHATASE": "6768-6",
+    }
+
+    KIDNEY_CODES = {
+        "BUN": "3096-1",
+        "EGFR": "620-2",
+    }
+
     MOTOR_REQUIREMENTS = {
         "MetabolicPrecisionMotor": ["GLUCOSE", "INSULIN"],
         "NFSMotor": ["AST", "ALT", "PLATELETS"],
@@ -70,10 +89,88 @@ class LaboratorySuggestionMotor(BaseClinicalMotor):
         "BiologicalAgeMotor": ["GLUCOSE", "CREATININE"],
     }
 
+    CONDITION_BASED_SUGGESTIONS = {
+        "E11": {
+            "code": "4548-4",
+            "exam": "HbA1c trimestral",
+            "rationale": "Diabetes: control glucémico",
+        },
+        "E11.9": {
+            "code": "4548-4",
+            "exam": "HbA1c trimestral",
+            "rationale": "Diabetes: control glucémico",
+        },
+        "I10": {
+            "code": "2093-3",
+            "exam": "Perfil lipídico",
+            "rationale": "Hipertensión: evaluar riesgo cardiovascular",
+        },
+        "I10.9": {
+            "code": "2093-3",
+            "exam": "Perfil lipídico",
+            "rationale": "Hipertensión: evaluar riesgo cardiovascular",
+        },
+        "K59.0": {
+            "code": "GGT-001",
+            "exam": "Función hepática",
+            "rationale": "Esteatosis hepática: monitoreo",
+        },
+        "M79.9": {
+            "code": "30522-7",
+            "exam": "PCR ultrasensible",
+            "rationale": "Inflamación: evaluar artritis/condiciones autoinmunes",
+        },
+    }
+
+    MEDICATION_MONITORING = {
+        "metformin": {
+            "exam": "Función renal",
+            "components": ["Creatinina", "eGFR"],
+            "codes": ["2160-0"],
+            "rationale": "Metformina: monitoreo renal semestral",
+        },
+        "statin": {
+            "exam": "Función hepática",
+            "components": ["AST", "ALT"],
+            "codes": ["29230-0", "22538-3"],
+            "rationale": "Estatinas: monitoreo hepático",
+        },
+        "sglt2": {
+            "exam": "Función renal",
+            "components": ["Creatinina", "eGFR"],
+            "codes": ["2160-0"],
+            "rationale": "SGLT2i: monitoreo renal",
+        },
+        "glp1": {
+            "exam": "Lipasa/Amilasa",
+            "components": ["Lipasa", "Amilasa"],
+            "codes": ["LIPASE-001", "AMYLASE-001"],
+            "rationale": "GLP-1: monitoreo de pancreatitis",
+        },
+    }
+
+    AGE_BASED_SCREENING = {
+        (40, 50): {
+            "exam": "Perfil lipídico",
+            "codes": ["2093-3", "2085-9"],
+            "rationale": "USPSTF: screening lípidos desde 40 años",
+        },
+        (50, 60): {
+            "exam": "Colonoscopía o SOH",
+            "codes": ["COLONOSCOPY"],
+            "rationale": "USPSTF: screening cáncer colorrectal 45-75",
+        },
+        (60, 100): {
+            "exam": "Densitometría ósea",
+            "codes": ["DEXA"],
+            "rationale": "Screening osteoporosis post-menopausia",
+        },
+    }
+
     def validate(self, encounter: Encounter) -> Tuple[bool, str]:
         return True, ""
 
-    def _get_available_codes(self, encounter: Encounter) -> set:
+    def _get_available_codes(self, encounter: Encounter) -> Set[str]:
         available = set()
         for obs in encounter.observations:
             available.add(obs.code)
@@ -109,26 +206,49 @@ class LaboratorySuggestionMotor(BaseClinicalMotor):
             available.add("30522-7")
         if mp and mp.ferritin_ng_ml:
             available.add("FER-001")
+        if mp and mp.platelets_k_u_l:
+            available.add("PLT-001")
+        if mp and mp.alkaline_phosphatase_u_l:
+            available.add("6768-6")
+        if mp and mp.albumin_g_dl:
+            available.add("1754-0")
         return available
 
-    def _get_required_for_motor(self, motor: str) -> List[str]:
-        return self.MOTOR_REQUIREMENTS.get(motor, [])
+    def _has_condition(self, encounter: Encounter, icd10_pattern: str) -> bool:
+        for c in encounter.conditions:
+            if icd10_pattern in c.code:
+                return True
+        return False
+
+    def _get_medications(self, encounter: Encounter) -> List[str]:
+        meds = []
+        for med in encounter.medications:
+            name = med.name.lower() if med.name else ""
+            for key in self.MEDICATION_MONITORING:
+                if key in name:
+                    meds.append(key)
+        return meds
+
+    def _get_age_group(self, age: int) -> tuple:
+        for range_start, exam_info in self.AGE_BASED_SCREENING.items():
+            if range_start[0] <= age < range_start[1]:
+                return range_start
+        return None
 
     def compute(self, encounter: Encounter) -> AdjudicationResult:
         available = self._get_available_codes(encounter)
-        all_required = set()
-        for motor, reqs in self.MOTOR_REQUIREMENTS.items():
-            all_required.update(reqs)
+        age = encounter.demographics.age_years if encounter.demographics else None
+        gender = encounter.demographics.gender if encounter.demographics else None
 
-        missing_critical = []
         suggestions = []
         evidence = []
 
+        base_panel_missing = []
         for code in ["2339-0", "2085-9", "2571-8", "2160-0"]:
             if code not in available:
-                missing_critical.append(code)
+                base_panel_missing.append(code)
 
-        if missing_critical:
+        if base_panel_missing:
             suggestions.append(
                 {
                     "exam": "Perfil Metabólico Básico",
@@ -142,7 +262,7 @@ class LaboratorySuggestionMotor(BaseClinicalMotor):
                     ],
                     "rationale": "Panel base requerido para evaluación cardiometabólica",
                     "priority": "high",
-                    "codes": missing_critical,
+                    "codes": base_panel_missing,
                 }
             )
 
@@ -151,7 +271,7 @@ class LaboratorySuggestionMotor(BaseClinicalMotor):
                 {
                     "exam": "Perfil Lipídico Completo",
                     "components": ["LDL-c directo", "Colesterol no-HDL", "ApoB"],
-                    "rationale": "LDL elevado requiere cuantificación directa para riesgo CVD",
+                    "rationale": "Evaluación precisa del riesgo cardiovascular aterogénico",
                     "priority": "medium",
                     "codes": ["18262-6"],
                 }
@@ -181,7 +301,7 @@ class LaboratorySuggestionMotor(BaseClinicalMotor):
                 {
                     "exam": "Perfil Hepático y Ferritina",
                     "components": ["GGT", "ALT", "AST", "Ferritina"],
-                    "rationale": "Detección de grasa hepática y estatus de hierro",
+                    "rationale": "Detección de esteatosis hepática y estatus de hierro",
                     "priority": "low",
                     "codes": ["GGT-001", "FER-001"],
                 }
@@ -200,7 +320,7 @@ class LaboratorySuggestionMotor(BaseClinicalMotor):
                 {
                     "exam": "Vitamina D (25-OH)",
                     "components": ["25-hidroxivitamina D"],
-                    "rationale": "Alta prevalencia de deficiencia en población con limited sun exposure",
+                    "rationale": "Alta prevalencia de deficiencia en población con limitada exposición solar",
                     "priority": "low",
                     "codes": ["VITD-001"],
                 }
@@ -209,9 +329,9 @@ class LaboratorySuggestionMotor(BaseClinicalMotor):
         if "11579-0" not in available:
             suggestions.append(
                 {
-                    "exam": "Función Tiroidea",
+                    "exam": "Función Tiroidea (TSH)",
                     "components": ["TSH"],
-                    "rationale": "Screening de hipotiroidismo subclínico",
+                    "rationale": "Screening de hipotiroidismo subclínico, especialmente en mujeres",
                     "priority": "low",
                     "codes": ["11579-0"],
                 }
@@ -228,6 +348,49 @@ class LaboratorySuggestionMotor(BaseClinicalMotor):
                 }
             )
 
+        for condition_pattern, suggestion in self.CONDITION_BASED_SUGGESTIONS.items():
+            if self._has_condition(encounter, condition_pattern):
+                if suggestion["code"] not in available:
+                    suggestions.append(
+                        {
+                            "exam": suggestion["exam"],
+                            "components": [suggestion["exam"]],
+                            "rationale": suggestion["rationale"],
+                            "priority": "medium",
+                            "codes": [suggestion["code"]],
+                        }
+                    )
+
+        medications = self._get_medications(encounter)
+        for med_key in medications:
+            med_info = self.MEDICATION_MONITORING[med_key]
+            missing_med_codes = [c for c in med_info["codes"] if c not in available]
+            if missing_med_codes:
+                suggestions.append(
+                    {
+                        "exam": f"Monitoreo: {med_info['exam']}",
+                        "components": med_info["components"],
+                        "rationale": med_info["rationale"],
+                        "priority": "medium",
+                        "codes": missing_med_codes,
+                    }
+                )
+
+        if age and age >= 40:
+            for (age_start, age_end), exam_info in self.AGE_BASED_SCREENING.items():
+                if age_start <= age < age_end:
+                    if age >= 45:
+                        suggestions.append(
+                            {
+                                "exam": "Screening: " + exam_info["exam"],
+                                "components": [exam_info["exam"]],
+                                "rationale": exam_info["rationale"],
+                                "priority": "low",
+                                "codes": exam_info["codes"],
+                            }
+                        )
+                    break
+
         action_checklist = []
         for s in suggestions:
             action_checklist.append(
@@ -239,11 +402,14 @@ class LaboratorySuggestionMotor(BaseClinicalMotor):
                 )
             )
 
-        calculated = f"Sugerencias: {len(suggestions)} exámenes"
-        if suggestions:
-            calculated = f"Panel Sugerido: {len(suggestions)} elementos"
+        calculated = f"Panel Sugerido: {len(suggestions)} elementos"
+        if not suggestions:
+            calculated = "Panel de laboratorio completo"
 
-        explanation = "Evaluación de gaps de laboratorio basada en datos disponibles y requerimientos de motores clínicos."
+        explanation = (
+            f"Análisis de {len(available)} parámetros disponibles. "
+            f"Se sugieren {len(suggestions)} exámenes complementarios."
+        )
         if not suggestions:
             explanation = (
                 "Panel de laboratorio completo. No se requieren estudios adicionales."
@@ -255,7 +421,12 @@ class LaboratorySuggestionMotor(BaseClinicalMotor):
             evidence=evidence,
             explanation=explanation,
             action_checklist=action_checklist,
-            metadata={"suggestions": suggestions, "available_count": len(available)},
+            metadata={
+                "suggestions": suggestions,
+                "available_count": len(available),
+                "age": age,
+                "gender": gender,
+            },
             requirement_id=self.REQUIREMENT_ID,
             estado_ui="PROBABLE_WARNING" if suggestions else "INDETERMINATE_LOCKED",
         )
