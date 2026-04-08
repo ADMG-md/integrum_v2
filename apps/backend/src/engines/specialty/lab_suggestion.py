@@ -93,77 +93,172 @@ class LaboratorySuggestionMotor(BaseClinicalMotor):
         "E11": {
             "code": "4548-4",
             "exam": "HbA1c trimestral",
-            "rationale": "Diabetes: control glucémico",
+            "frequency": "cada 3 meses",
+            "rationale": "Diabetes tipo 2: monitoreo glucémico según ADA 2024. Objetivo <7% en mayoría.",
+            "guideline": "ADA Standards of Care 2024, Sec. 11",
         },
         "E11.9": {
             "code": "4548-4",
             "exam": "HbA1c trimestral",
-            "rationale": "Diabetes: control glucémico",
+            "frequency": "cada 3 meses",
+            "rationale": "Diabetes mellitus: control glucémico. Si HbA1c >9%, considerar intensificación.",
+            "guideline": "ADA Standards of Care 2024, Sec. 11",
         },
         "I10": {
             "code": "2093-3",
-            "exam": "Perfil lipídico",
-            "rationale": "Hipertensión: evaluar riesgo cardiovascular",
+            "exam": "Perfil lipídico completo",
+            "frequency": "anual",
+            "rationale": "Hipertensión: riesgo cardiovascular incrementado. Statinas si ASCVD >=7.5%.",
+            "guideline": "ACC/AHA 2018 Guideline",
         },
         "I10.9": {
             "code": "2093-3",
-            "exam": "Perfil lipídico",
-            "rationale": "Hipertensión: evaluar riesgo cardiovascular",
+            "exam": "Perfil lipídico completo",
+            "frequency": "anual",
+            "rationale": "Hipertensión esencial: evaluar ateroesclerosis. LDL objetivo <100mg/dL.",
+            "guideline": "ACC/AHA 2018 Guideline",
         },
         "K59.0": {
             "code": "GGT-001",
-            "exam": "Función hepática",
-            "rationale": "Esteatosis hepática: monitoreo",
+            "exam": "Perfil hepático completo",
+            "frequency": "semestral",
+            "rationale": "Esteatosis hepática (MASLD): progresión a fibrosis. FIB-4 si AST/ALT elevados.",
+            "guideline": "AASLD Practice Guidance 2020",
+        },
+        "K76.0": {
+            "code": "GGT-001",
+            "exam": "Ecografía hepática + elastografía",
+            "frequency": "anual",
+            "rationale": "Enfermedad hepática grasa: monitoreo de fibrosis. Preferir elastografía.",
+            "guideline": "AASLD Practice Guidance 2020",
         },
         "M79.9": {
             "code": "30522-7",
             "exam": "PCR ultrasensible",
-            "rationale": "Inflamación: evaluar artritis/condiciones autoinmunes",
+            "frequency": "único",
+            "rationale": "Dolor musculoskeletal: excluir proceso inflamatorio sistémico.",
+            "guideline": " ACR Rheumatology Guidelines",
+        },
+        "E78": {
+            "code": "18262-6",
+            "exam": "LDL directo + ApoB",
+            "frequency": "anual",
+            "rationale": "Dislipidemia: ApoB es mejor predictor que LDL. Objetivo <70mg/dL si muy alto riesgo.",
+            "guideline": "ACC/AHA 2022",
+        },
+        "N18": {
+            "code": "2160-0",
+            "exam": "eGFR + albuminuria",
+            "frequency": "semestral",
+            "rationale": "Enfermedad renal crónica: progresión. Inhibidores SGLT2i si eGFR <60.",
+            "guideline": "KDIGO 2024",
+        },
+        "F32": {
+            "code": "TSH-001",
+            "exam": "Función tiroidea",
+            "frequency": "único",
+            "rationale": "Depresión: disfunción tiroidea puede ser factor contribuyente. Prevalencia alta.",
+            "guideline": "APA Practice Guideline",
         },
     }
 
     MEDICATION_MONITORING = {
         "metformin": {
-            "exam": "Función renal",
-            "components": ["Creatinina", "eGFR"],
-            "codes": ["2160-0"],
-            "rationale": "Metformina: monitoreo renal semestral",
+            "exam": "Función renal (Creatinina + eGFR)",
+            "components": ["Creatinina sérica", "eGFR", "Albúmina urinaria"],
+            "frequency": "semestral",
+            "codes": ["2160-0", "620-2"],
+            "rationale": "Metformina contraindicada si eGFR <30. Evaluar función renal antes de continuar. Según FDA 2017.",
+            "guideline": "FDA Label 2017, ADA 2024",
         },
         "statin": {
-            "exam": "Función hepática",
-            "components": ["AST", "ALT"],
+            "exam": "Función hepática (AST/ALT)",
+            "components": ["AST", "ALT", "CK si síntomas"],
+            "frequency": "basal y 8-12 semanas",
             "codes": ["29230-0", "22538-3"],
-            "rationale": "Estatinas: monitoreo hepático",
+            "rationale": "Estatinas pueden causar hepatotoxicidad. Monitorear si uso prolongado o dosis alta.",
+            "guideline": "FDA Safety Communication 2012",
         },
         "sglt2": {
-            "exam": "Función renal",
-            "components": ["Creatinina", "eGFR"],
-            "codes": ["2160-0"],
-            "rationale": "SGLT2i: monitoreo renal",
+            "exam": "Función renal + electrolitos",
+            "components": ["Creatinina", "eGFR", "Potasio", "BUN"],
+            "frequency": "basal, 4 sem, luego trimestral",
+            "codes": ["2160-0", "620-2", "3096-1"],
+            "rationale": "SGLT2i: riesgo de lesión renal aguda y cetoacidosis. Monitoreo requerido.",
+            "guideline": "FDA Box Warning 2020, ADA 2024",
         },
         "glp1": {
-            "exam": "Lipasa/Amilasa",
+            "exam": "Lipasa y Amilasa",
             "components": ["Lipasa", "Amilasa"],
+            "frequency": "si dolor abdominal",
             "codes": ["LIPASE-001", "AMYLASE-001"],
-            "rationale": "GLP-1: monitoreo de pancreatitis",
+            "rationale": "GLP-1: riesgo de pancreatitis. Suspender si lipasa >3x LSN.",
+            "guideline": "FDA Box Warning 2022",
+        },
+        "ace": {
+            "exam": "Electrolitos + Función renal",
+            "components": ["Creatinina", "eGFR", "Potasio", "Sodium"],
+            "frequency": "basal, 2 sem, luego anual",
+            "codes": ["2160-0", "620-2", "2951-2"],
+            "rationale": "IECAs/ARBs: riesgo de hiperkalemia e insuficiencia renal. Monitoreo esencial.",
+            "guideline": "KDIGO 2024 Hypertension",
+        },
+        "diuretic": {
+            "exam": "Electrolitos",
+            "components": ["Potasio", "Sodio", "Magnesio", "Ácido úrico"],
+            "frequency": "basal, 2-4 sem",
+            "codes": ["2951-2", "2093-3"],
+            "rationale": "Diuréticos: hipokalemia, hiponatremia, hiperuricemia. Monitoreo necesario.",
+            "guideline": "ESC Hypertension 2023",
+        },
+        "warfarin": {
+            "exam": "INR",
+            "components": ["INR (3060-2)"],
+            "frequency": "semanal hasta estable, luego mensual",
+            "codes": ["3060-2"],
+            "rationale": "Warfarina: estrecho margen terapéutico. INR objetivo según indicación (2-3 usual).",
+            "guideline": "CHEST Guidelines 2022",
+        },
+        "thiazolidinone": {
+            "exam": "Función hepática",
+            "components": ["AST", "ALT"],
+            "frequency": "basal, cada 2-3 meses primer año",
+            "codes": ["29230-0", "22538-3"],
+            "rationale": "Pioglitazona: riesgo de hepatotoxicidad. Monitoreo recomendado.",
+            "guideline": "FDA Safety 2011",
         },
     }
 
     AGE_BASED_SCREENING = {
-        (40, 50): {
+        (40, 45): {
             "exam": "Perfil lipídico",
             "codes": ["2093-3", "2085-9"],
-            "rationale": "USPSTF: screening lípidos desde 40 años",
+            "rationale": "USPSTF 2021: screening dislipidemia adulto. Iniciar a los 40 años.",
+            "guideline": "USPSTF 2021, Grade B",
         },
-        (50, 60): {
-            "exam": "Colonoscopía o SOH",
-            "codes": ["COLONOSCOPY"],
-            "rationale": "USPSTF: screening cáncer colorrectal 45-75",
+        (45, 50): {
+            "exam": "Sangre oculta en heces (SOH) o colonoscopía",
+            "codes": ["COLON-001"],
+            "rationale": "USPSTF 2021: screening cáncer colorrectal 45-75 años. Colonoscopía cada 10 años o SOH anual.",
+            "guideline": "USPSTF 2021, Grade B",
         },
-        (60, 100): {
-            "exam": "Densitometría ósea",
-            "codes": ["DEXA"],
-            "rationale": "Screening osteoporosis post-menopausia",
+        (50, 55): {
+            "exam": "Screening cáncer: mamá, colorectal, cervix",
+            "codes": ["MAMMO", "COLON-001", "PAP"],
+            "rationale": "USPSTF 2021: mamá 50-74 cada 2 años, cervix hasta 65, colorrectal hasta 75.",
+            "guideline": "USPSTF 2021",
+        },
+        (60, 65): {
+            "exam": "Densitometría ósea (DXA)",
+            "codes": ["DEXA-001"],
+            "rationale": "USPSTF 2021: mujeres post-menopausia 65+.inder 60 con factores de riesgo.",
+            "guideline": "USPSTF 2021, Grade B",
+        },
+        (65, 100): {
+            "exam": "Evaluación cognitiva + aneurisma aórtico",
+            "codes": ["MMSE-001", "AAA-ULTRASOUND"],
+            "rationale": "Medicare Annual Wellness Visit: detección demencia y aneurisma aorta abdominal hombres 65-75 fumadores.",
+            "guideline": "CMS Annual Wellness Visit",
         },
     }
 
@@ -351,11 +446,13 @@ class LaboratorySuggestionMotor(BaseClinicalMotor):
         for condition_pattern, suggestion in self.CONDITION_BASED_SUGGESTIONS.items():
             if self._has_condition(encounter, condition_pattern):
                 if suggestion["code"] not in available:
+                    frequency = suggestion.get("frequency", "según necesidad")
+                    guideline = suggestion.get("guideline", "")
                     suggestions.append(
                         {
                             "exam": suggestion["exam"],
                             "components": [suggestion["exam"]],
-                            "rationale": suggestion["rationale"],
+                            "rationale": f"{suggestion['rationale']} Frecuencia: {frequency}. {guideline}",
                             "priority": "medium",
                             "codes": [suggestion["code"]],
                         }
@@ -366,11 +463,13 @@ class LaboratorySuggestionMotor(BaseClinicalMotor):
             med_info = self.MEDICATION_MONITORING[med_key]
             missing_med_codes = [c for c in med_info["codes"] if c not in available]
             if missing_med_codes:
+                frequency = med_info.get("frequency", "según necesidad")
+                guideline = med_info.get("guideline", "")
                 suggestions.append(
                     {
                         "exam": f"Monitoreo: {med_info['exam']}",
                         "components": med_info["components"],
-                        "rationale": med_info["rationale"],
+                        "rationale": f"{med_info['rationale']} Frecuencia: {frequency}. {guideline}",
                         "priority": "medium",
                         "codes": missing_med_codes,
                     }
@@ -380,11 +479,13 @@ class LaboratorySuggestionMotor(BaseClinicalMotor):
             for (age_start, age_end), exam_info in self.AGE_BASED_SCREENING.items():
                 if age_start <= age < age_end:
                     if age >= 45:
+                        frequency = exam_info.get("frequency", "según guía")
+                        guideline = exam_info.get("guideline", "")
                         suggestions.append(
                             {
                                 "exam": "Screening: " + exam_info["exam"],
                                 "components": [exam_info["exam"]],
-                                "rationale": exam_info["rationale"],
+                                "rationale": f"{exam_info['rationale']} Frecuencia: {frequency}. {guideline}",
                                 "priority": "low",
                                 "codes": exam_info["codes"],
                             }
