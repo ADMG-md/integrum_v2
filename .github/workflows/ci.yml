@@ -75,8 +75,9 @@ jobs:
         env:
           DATABASE_URL: postgresql+asyncpg://integrum_user:integrum_password@localhost:5432/integrum_v2_test
           SECRET_KEY: test-secret-key-for-ci-only-not-for-production
-          VAULT_MASTER_KEY: dGVzdC12YXVsdC1tYXN0ZXItZm9yLWNpLW9ubHk=
+          VAULT_MASTER_KEY: zxpoq0-wbIhmTmIr2MpqegqCn7WZabG5v_woxOyzPYg=
           ALLOWED_ORIGINS: http://localhost:3000
+          ALLOW_DEV_VAULT_KEY: true
         run: |
           cd apps/backend
           python -m pytest tests/ -v --tb=short --cov=src --cov-report=term-missing --cov-report=xml
@@ -99,7 +100,7 @@ jobs:
         run: |
           docker build \
             --build-arg SECRET_KEY=ci-build-key \
-            --build-arg VAULT_MASTER_KEY=dGVzdC12YXVsdC1tYXN0ZXItZm9yLWNpLW9ubHk= \
+            --build-arg VAULT_MASTER_KEY=zxpoq0-wbIhmTmIr2MpqegqCn7WZabG5v_woxOyzPYg= \
             -t integrum-backend:${{ github.sha }} \
             apps/backend/
 
