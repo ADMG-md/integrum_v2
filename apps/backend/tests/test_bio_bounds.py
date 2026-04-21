@@ -2,6 +2,9 @@ import asyncio
 import httpx
 import json
 
+import pytest
+
+@pytest.mark.skip(reason="Manual integration test against live server")
 async def test_bio_bounds():
     url = "http://localhost:8000/api/v1/encounter/process"
     headers = {"Content-Type": "application/json"}
