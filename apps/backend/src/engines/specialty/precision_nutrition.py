@@ -110,6 +110,41 @@ class PrecisionNutritionMotor(BaseClinicalMotor):
                 rationale="IR Muscular / Bajo Gasto. Sincronizar ingesta de CHO complejos con actividad física. Priorizar densidad proteica. Ejercicio de fuerza obligatorio."
             ))
 
+        # --- 6. ApoE4 Proxy / Sensibilidad a Grasas Saturadas (LMHR) ---
+        ldl = getattr(encounter.cardio_panel, "ldl_mg_dl", None)
+        hdl = getattr(encounter.cardio_panel, "hdl_mg_dl", None)
+        tg = getattr(encounter.cardio_panel, "triglycerides_mg_dl", None)
+        # Some panels store homa_ir, others calculate it via helper. Let's safely extract it:
+        homa = getattr(encounter.metabolic_panel, "homa_ir", None) if encounter.metabolic_panel else None
+        
+        # Calcular HOMA in-line si hay insulina y glucosa pero no viene precalculado
+        if not homa and encounter.metabolic_panel:
+            gluc = encounter.metabolic_panel.glucose_mg_dl
+            ins = encounter.metabolic_panel.insulin_mu_u_ml
+            if gluc and ins:
+                homa = (float(gluc) * float(ins)) / 405.0
+        
+        if ldl and tg and ldl >= 160.0 and tg <= 70.0:
+            phenotypes_detected.append("Hipersensibilidad a Grasa Saturada (Proxy ApoE4+)")
+            evidence.append(ClinicalEvidence(type="Lab", code="LDL/TG-DISCORDANCE", value=ldl, threshold="LDL>160 + TG<70", display="Patrón Hiperrespondedor a Grasas"))
+            
+            action_checklist.append(ActionItem(
+                category="lifestyle", priority="critical",
+                task="Restricción Severa de Grasa Saturada (Patrón Mediterráneo / Cero Keto Carnívora)",
+                rationale="Proxy ApoE4 detectado. Riesgo endotelial masivo ante grasas animales y saturadas vegetales (coco). Priorizar Aceite de Oliva, Aguacate (MUFAs/PUFAs) e HC complejos fibrosos."
+            ))
+
+        # --- 7. AMY1 / IRS1 Proxy (Intolerancia Severa a Hidratos de Carbono) ---
+        if homa and hdl and tg and homa >= 2.5 and tg >= 150.0 and hdl <= 40.0:
+            phenotypes_detected.append("Intolerancia Metabólica a CHO (Proxy AMY1/IRS1)")
+            evidence.append(ClinicalEvidence(type="Lab", code="IR-TRIAD", value=homa, threshold="HOMA>2.5 + TG>150 + HDL<40", display="Triada Aterogénica"))
+            
+            action_checklist.append(ActionItem(
+                category="lifestyle", priority="high",
+                task="Restricción Moderada-Severa de Carbohidratos (< 50-100g/día)",
+                rationale="Falla grave en la partición de sustratos y saturación del glucógeno. Reorientar a beta-oxidación prescibiendo dieta VLCD o Cetogénica Limpia."
+            ))
+
         if not phenotypes_detected:
             return AdjudicationResult(
                 calculated_value="Perfil Nutricional Estándar",

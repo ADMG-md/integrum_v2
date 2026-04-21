@@ -49,6 +49,7 @@ from src.engines.specialty.pediatric_nutrition import PediatricNutritionMotor
 from src.engines.specialty.precision_nutrition import PrecisionNutritionMotor
 from src.engines.specialty.pharma_precision import PharmaPrecisionMotor
 from src.engines.specialty.psychometabolic_axis import PsychometabolicAxisMotor
+from src.engines.specialty.pharmacogenomics import PharmacogenomicProxyMotor
 from src.engines.domain import Encounter, AdjudicationResult
 from typing import Dict, Any, List, Optional, Literal
 import structlog
@@ -116,6 +117,8 @@ PRIMARY_MOTORS = {
     "PharmaPrecisionMotor": PharmaPrecisionMotor,
     # Sprint 11: Psychometabolic Axis (Gut-Brain)
     "PsychometabolicAxisMotor": PsychometabolicAxisMotor,
+    # Sprint 12: Precision Proxies
+    "PharmacogenomicProxyMotor": PharmacogenomicProxyMotor,
 }
 
 GATED_MOTORS = {

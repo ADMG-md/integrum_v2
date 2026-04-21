@@ -157,6 +157,11 @@ class ClinicalHistorySchema(BaseModel):
     smoking_status: Literal["never", "former", "current"] = "never"
     alcohol_intake: Literal["none", "occasional", "frequent"] = "none"
 
+    has_statin_myalgia: bool = False
+    caffeine_anxiety_insomnia: bool = False
+    taking_otc_vitd: bool = False
+    taking_ppi_chronically: bool = False
+
     has_glaucoma: bool = False
     has_seizures_history: bool = False
     has_eating_disorder_history: bool = False

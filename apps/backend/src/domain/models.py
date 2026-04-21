@@ -140,6 +140,13 @@ class ClinicalHistory(BaseModel):
     smoking_status: str = "never"
     alcohol_intake: str = "none"
 
+    # Pharmacogenomic / Nutri-Genomic Proxies
+    has_statin_myalgia: bool = False
+    caffeine_anxiety_insomnia: bool = False
+    taking_otc_vitd: bool = False
+    taking_ppi_chronically: bool = False
+
+
     # Women's health
     pregnancy_status: str = "unknown"
     menopausal_status: str = "unknown"
