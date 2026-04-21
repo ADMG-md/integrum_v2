@@ -691,7 +691,7 @@ class TestMensHealthMotor:
         motor = MensHealthMotor()
         result = motor.compute(enc)
         assert isinstance(result, AdjudicationResult)
-        assert result.metadata["hypogonadism_risk"] >= 3
+        assert result.metadata["hypogonadism_confirmed"] is True
         assert result.estado_ui == "CONFIRMED_ACTIVE"
 
     def test_compute_with_elevated_psa(self, encounter_with_metabolic_data):

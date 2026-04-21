@@ -91,8 +91,11 @@ class ObesityMasterMotor:
                 "eoss_stage": data.eoss_stage,
                 "sarcopenia_risk": data.sarcopenia_risk,
                 "bmi": data.bmi_kg_m2,
+                "cvd_risk": data.cvd_risk_category,
                 "nutrition_summary": data.nutrition_precision_summary,
                 "pharma_summary": data.pharma_precision_summary,
+                "discordant_profile": discordant,
+                "discordance_reason": reason,
             },
         )
 
