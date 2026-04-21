@@ -1,3 +1,14 @@
+"""
+WomensHealthMotor — Precision Female Endocrinology
+
+Evaluates:
+1. PCOS Phenotyping (Metabolic vs Adrenal)
+2. Safe HRT (Hormone Replacement Therapy) prescribing (Safety Gates) 
+3. Premature Menopause (POI) cardiovascular risk enhancer
+4. Pregnancy teratogen screening
+5. Obstetric History (Preeclampsia, GDM)
+"""
+
 from src.engines.base import BaseClinicalMotor
 from src.engines.domain import (
     Encounter,
@@ -10,23 +21,7 @@ from typing import Tuple
 
 
 class WomensHealthMotor(BaseClinicalMotor):
-    """
-    Women's Health Assessment Engine.
-
-    Evaluates:
-    1. PCOS (Rotterdam 2003) — requires 2 of 3:
-       - Hyperandrogenism: FAI > 5 OR Ferriman-Gallwey >= 8
-       - Oligo/anovulation: irregular cycles OR amenorrhea
-       - Polycystic ovarian morphology: AMH > 4.5 ng/mL
-
-    2. Pregnancy screening — gate for teratogenic medications
-    3. Menopausal status — therapeutic implications
-    4. Obstetric history — preeclampsia (2x CV risk), GDM (7x DM2 risk)
-
-    REQUIREMENT_ID: WOMENS-HEALTH
-    """
-
-    REQUIREMENT_ID = "WOMENS-HEALTH"
+    REQUIREMENT_ID = "WOMENS-HEALTH-V2"
 
     def validate(self, encounter: Encounter) -> Tuple[bool, str]:
         is_female = encounter.metadata.get("sex", "").lower() in ["female", "f"]
@@ -38,167 +33,171 @@ class WomensHealthMotor(BaseClinicalMotor):
         h = encounter.history
         if not h:
             return AdjudicationResult(
-                calculated_value="Sin datos de salud femenina",
+                calculated_value="Sin historia clínica",
                 confidence=0.0,
                 evidence=[],
                 requirement_id=self.REQUIREMENT_ID,
                 estado_ui="INDETERMINATE_LOCKED",
-                explanation="Sin historia clinica disponible.",
+                explanation="Requiere historial clínico e interrogatorio endocrino.",
             )
 
         findings = []
         actions = []
+        evidence = []
         sop_criteria = 0
+        phenotypes = []
 
-        # 1. PCOS Assessment (Rotterdam 2003)
-        # Criterion 1: Hyperandrogenism
+        # --- 1. PCOS ASSESSMENT & PHENOTYPING ---
         has_hyperandrogenism = False
+        mp = encounter.metabolic_panel
 
-        # Via FAI (Free Androgen Index)
-        testo = encounter.metabolic_panel.testosterone_total_ng_dl
-        shbg = encounter.metabolic_panel.shbg_nmol_l
+        # FAI (Free Androgen Index)
+        testo = mp.testosterone_total_ng_dl if mp else None
+        shbg = mp.shbg_nmol_l if mp else None
         if testo and shbg and shbg > 0:
             fai = (testo / shbg) * 100
-            if fai > 5:
+            if fai > 5.0:
                 has_hyperandrogenism = True
-                findings.append(f"Hiperandrogenismo bioquimico (FAI: {fai:.1f})")
+                findings.append(f"Hiperandrogenismo (FAI: {fai:.1f})")
 
-        # Via Ferriman-Gallwey
-        fg_score = h.ferriman_gallwey_score
+        # Clinical Hyperandrogenism (Ferriman-Gallwey)
+        fg_score = h.ferriman_gallwey_score if hasattr(h, "ferriman_gallwey_score") else None
         if fg_score is not None and fg_score >= 8:
             has_hyperandrogenism = True
-            findings.append(f"Hiperandrogenismo clinico (Ferriman-Gallwey: {fg_score})")
+            findings.append(f"Hiperandrogenismo clínico (Ferriman: {fg_score})")
 
         if has_hyperandrogenism:
             sop_criteria += 1
 
-        # Criterion 2: Oligo/anovulation
-        cycle_irregular = h.cycle_regularity in ["irregular", "amenorrhea"]
+        cycle_irregular = hasattr(h, "cycle_regularity") and h.cycle_regularity in ["irregular", "amenorrhea"]
         if cycle_irregular:
             sop_criteria += 1
-            findings.append(f"Oligo/anovulacion (ciclos: {h.cycle_regularity})")
+            findings.append("Oligo/anovulación")
 
-        # Criterion 3: Polycystic ovarian morphology (AMH)
-        amh = encounter.metabolic_panel.amh_ng_ml
+        amh = mp.amh_ng_ml if mp else None
         if amh is not None and amh > 4.5:
             sop_criteria += 1
-            findings.append(f"Morfologia ovarica poliquistica (AMH: {amh} ng/mL)")
+            findings.append(f"Morfología poliquística (AMH: {amh} ng/mL)")
 
-        # SOP diagnosis
         sop_confirmed = sop_criteria >= 2
         if sop_confirmed:
-            findings.append(f"SOP confirmado ({sop_criteria}/3 criterios Rotterdam)")
-            actions.append(
-                ActionItem(
-                    category="diagnostic",
-                    priority="high",
-                    task="Confirmar SOP con ecografia transvaginal y perfil hormonal completo",
-                    rationale=f"{sop_criteria}/3 criterios de Rotterdam cumplidos.",
-                )
-            )
-            actions.append(
-                ActionItem(
-                    category="pharmacological",
-                    priority="medium",
-                    task="Considerar metformina si resistencia a insulina + SOP",
-                    rationale="Metformina mejora ovulacion y sensibilidad a insulina en SOP.",
-                )
-            )
+            phenotypes.append("SOP Confirmado")
+            evidence.append(ClinicalEvidence(type="Diagnosis", code="PCOS", value=sop_criteria, display="Criterios Rotterdam ≥ 2"))
+            
+            # Phenotyping: Adrenal vs Metabolic
+            dheas_obs = encounter.get_observation("DHEAS-001")
+            insulin = mp.insulin_mu_u_ml if mp else None
+            glucose = mp.glucose_mg_dl if mp else None
+            
+            is_metabolic = False
+            if insulin and glucose:
+                homa_ir = (insulin * glucose) / 405
+                if homa_ir > 2.5:
+                    is_metabolic = True
+                    phenotypes.append("SOP Fenotipo Metabólico")
+                    actions.append(ActionItem(
+                        category="pharmacological", priority="high",
+                        task="SOP Metabólico: Priorizar sensibilizadores a la insulina",
+                        rationale=f"SOP + HOMA-IR ({homa_ir:.1f}). Metformina o GLP-1 indicados para reanudar ovulación y proteger metabolismo."
+                    ))
 
-        # 2. Pregnancy screening
-        pregnancy = h.pregnancy_status
-        if pregnancy == "pregnant":
-            findings.append(
-                "Paciente embarazada — verificar medicamentos teratogenicos"
-            )
-            actions.append(
-                ActionItem(
-                    category="diagnostic",
-                    priority="critical",
-                    task="SUSPENDER: estatinas, SGLT2i, ACE/ARB si estan prescritos",
-                    rationale="Medicamentos teratogenicos contraindicados en embarazo.",
-                )
-            )
+            dheas = safe_float(dheas_obs.value) if dheas_obs else None
+            if dheas is not None and dheas > 275:
+                phenotypes.append("SOP Fenotipo Adrenal")
+                actions.append(ActionItem(
+                    category="pharmacological", priority="high",
+                    task="SOP Adrenal: Considerar inhibición androgénica periférica",
+                    rationale=f"Elevación de andrógenos suprarrenales (DHEAS: {dheas} ug/dL). Espironolactona es altamente efectiva para control del exceso androgénico (acné/hirsutismo), asumiendo paciente con anticoncepción asegurada."
+                ))
+            
+            if not is_metabolic and (dheas is None or dheas <= 275):
+                actions.append(ActionItem(
+                    category="diagnostic", priority="medium",
+                    task="Fenotipificar SOP",
+                    rationale="Solicitar DHEAS e Insulina basal para diferenciar el driver fisiopatológico del SOP."
+                ))
 
-        # 3. Menopausal status
-        menopause = h.menopausal_status
+
+        # --- 2. HRT SAFETY GATE & MENOPAUSE ---
+        menopause = h.menopausal_status if hasattr(h, "menopausal_status") else "pre"
+        age = encounter.demographics.age_years
+        
+        has_history_vte = getattr(h, "has_history_dvt_pe", False) or bool(encounter.get_observation("Hx-VTE"))
+        has_breast_ca = getattr(h, "has_history_breast_cancer", False) or bool(encounter.get_observation("Hx-BRCA"))
+        has_ascvd = h.has_coronary_disease or h.has_stroke or h.has_heart_failure
+        
+        menopause_age_obs = encounter.get_observation("MENOPAUSE-AGE")
+        menopause_age = safe_float(menopause_age_obs.value) if menopause_age_obs else None
+
         if menopause == "post":
-            findings.append("Post-menopausica — mayor riesgo cardiovascular")
-            actions.append(
-                ActionItem(
-                    category="diagnostic",
-                    priority="medium",
-                    task="Evaluar necesidad de terapia hormonal de reemplazo (HRT)",
-                    rationale="HRT puede mejorar sintomas y riesgo CV si iniciada <60 anos.",
-                )
-            )
-        elif menopause == "peri":
-            findings.append("Peri-menopausica — monitorear cambios metabolicos")
+            findings.append("Post-menopáusica")
+            
+            # Premature Ovarian Insufficiency
+            if menopause_age and menopause_age < 40:
+                phenotypes.append("Insuficiencia Ovárica Prematura (POI)")
+                actions.append(ActionItem(
+                    category="pharmacological", priority="critical",
+                    task="HRT mandatoria hasta edad fisiológica de menopausia (51 años)",
+                    rationale=f"Menopausia a los {menopause_age} años. Alta mortalidad cardiovascular y osteoporosis si no se restituyen estrógenos tempranamente."
+                ))
+                evidence.append(ClinicalEvidence(type="Risk", code="POI-CV-RISK", value="High", display="Riesgo CV acelerado por POI"))
+            else:
+                # Standard HRT Safety Gate (ACOG/NAMS Guidelines)
+                years_since_menopause = (age - menopause_age) if menopause_age else (age - 51)
+                
+                if has_breast_ca:
+                    actions.append(ActionItem(
+                        category="pharmacological", priority="critical",
+                        task="Terapia Hormonal (HRT) CONTRAINDICADA (Absoluta)",
+                        rationale="Historia de Cáncer de Mama. Referir para manejo no hormonal de síntomas vasomotores (ej. Fezolinetant, ISRS)."
+                    ))
+                elif has_history_vte or has_ascvd:
+                    actions.append(ActionItem(
+                        category="pharmacological", priority="high",
+                        task="HRT Oral CONTRAINDICADA. Considerar Transdérmica con precaución",
+                        rationale="Historia de Trombosis o ASCVD. Los estrógenos orales tienen primer paso hepático incrementando factores procoagulantes. La vía transdérmica evita este riesgo, pero requiere aprobación cardiológica colegiada."
+                    ))
+                elif age >= 60 or years_since_menopause >= 10:
+                    actions.append(ActionItem(
+                        category="pharmacological", priority="high",
+                        task="No iniciar HRT sistémica",
+                        rationale=f"Edad {age} o tiempo desde menopausia >= 10 años. AHA/NAMS no recomiendan inicio de HRT por incremento de riesgo de placa vulnerable y trombosis."
+                    ))
+                else:
+                    actions.append(ActionItem(
+                        category="pharmacological", priority="medium",
+                        task="Ventana Estrogénica Abierta — Candidata a HRT",
+                        rationale="<60 años y <10 años desde menopausia sin contraindicaciones absolutas detectadas. HRT puede proveer alivio vasomotor y protección ósea/metabólica si la paciente es sintomática."
+                    ))
 
-        # 4. Obstetric history
-        ob_risks = []
-        if h.has_history_preeclampsia:
-            ob_risks.append("Preeclampsia previa (riesgo CV 2x)")
-        if h.has_history_gestational_diabetes:
-            ob_risks.append("Diabetes gestacional previa (riesgo DM2 7x)")
+        # --- 3. PREGNANCY & OBSTETRICS (Teratogen Guard) ---
+        pregnancy = getattr(h, "pregnancy_status", "not_applicable")
+        if pregnancy == "pregnant":
+            phenotypes.append("Gestación Activa")
+            actions.append(ActionItem(
+                category="pharmacological", priority="critical",
+                task="SUSPENDER TERATÓGENOS: Estatinas, IECA/ARA2, SGLT2i, GLP-1",
+                rationale="Medicamentos de uso metabólico rutinario están contraindicados en embarazo (FDA Categoría X o sin data de seguridad)."
+            ))
 
-        if ob_risks:
-            findings.extend(ob_risks)
-            actions.append(
-                ActionItem(
-                    category="diagnostic",
-                    priority="high",
-                    task="Screening cardiovascular intensificado por historia obstetrica",
-                    rationale="Historia obstetrica de alto riesgo cardiovascular.",
-                )
-            )
+        if getattr(h, "has_history_preeclampsia", False):
+            findings.append("Riesgo CV aumentado por Preeclampsia previa (x2)")
+            evidence.append(ClinicalEvidence(type="Risk", code="PREECLAMPSIA", value="+", display="Riesgo CV x2"))
+        
+        if getattr(h, "has_history_gestational_diabetes", False):
+            findings.append("Riesgo DM2 aumentado por DMG previa (x7)")
+            evidence.append(ClinicalEvidence(type="Risk", code="GDM", value="+", display="Riesgo futuro DM2 x7"))
 
-        # Classification
-        if sop_confirmed:
-            estado = "CONFIRMED_ACTIVE"
-            verdict = "Sindrome de Ovario Poliquistico confirmado"
-            confidence = 0.90
-        elif sop_criteria == 1:
-            estado = "PROBABLE_WARNING"
-            verdict = "Sospecha de SOP (1/3 criterios)"
-            confidence = 0.75
-        elif pregnancy == "pregnant":
-            estado = "CONFIRMED_ACTIVE"
-            verdict = "Embarazo — verificar seguridad de medicamentos"
-            confidence = 0.95
-        elif ob_risks:
-            estado = "PROBABLE_WARNING"
-            verdict = "Factores de riesgo obstetrico identificados"
-            confidence = 0.85
-        else:
-            estado = "INDETERMINATE_LOCKED"
-            verdict = "Salud femenina sin hallazgos de preocupacion"
-            confidence = 0.85
-
-        explanation = "; ".join(findings) if findings else "Sin hallazgos relevantes."
+        # --- OUTCOME STATUS ---
+        status = "CONFIRMED_ACTIVE" if sop_confirmed or pregnancy == "pregnant" or menopause == "post" else "INDETERMINATE_LOCKED"
+        headline = " | ".join(phenotypes) if phenotypes else "Salud femenina basal"
 
         return AdjudicationResult(
-            calculated_value=verdict,
-            confidence=confidence,
-            evidence=[
-                ClinicalEvidence(
-                    type="Assessment",
-                    code="WOMENS-HEALTH",
-                    value=sop_criteria,
-                    threshold=">=2 para SOP",
-                    display="Evaluacion de Salud Femenina",
-                )
-            ],
+            calculated_value=headline,
+            confidence=0.90 if sop_confirmed else 0.80,
+            evidence=evidence,
             requirement_id=self.REQUIREMENT_ID,
-            estado_ui=estado,
-            explanation=explanation,
+            estado_ui=status,
+            explanation="; ".join(findings) if findings else "Evaluación femenina completada sin hallazgos patológicos.",
             action_checklist=actions,
-            metadata={
-                "sop_criteria": sop_criteria,
-                "sop_confirmed": sop_confirmed,
-                "pregnancy_status": pregnancy,
-                "menopausal_status": menopause,
-                "ob_risk_factors": ob_risks,
-                "findings": findings,
-            },
         )

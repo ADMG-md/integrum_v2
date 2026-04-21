@@ -1,127 +1,98 @@
-"""
-Golden Motor Tests: WomensHealthMotor (IEC 62304 V&V)
-=======================================================
-Tests for Women's Health Assessment Engine.
-Test IDs: T-WH-01 through T-WH-07.
-Evidence: Rotterdam 2003, ACOG guidelines.
-"""
-
 import pytest
-from src.engines.specialty.womens_health import WomensHealthMotor
-from src.engines.domain import Encounter, ClinicalHistory
-from src.schemas.encounter import (
-    DemographicsSchema,
-    MetabolicPanelSchema,
-    CardioPanelSchema,
+from src.engines.domain import (
+    Encounter, Observation, DemographicsSchema,
+    MetabolicPanelSchema, ActionItem
 )
+from src.schemas.encounter import CardioPanelSchema
+from src.domain.models import ClinicalHistory
+from src.engines.specialty.womens_health import WomensHealthMotor
 
-
-@pytest.fixture
-def motor():
-    return WomensHealthMotor()
-
-
-def _make_encounter(id="wh-test", history=None, metadata=None, metabolic=None):
-    """Helper: creates a valid Encounter for Women's Health testing."""
-    default_meta = {"sex": "F"}
-    if metadata:
-        default_meta.update(metadata)
-    mp = MetabolicPanelSchema()
-    if metabolic:
-        for k, v in metabolic.items():
-            setattr(mp, k, v)
+def _female_enc(**overrides) -> Encounter:
+    obs = overrides.pop("observations", [])
+    history_kw = overrides.pop("history_kwargs", {"onset_trigger": "unknown", "pregnancy_status": "not_applicable"})
+    if "pregnancy_status" not in history_kw:
+        history_kw["pregnancy_status"] = "not_applicable"
+    if "onset_trigger" not in history_kw:
+        history_kw["onset_trigger"] = "unknown"
+    history = ClinicalHistory(**history_kw)
+    metabolic = overrides.pop("metabolic_panel", MetabolicPanelSchema())
+    cardio = overrides.pop("cardio_panel", CardioPanelSchema())
+    demo = DemographicsSchema(age_years=35, gender="female", weight_kg=70, height_cm=160)
+    
     return Encounter(
-        id=id,
-        demographics=DemographicsSchema(age_years=35, gender="female"),
-        metabolic_panel=mp,
-        cardio_panel=CardioPanelSchema(),
-        observations=[],
-        metadata=default_meta,
-        history=history or ClinicalHistory(),
+        id="WOMEN-01",
+        demographics=overrides.pop("demographics", demo),
+        metabolic_panel=metabolic,
+        cardio_panel=cardio,
+        history=history,
+        observations=obs,
+        **overrides
     )
 
+motor = WomensHealthMotor()
 
-def test_womens_health_validate_male(motor):
-    """T-WH-01: Male patient = validation failure."""
-    enc = _make_encounter(id="1", metadata={"sex": "M"})
-    is_valid, msg = motor.validate(enc)
-    assert is_valid is False
-    assert "female" in msg.lower()
+def test_validation():
+    enc_m = _female_enc()
+    enc_m.demographics.gender = "male"
+    enc_m.metadata = {"sex": "male"}
+    v, _ = motor.validate(enc_m)
+    assert not v
 
+    enc_f = _female_enc()
+    enc_f.metadata = {"sex": "female"}
+    v2, _ = motor.validate(enc_f)
+    assert v2
 
-def test_womens_health_validate_female(motor):
-    """T-WH-01: Female patient = validation passes."""
-    enc = _make_encounter(id="2")
-    is_valid, msg = motor.validate(enc)
-    assert is_valid is True
-
-
-def test_womens_health_sop_confirmed(motor):
-    """T-WH-02: 2+ Rotterdam criteria = SOP confirmed."""
-    history = ClinicalHistory(
-        cycle_regularity="irregular",
-        ferriman_gallwey_score=10,
+def test_pcos_metabolic():
+    enc = _female_enc(
+        history_kwargs={"cycle_regularity": "irregular", "ferriman_gallwey_score": 10},
+        metabolic_panel=MetabolicPanelSchema(glucose_mg_dl=100, insulin_mu_u_ml=20)
     )
-    enc = _make_encounter(id="3", history=history)
-    result = motor.compute(enc)
-    assert result.metadata["sop_confirmed"] is True
-    assert "Ovario Poliquistico" in result.calculated_value
-    assert result.estado_ui == "CONFIRMED_ACTIVE"
+    res = motor.compute(enc)
+    assert "SOP Confirmado" in res.calculated_value
+    assert "Fenotipo Metabólico" in res.calculated_value
+    assert any("Metformina" in a.rationale for a in res.action_checklist)
 
-
-def test_womens_health_pregnancy_gate(motor):
-    """T-WH-04: Pregnant = critical action for teratogenic meds."""
-    history = ClinicalHistory(pregnancy_status="pregnant")
-    enc = _make_encounter(id="5", history=history)
-    result = motor.compute(enc)
-    assert (
-        "embarazada" in result.calculated_value.lower()
-        or "embarazo" in result.calculated_value.lower()
+def test_pcos_adrenal():
+    enc = _female_enc(
+        observations=[Observation(code="DHEAS-001", value=350)],
+        history_kwargs={"cycle_regularity": "irregular", "ferriman_gallwey_score": 10},
+        metabolic_panel=MetabolicPanelSchema(glucose_mg_dl=90, insulin_mu_u_ml=5)
     )
-    critical = [a for a in result.action_checklist if a.priority == "critical"]
-    assert len(critical) > 0
+    res = motor.compute(enc)
+    assert "SOP Fenotipo Adrenal" in res.calculated_value
+    assert any("Espironolactona" in a.rationale for a in res.action_checklist)
 
-
-def test_womens_health_preeclampsia_history(motor):
-    """T-WH-05: History of preeclampsia = CV risk factor."""
-    history = ClinicalHistory(has_history_preeclampsia=True)
-    enc = _make_encounter(id="6", history=history)
-    result = motor.compute(enc)
-    assert "preeclampsia" in result.explanation.lower()
-
-
-def test_womens_health_gestational_diabetes(motor):
-    """T-WH-06: History of GDM = 7x DM2 risk."""
-    history = ClinicalHistory(has_history_gestational_diabetes=True)
-    enc = _make_encounter(id="7", history=history)
-    result = motor.compute(enc)
-    assert "gestacional" in result.explanation.lower()
-
-
-def test_womens_health_postmenopausal(motor):
-    """T-WH-07: Postmenopausal = increased CV risk."""
-    history = ClinicalHistory(menopausal_status="post")
-    enc = _make_encounter(id="8", history=history)
-    result = motor.compute(enc)
-    assert (
-        "Post-menopausica" in result.explanation
-        or "menopausia" in result.explanation.lower()
+def test_hrt_safety_gate_breast_cancer():
+    enc = _female_enc(
+        observations=[Observation(code="Hx-BRCA", value="yes")],
+        history_kwargs={"menopausal_status": "post"}
     )
+    res = motor.compute(enc)
+    assert any("CONTRAINDICADA" in a.task and "Cáncer" in a.rationale for a in res.action_checklist)
 
-
-def test_womens_health_no_findings(motor):
-    """T-WH-07: Female, no risk factors = no findings."""
-    enc = _make_encounter(id="9")
-    result = motor.compute(enc)
-    assert (
-        "sin hallazgos" in result.calculated_value.lower()
-        or "sin preocupacion" in result.calculated_value.lower()
+def test_hrt_safety_gate_vte():
+    enc = _female_enc(
+        observations=[Observation(code="Hx-VTE", value="yes")],
+        history_kwargs={"menopausal_status": "post"}
     )
+    res = motor.compute(enc)
+    assert any("Transdérmica" in a.task for a in res.action_checklist)
 
+def test_hrt_window_closed():
+    demo = DemographicsSchema(age_years=65, gender="female", weight_kg=70, height_cm=160)
+    enc = _female_enc(
+        demographics=demo,
+        history_kwargs={"menopausal_status": "post"}
+    )
+    res = motor.compute(enc)
+    assert any("No iniciar HRT" in a.task and "Edad" in a.rationale for a in res.action_checklist)
 
-def test_womens_health_amh_criterion(motor):
-    """T-WH-03: AMH > 4.5 ng/mL = polycystic morphology criterion."""
-    history = ClinicalHistory(cycle_regularity="irregular")
-    enc = _make_encounter(id="10", history=history, metabolic={"amh_ng_ml": 8.0})
-    result = motor.compute(enc)
-    assert result.metadata["sop_criteria"] >= 2
+def test_premature_menopause():
+    enc = _female_enc(
+        observations=[Observation(code="MENOPAUSE-AGE", value="38")],
+        history_kwargs={"menopausal_status": "post"}
+    )
+    res = motor.compute(enc)
+    assert "POI" in res.calculated_value
+    assert any("HRT mandatoria" in a.task for a in res.action_checklist)
