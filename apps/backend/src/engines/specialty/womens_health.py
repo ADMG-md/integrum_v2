@@ -200,4 +200,8 @@ class WomensHealthMotor(BaseClinicalMotor):
             estado_ui=status,
             explanation="; ".join(findings) if findings else "Evaluación femenina completada sin hallazgos patológicos.",
             action_checklist=actions,
+            metadata={
+                "sop_confirmed": sop_confirmed,
+                "pregnancy_status": pregnancy,
+            }
         )
