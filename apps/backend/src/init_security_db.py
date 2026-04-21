@@ -19,7 +19,7 @@ from src.services.auth_service import AuthService
 
 async def init_prod_db():
     print("[Mission 11] Initializing Security Layer DB Suite...")
-    engine = create_async_engine(DATABASE_URL, echo=True)
+    engine = create_async_engine(DATABASE_URL, echo=False)
 
     async_session = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
 

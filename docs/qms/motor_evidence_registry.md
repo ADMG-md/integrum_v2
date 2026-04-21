@@ -56,6 +56,7 @@
 | **DrugInteractionMotor** | T1 | FDA Orange Book, Lexicomp | ✅ Validated (Sprint 8) | DetectedIssue (interaction) | Clinical decision trigger |
 | **ProteinEngineMotor** | T2 | ESPEN 2019, Paddon-Jones 2015 | Not validated | NutritionOrder | Supportive |
 | **CMIMotor** | T2 | Wakabayashi 2015, Tao 2022 | ✅ Validated (Sprint 6) | Observation (CMI) | Supportive |
+| **PediatricNutritionMotor** | T2 | AAP 2023, USPSTF 2024, Al-Beltagi 2024, Rucklidge 2025 | ✅ Validated (Sprint 9) | ActionItem (nutrition recommendation) | Supportive |
 | **CVDHazardMotor** | T1 | ACC/AHA PCE 2013 | Not validated | Observation (ASCVD risk) | Clinical decision trigger |
 | **MarkovProgressionMotor** | T4 | Internal transition matrix | Not validated | ❌ Do not export | Internal exploration |
 | **ObesityMasterMotor** | T3 | Aggregator of T1/T2 motors | Not validated | ❌ Do not export (internal summary) | Clinical context only |

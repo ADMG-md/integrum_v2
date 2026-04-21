@@ -6,18 +6,28 @@ from datetime import datetime
 # Add apps/backend to path
 sys.path.append(os.path.join(os.getcwd(), "apps/backend"))
 
-from src.engines.domain import Encounter, Observation, Condition
+from src.engines.domain import (
+    Encounter,
+    Observation,
+    Condition,
+    DemographicsSchema,
+    MetabolicPanelSchema,
+    CardioPanelSchema,
+)
 from src.engines.specialty_runner import specialty_runner
 from src.schemas.encounter import AdjudicationResultSchema
 from src.schemas.report import ClinicalReportSchema
 
 def verify_e2e_flow():
-    print("🚀 INTEGRUM V2.2: END-TO-END INTEGRATION VERIFICATION")
+    print("🚀 INTEGRUM V2.6: HARDENED END-TO-END INTEGRATION VERIFICATION")
     
     # 1. Simulate Engine Execution (The "Clinical Pulse")
     print("\n[STEP 1] Running Clinical Engines...")
     e = Encounter(
         id="E2E-TEST-VOLT",
+        demographics=DemographicsSchema(age_years=45, gender="male"),
+        metabolic_panel=MetabolicPanelSchema(),
+        cardio_panel=CardioPanelSchema(),
         conditions=[Condition(code="E66", title="Obesity")],
         observations=[
             Observation(code="GAD-7", value=12), # Acosta Probable
@@ -76,5 +86,7 @@ if __name__ == "__main__":
     try:
         verify_e2e_flow()
     except Exception as e:
+        import traceback
+        traceback.print_exc()
         print(f"\n❌ E2E VERIFICATION FAILED: {str(e)}")
         sys.exit(1)

@@ -47,21 +47,48 @@ def _anonymize_id(id_str: str) -> str:
 # Motor columns (deterministic order for CSV header stability across exports)
 # ─────────────────────────────────────────────────────────────────────────────
 MOTOR_COLUMNS = [
-    "AcostaPhenotypeMotor", "EOSSStagingMotor", "BiologicalAgeMotor",
-    "MetabolicPrecisionMotor", "DeepMetabolicProxyMotor", "Lifestyle360Motor",
-    "SarcopeniaMonitorMotor", "AnthropometryMotor", "EndocrineMotor",
-    "HypertensionMotor", "InflammationMotor", "SleepApneaMotor",
-    "LaboratoryStewardshipMotor", "FunctionalSarcopeniaMotor",
-    "FLIMotor", "VAIMotor", "CMIMotor",
-    "GLP1MonitoringMotor", "MetforminB12Motor", "CancerScreeningMotor",
-    "ApoBApoA1Motor", "PulsePressureMotor",
-    "ACEScoreEngine", "SGLT2iBenefitMotor", "FreeTestosteroneMotor",
-    "VitaminDMotor", "CharlsonMotor",
-    "KFREMotor", "FriedFrailtyMotor", "TyGBMIMotor", "CVDReclassifierMotor",
-    "WomensHealthMotor", "MensHealthMotor",
-    "CVDHazardMotor", "MarkovProgressionMotor",
-    "ObesityMasterMotor", "ClinicalGuidelinesMotor",
-    "LipidRiskPrecisionMotor", "DrugInteractionMotor",
+    "AcostaPhenotypeMotor",
+    "EOSSStagingMotor",
+    "BiologicalAgeMotor",
+    "MetabolicPrecisionMotor",
+    "DeepMetabolicProxyMotor",
+    "Lifestyle360Motor",
+    "SarcopeniaMonitorMotor",
+    "AnthropometryMotor",
+    "EndocrineMotor",
+    "HypertensionMotor",
+    "InflammationMotor",
+    "SleepApneaMotor",
+    "LaboratoryStewardshipMotor",
+    "FunctionalSarcopeniaMotor",
+    "FLIMotor",
+    "VAIMotor",
+    "CMIMotor",
+    "GLP1MonitoringMotor",
+    "MetforminB12Motor",
+    "CancerScreeningMotor",
+    "ApoBApoA1Motor",
+    "PulsePressureMotor",
+    "ACEScoreEngine",
+    "SGLT2iBenefitMotor",
+    "FreeTestosteroneMotor",
+    "VitaminDMotor",
+    "CharlsonMotor",
+    "KFREMotor",
+    "FriedFrailtyMotor",
+    "TyGBMIMotor",
+    "CVDReclassifierMotor",
+    "WomensHealthMotor",
+    "MensHealthMotor",
+    "CVDHazardMotor",
+    "MarkovProgressionMotor",
+    "ObesityMasterMotor",
+    "ClinicalGuidelinesMotor",
+    "LipidRiskPrecisionMotor",
+    "DrugInteractionMotor",
+    "PediatricNutritionMotor",
+    "PrecisionNutritionMotor",
+    "PharmaPrecisionMotor",
 ]
 
 
@@ -89,16 +116,13 @@ def _build_flat_row(
         "encounter_date": enc.created_at.date().isoformat() if enc.created_at else None,
         "encounter_status": enc.status,
         "reason_for_visit": enc.reason_for_visit,
-
         # Demographics
         "gender": patient.gender,
-
         # Physician-AI concordance
         "agreement_rate_pct": enc.agreement_rate,
-
         # Outcome tracking (Fix 2 — filled at finalize by physician)
         "outcome_weight_current_kg": enc.weight_current_kg,
-        "outcome_status": enc.outcome_status,            # MEJORADO / ESTABLE / DETERIORO
+        "outcome_status": enc.outcome_status,  # MEJORADO / ESTABLE / DETERIORO
         "outcome_adverse_event": enc.adverse_event,
         "outcome_medication_changed": enc.medication_changed,
         "outcome_adherence_reported": enc.adherence_reported,  # ALTA / MEDIA / BAJA
@@ -115,8 +139,8 @@ def _build_flat_row(
         row[f"{prefix}_value"] = res.get("calculated_value")
         row[f"{prefix}_estado"] = res.get("estado_ui")
         row[f"{prefix}_confidence"] = res.get("confidence")
-        row[f"{prefix}_decision"] = audit.get("decision_type")   # AGREEMENT / OVERRIDE
-        row[f"{prefix}_reason"] = audit.get("reason_code")       # structured vocabulary
+        row[f"{prefix}_decision"] = audit.get("decision_type")  # AGREEMENT / OVERRIDE
+        row[f"{prefix}_reason"] = audit.get("reason_code")  # structured vocabulary
 
     return row
 
@@ -125,10 +149,11 @@ def _build_flat_row(
 # GET /export/research/flat  — THE research dataset endpoint
 # ─────────────────────────────────────────────────────────────────────────────
 
+
 @router.get("/research/flat")
 async def export_research_flat(
-    fmt: str = "csv",           # "csv" or "json"
-    status_filter: str = "all", # "all", "FINALIZED", "ANALYZED"
+    fmt: str = "csv",  # "csv" or "json"
+    status_filter: str = "all",  # "all", "FINALIZED", "ANALYZED"
     db: AsyncSession = Depends(get_db),
     current_user: UserModel = Depends(
         check_role([UserRole.SUPERADMIN, UserRole.MEDICAL_DIRECTOR, UserRole.PHYSICIAN])
@@ -169,6 +194,7 @@ async def export_research_flat(
     if not patients:
         if fmt == "csv":
             from fastapi.responses import Response
+
             return Response(content="No patients in database.", media_type="text/plain")
         return {"rows": [], "metadata": {"total_encounters": 0}}
 
@@ -187,6 +213,7 @@ async def export_research_flat(
 
         # Fetch physician decision audit (concordance per motor)
         from src.models.audit import DecisionAuditLog
+
         audit_stmt = select(DecisionAuditLog).where(
             DecisionAuditLog.encounter_id == enc.id
         )
@@ -204,10 +231,14 @@ async def export_research_flat(
     if not rows:
         if fmt == "csv":
             from fastapi.responses import Response
+
             return Response(
                 content="No encounters match the filter.", media_type="text/plain"
             )
-        return {"rows": [], "metadata": {"total_encounters": 0, "status_filter": status_filter}}
+        return {
+            "rows": [],
+            "metadata": {"total_encounters": 0, "status_filter": status_filter},
+        }
 
     if fmt == "json":
         return {
@@ -253,6 +284,7 @@ async def export_research_flat(
 # Legacy endpoints (preserved for backward compatibility)
 # ─────────────────────────────────────────────────────────────────────────────
 
+
 @router.get("/anonymized")
 async def export_anonymized_data(
     db: AsyncSession = Depends(get_db),
@@ -277,39 +309,55 @@ async def export_anonymized_data(
             "total_patients": len(patients),
             "preferred_endpoint": "GET /export/research/flat — flat CSV, one row per encounter",
             "anonymization": "SHA-256 deterministic hash",
-            "pii_removed": ["full_name", "external_id", "email", "phone", "date_of_birth"],
+            "pii_removed": [
+                "full_name",
+                "external_id",
+                "email",
+                "phone",
+                "date_of_birth",
+            ],
         },
     }
 
     for patient in patients:
-        export_data["patients"].append({"patient_id": _anonymize_id(patient.id), "gender": patient.gender})
+        export_data["patients"].append(
+            {"patient_id": _anonymize_id(patient.id), "gender": patient.gender}
+        )
 
         enc_stmt = select(EncounterModel).where(EncounterModel.patient_id == patient.id)
         enc_result = await db.execute(enc_stmt)
         for enc in enc_result.scalars().all():
-            export_data["encounters"].append({
-                "encounter_id": _anonymize_id(enc.id),
-                "patient_id": _anonymize_id(enc.patient_id),
-                "status": enc.status,
-                "phenotype_result": enc.phenotype_result,
-                "agreement_rate": enc.agreement_rate,
-                "outcome_status": enc.outcome_status,
-                "outcome_weight_current_kg": enc.weight_current_kg,
-                "outcome_adherence_reported": enc.adherence_reported,
-                "created_at": enc.created_at.isoformat() if enc.created_at else None,
-            })
+            export_data["encounters"].append(
+                {
+                    "encounter_id": _anonymize_id(enc.id),
+                    "patient_id": _anonymize_id(enc.patient_id),
+                    "status": enc.status,
+                    "phenotype_result": enc.phenotype_result,
+                    "agreement_rate": enc.agreement_rate,
+                    "outcome_status": enc.outcome_status,
+                    "outcome_weight_current_kg": enc.weight_current_kg,
+                    "outcome_adherence_reported": enc.adherence_reported,
+                    "created_at": enc.created_at.isoformat()
+                    if enc.created_at
+                    else None,
+                }
+            )
 
-            log_stmt = select(AdjudicationLog).where(AdjudicationLog.encounter_id == enc.id)
+            log_stmt = select(AdjudicationLog).where(
+                AdjudicationLog.encounter_id == enc.id
+            )
             log_result = await db.execute(log_stmt)
             for log in log_result.scalars().all():
-                export_data["adjudication_logs"].append({
-                    "encounter_id": _anonymize_id(log.encounter_id),
-                    "engine_name": log.engine_name,
-                    "calculated_value": log.calculated_value,
-                    "confidence": log.confidence,
-                    "is_overridden": log.is_overridden,
-                    "override_reason": log.override_reason,
-                })
+                export_data["adjudication_logs"].append(
+                    {
+                        "encounter_id": _anonymize_id(log.encounter_id),
+                        "engine_name": log.engine_name,
+                        "calculated_value": log.calculated_value,
+                        "confidence": log.confidence,
+                        "is_overridden": log.is_overridden,
+                        "override_reason": log.override_reason,
+                    }
+                )
 
     return export_data
 
@@ -335,9 +383,13 @@ async def export_single_patient(
 
     export_data: Dict[str, Any] = {
         "patient": {
-            "id": patient.id, "external_id": patient.external_id,
-            "full_name": patient.full_name, "date_of_birth": patient.date_of_birth,
-            "gender": patient.gender, "email": patient.email, "phone": patient.phone,
+            "id": patient.id,
+            "external_id": patient.external_id,
+            "full_name": patient.full_name,
+            "date_of_birth": patient.date_of_birth,
+            "gender": patient.gender,
+            "email": patient.email,
+            "phone": patient.phone,
         },
         "encounters": [],
     }
@@ -345,28 +397,31 @@ async def export_single_patient(
     for enc in encounters:
         log_stmt = select(AdjudicationLog).where(AdjudicationLog.encounter_id == enc.id)
         log_result = await db.execute(log_stmt)
-        export_data["encounters"].append({
-            "id": enc.id, "status": enc.status,
-            "reason_for_visit": enc.reason_for_visit,
-            "phenotype_result": enc.phenotype_result,
-            "clinical_notes": enc.clinical_notes,
-            "plan_of_action": enc.plan_of_action,
-            "outcome_status": enc.outcome_status,
-            "outcome_weight_current_kg": enc.weight_current_kg,
-            "outcome_adverse_event": enc.adverse_event,
-            "outcome_medication_changed": enc.medication_changed,
-            "outcome_adherence_reported": enc.adherence_reported,
-            "created_at": enc.created_at.isoformat() if enc.created_at else None,
-            "adjudication_logs": [
-                {
-                    "engine_name": log.engine_name,
-                    "calculated_value": log.calculated_value,
-                    "confidence": log.confidence,
-                    "is_overridden": log.is_overridden,
-                    "physician_value": log.physician_value,
-                }
-                for log in log_result.scalars().all()
-            ],
-        })
+        export_data["encounters"].append(
+            {
+                "id": enc.id,
+                "status": enc.status,
+                "reason_for_visit": enc.reason_for_visit,
+                "phenotype_result": enc.phenotype_result,
+                "clinical_notes": enc.clinical_notes,
+                "plan_of_action": enc.plan_of_action,
+                "outcome_status": enc.outcome_status,
+                "outcome_weight_current_kg": enc.weight_current_kg,
+                "outcome_adverse_event": enc.adverse_event,
+                "outcome_medication_changed": enc.medication_changed,
+                "outcome_adherence_reported": enc.adherence_reported,
+                "created_at": enc.created_at.isoformat() if enc.created_at else None,
+                "adjudication_logs": [
+                    {
+                        "engine_name": log.engine_name,
+                        "calculated_value": log.calculated_value,
+                        "confidence": log.confidence,
+                        "is_overridden": log.is_overridden,
+                        "physician_value": log.physician_value,
+                    }
+                    for log in log_result.scalars().all()
+                ],
+            }
+        )
 
     return export_data

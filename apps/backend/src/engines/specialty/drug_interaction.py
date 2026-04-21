@@ -1,10 +1,19 @@
 """
 Drug Interaction Motor — checks medication safety against conditions, renal function,
-and drug-drug interactions using embedded SQLite database.
+and drug-drug interactions using a static in-memory knowledge base.
+
+REQUIREMENT_ID: DRUG-INTERACTION
+SOURCE: FDA Labels, Lexicomp, Micromedex (extracted 2026-04-03)
 """
 
-import sqlite3
-import os
+from src.engines.specialty.drug_knowledge import (
+    MEDICATIONS,
+    INTERACTIONS,
+    CONTRAINDICATIONS,
+    RENAL_DOSING,
+    MED_NAME_TO_ID,
+    ID_TO_MED_NAME,
+)
 from src.engines.base import BaseClinicalMotor
 from src.engines.domain import (
     Encounter,
@@ -13,28 +22,152 @@ from src.engines.domain import (
     ActionItem,
     safe_float,
 )
-from typing import Tuple, List, Dict, Any
+from typing import Tuple, List, Dict, Any, Optional
 
-DB_PATH = os.path.join(
-    os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-    "..",
-    "data",
-    "drug_interactions.db",
-)
+# ============================================================
+# Fuzzy medication name matching (Spanish/English variants)
+# ============================================================
+
+_SYNONYM_MAP: Dict[str, str] = {
+    "semaglutida": "semaglutide",
+    "tirzepatida": "tirzepatide",
+    "metformina": "metformin",
+    "empagliflozina": "empagliflozin",
+    "insulina_glargina": "insulin_glargine",
+    "insulina_glargine": "insulin_glargine",
+    "atorvastatina": "atorvastatin",
+    "naltrexona": "naltrexone",
+    "liraglutida": "liraglutide",
+    "dulaglutida": "dulaglutide",
+    "dapagliflozina": "dapagliflozin",
+    "canagliflozina": "canagliflozin",
+    "enalapril": "enalapril",
+    "lisinopril": "lisinopril",
+    "losartan": "losartan",
+    "amlodipino": "amlodipine",
+    "amlodipine": "amlodipine",
+    "furosemida": "furosemide",
+    "hydrochlorothiazide": "hydrochlorothiazide",
+    "hidroclorotiazida": "hydrochlorothiazide",
+    "omeprazol": "omeprazole",
+    "omeprazole": "omeprazole",
+    "sertralina": "sertraline",
+    "sertraline": "sertraline",
+    "fluoxetina": "fluoxetine",
+    "fluoxetine": "fluoxetine",
+    "citalopram": "citalopram",
+    "escitalopram": "escitalopram",
+    "amiodarona": "amiodarone",
+    "amiodarone": "amiodarone",
+    "azitromicina": "azithromycin",
+    "azithromycin": "azithromycin",
+    "levofloxacino": "levofloxacin",
+    "levofloxacin": "levofloxacin",
+    "ondansetron": "ondansetron",
+    "ondansetrón": "ondansetron",
+    "tramadol": "tramadol",
+    "gabapentina": "gabapentin",
+    "gabapentin": "gabapentin",
+    "pregabalina": "pregabalin",
+    "pregabalin": "pregabalin",
+    "topiramato": "topiramate",
+    "topiramate": "topiramate",
+    "warfarina": "warfarin",
+    "warfarin": "warfarin",
+    "apixaban": "apixaban",
+    "rivaroxaban": "rivaroxaban",
+    "clopidogrel": "clopidogrel",
+    "aspirina": "aspirin",
+    "aspirin": "aspirin",
+    "ibuprofeno": "ibuprofen",
+    "ibuprofen": "ibuprofen",
+    "naproxeno": "naproxen",
+    "naproxen": "naproxen",
+    "diclofenaco": "diclofenac",
+    "diclofenac": "diclofenac",
+    "prednisona": "prednisone",
+    "prednisone": "prednisone",
+    "dexametasona": "dexamethasone",
+    "dexamethasone": "dexamethasone",
+    "levothyroxine": "levothyroxine",
+    "levotiroxina": "levothyroxine",
+    "carbamazepina": "carbamazepine",
+    "carbamazepine": "carbamazepine",
+    "valproato": "valproate",
+    "valproic_acid": "valproic_acid",
+    "ácido_valproico": "valproic_acid",
+    "lamotrigina": "lamotrigine",
+    "lamotrigine": "lamotrigine",
+    "quetiapina": "quetiapine",
+    "quetiapine": "quetiapine",
+    "olanzapina": "olanzapine",
+    "olanzapine": "olanzapine",
+    "risperidona": "risperidone",
+    "risperidone": "risperidone",
+    "aripiprazol": "aripiprazole",
+    "aripiprazole": "aripiprazole",
+    "metoprolol": "metoprolol",
+    "carvedilol": "carvedilol",
+    "propranolol": "propranolol",
+    "espironolactona": "spironolactone",
+    "spironolactone": "spironolactone",
+    "clonidina": "clonidine",
+    "clonidine": "clonidine",
+    "sildenafilo": "sildenafil",
+    "sildenafil": "sildenafil",
+    "tadalafilo": "tadalafil",
+    "tadalafil": "tadalafil",
+    "finasterida": "finasteride",
+    "finasteride": "finasteride",
+    "testosterona": "testosterone",
+    "testosterone": "testosterone",
+    "estrógeno": "estrogen",
+    "estrogen": "estrogen",
+    "progesterona": "progesterone",
+    "progesterone": "progesterone",
+    "medroxiprogesterona": "medroxyprogesterone",
+    "medroxyprogesterone": "medroxyprogesterone",
+    "drospirenona": "drospirenone",
+    "drospirenone": "drospirenone",
+    "etinilestradiol": "ethinyl_estradiol",
+    "ethinyl_estradiol": "ethinyl_estradiol",
+    "levonorgestrel": "levonorgestrel",
+    "noretindrona": "norethindrone",
+    "norethindrone": "norethindrone",
+}
 
 
-def _get_db() -> sqlite3.Connection:
-    if not os.path.exists(DB_PATH):
-        sql_path = DB_PATH.replace(".db", ".sql")
-        if os.path.exists(sql_path):
-            os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
-            conn = sqlite3.connect(DB_PATH)
-            with open(sql_path) as f:
-                conn.executescript(f.read())
-            conn.commit()
-            return conn
-        raise FileNotFoundError(f"Drug interaction database not found at {DB_PATH}")
-    return sqlite3.connect(DB_PATH)
+def _normalize_med_name(raw: str) -> str:
+    return raw.lower().strip().replace(" ", "_").replace("-", "_")
+
+
+def _match_medication(raw_name: str) -> Optional[str]:
+    """Match a medication name (Spanish/English) to a canonical key in MEDICATIONS."""
+    normalized = _normalize_med_name(raw_name)
+
+    if normalized in MEDICATIONS:
+        return normalized
+
+    if normalized in _SYNONYM_MAP:
+        canonical = _SYNONYM_MAP[normalized]
+        if canonical in MEDICATIONS:
+            return canonical
+
+    for key in MEDICATIONS:
+        if key in normalized or normalized in key:
+            return key
+
+    for synonym, canonical in _SYNONYM_MAP.items():
+        if synonym in normalized or normalized in synonym:
+            if canonical in MEDICATIONS:
+                return canonical
+
+    return None
+
+
+# ============================================================
+# Motor
+# ============================================================
 
 
 class DrugInteractionMotor(BaseClinicalMotor):
@@ -49,13 +182,18 @@ class DrugInteractionMotor(BaseClinicalMotor):
     5. QT prolongation aggregation
     6. Obesity-inducing medications audit
 
-    Uses embedded SQLite database for portability.
-    Database initialized from drug_interactions.sql on first run.
+    Uses a static in-memory knowledge base (drug_knowledge.py).
+    No I/O, no database, no network — pure deterministic function.
 
     REQUIREMENT_ID: DRUG-INTERACTION
     """
 
     REQUIREMENT_ID = "DRUG-INTERACTION"
+    ENGINE_NAME = "DrugInteractionMotor"
+    ENGINE_VERSION = "2.0.0"
+
+    def get_version_hash(self) -> str:
+        return f"{self.ENGINE_NAME}-v{self.ENGINE_VERSION}"
 
     def validate(self, encounter: Encounter) -> Tuple[bool, str]:
         if not encounter.medications:
@@ -63,270 +201,26 @@ class DrugInteractionMotor(BaseClinicalMotor):
         return True, ""
 
     def compute(self, encounter: Encounter) -> AdjudicationResult:
-        conn = _get_db()
-        cursor = conn.cursor()
-
-        findings: List[str] = []
-        actions: List[ActionItem] = []
-        evidence: List[ClinicalEvidence] = []
         critical_alerts: List[str] = []
         major_alerts: List[str] = []
         moderate_alerts: List[str] = []
+        actions: List[ActionItem] = []
+        evidence: List[ClinicalEvidence] = []
+        qt_meds: List[str] = []
+        obesity_meds: List[str] = []
 
-        # Build medication name lookup
-        med_names = []
+        condition_codes = {c.code for c in encounter.conditions}
+        if encounter.history:
+            if encounter.history.has_type2_diabetes:
+                condition_codes.add("E11")
+            if encounter.history.has_hypertension:
+                condition_codes.add("I10")
+
+        matched_meds: List[Tuple[str, Dict[str, Any]]] = []
         for med in encounter.medications:
-            name = med.name.lower().replace(" ", "_")
-            med_names.append(name)
-
-        # 1. Drug-Drug Interactions
-        if len(med_names) >= 2:
-            placeholders = ",".join(["?"] * len(med_names))
-            cursor.execute(
-                f"""
-                SELECT m1.generic_name, m2.generic_name, di.severity, di.mechanism,
-                       di.clinical_effect, di.management, di.evidence_level
-                FROM drug_interactions di
-                JOIN medications m1 ON di.drug_a_id = m1.id
-                JOIN medications m2 ON di.drug_b_id = m2.id
-                WHERE m1.generic_name IN ({placeholders})
-                  AND m2.generic_name IN ({placeholders})
-                  AND m1.generic_name != m2.generic_name
-            """,
-                med_names + med_names,
-            )
-
-            for row in cursor.fetchall():
-                (
-                    drug_a,
-                    drug_b,
-                    severity,
-                    mechanism,
-                    effect,
-                    management,
-                    evidence_level,
-                ) = row
-                alert = f"{drug_a} + {drug_b}: {effect} ({severity})"
-                if severity == "contraindicated":
-                    critical_alerts.append(alert)
-                    actions.append(
-                        ActionItem(
-                            category="pharmacological",
-                            priority="critical",
-                            task=f"CONTRAINDICADO: {drug_a} + {drug_b}",
-                            rationale=f"{mechanism}. {effect}. Manejo: {management}",
-                        )
-                    )
-                elif severity == "major":
-                    major_alerts.append(alert)
-                    actions.append(
-                        ActionItem(
-                            category="pharmacological",
-                            priority="high",
-                            task=f"Interacción mayor: {drug_a} + {drug_b}",
-                            rationale=f"{mechanism}. {effect}. Manejo: {management}",
-                        )
-                    )
-                elif severity == "moderate":
-                    moderate_alerts.append(alert)
-
-        # 2. Contraindications by condition
-        h = encounter.history
-        if h:
-            condition_codes = []
-            for cond in encounter.conditions:
-                condition_codes.append(cond.code)
-
-            if condition_codes:
-                placeholders = ",".join(["?"] * len(condition_codes))
-                cursor.execute(
-                    f"""
-                    SELECT m.generic_name, c.condition_name, c.severity, c.rationale,
-                           c.alternative_medications
-                    FROM contraindications c
-                    JOIN medications m ON c.medication_id = m.id
-                    WHERE c.condition_code IN ({placeholders})
-                """,
-                    condition_codes,
-                )
-
-                for row in cursor.fetchall():
-                    med_name, cond_name, severity, rationale, alternatives = row
-                    if med_name.lower() in [n.lower() for n in med_names]:
-                        if severity == "absolute":
-                            critical_alerts.append(
-                                f"{med_name} contraindicado en {cond_name}"
-                            )
-                            actions.append(
-                                ActionItem(
-                                    category="pharmacological",
-                                    priority="critical",
-                                    task=f"SUSPENDER {med_name} — contraindicado en {cond_name}",
-                                    rationale=f"{rationale}. Alternativas: {alternatives or 'Consultar farmacología'}",
-                                )
-                            )
-                        elif severity == "relative":
-                            major_alerts.append(
-                                f"{med_name} con precaución en {cond_name}"
-                            )
-
-        # 3. Renal dose adjustments
-        egfr = encounter.egfr_ckd_epi
-        if egfr and med_names:
-            placeholders = ",".join(["?"] * len(med_names))
-            cursor.execute(
-                f"""
-                SELECT m.generic_name, rd.dose_adjustment, rd.monitoring, rd.notes
-                FROM renal_dosing rd
-                JOIN medications m ON rd.medication_id = m.id
-                WHERE m.generic_name IN ({placeholders})
-                  AND ? BETWEEN rd.egfr_min AND rd.egfr_max
-            """,
-                med_names + [egfr],
-            )
-
-            for row in cursor.fetchall():
-                med_name, adjustment, monitoring, notes = row
-                if med_name.lower() in [n.lower() for n in med_names]:
-                    if "contraindicated" in adjustment.lower():
-                        critical_alerts.append(
-                            f"{med_name} contraindicado (eGFR {egfr})"
-                        )
-                        actions.append(
-                            ActionItem(
-                                category="pharmacological",
-                                priority="critical",
-                                task=f"SUSPENDER {med_name} — eGFR {egfr}",
-                                rationale=f"Ajuste: {adjustment}. {notes or ''}",
-                            )
-                        )
-                    else:
-                        major_alerts.append(f"{med_name}: ajustar dosis (eGFR {egfr})")
-                        actions.append(
-                            ActionItem(
-                                category="pharmacological",
-                                priority="high",
-                                task=f"Ajustar dosis de {med_name}: {adjustment}",
-                                rationale=f"eGFR: {egfr}. {notes or ''}. Monitoreo: {monitoring or 'Según protocolo'}",
-                            )
-                        )
-
-        # 4. Pregnancy safety
-        pregnancy = getattr(h, "pregnancy_status", "unknown") if h else "unknown"
-        if pregnancy == "pregnant" and med_names:
-            placeholders = ",".join(["?"] * len(med_names))
-            cursor.execute(
-                f"""
-                SELECT m.generic_name, m.pregnancy_category
-                FROM medications m
-                WHERE m.generic_name IN ({placeholders})
-                  AND m.is_teratogenic = 1
-            """,
-                med_names,
-            )
-
-            for row in cursor.fetchall():
-                med_name, category = row
-                if med_name.lower() in [n.lower() for n in med_names]:
-                    critical_alerts.append(
-                        f"{med_name} teratogénico (categoría {category}) — EMBARAZO"
-                    )
-                    actions.append(
-                        ActionItem(
-                            category="pharmacological",
-                            priority="critical",
-                            task=f"SUSPENDER {med_name} — embarazo (categoría {category})",
-                            rationale="Medicamento teratogénico contraindicado en embarazo.",
-                        )
-                    )
-
-        # 4b. Suicide risk gate for bupropion-containing medications
-        # FDA Black Box Warning: suicidality in young adults
-        bupropion_meds = [
-            m
-            for m in med_names
-            if "bupropion" in m.lower() or "naltrexone_bupropion" in m.lower()
-        ]
-        if bupropion_meds:
-            phq9_item_9 = None
-            if h and hasattr(h, "phq9_item_9_score"):
-                phq9_item_9 = h.phq9_item_9_score
-            if phq9_item_9 is not None and phq9_item_9 > 0:
-                for med_name in bupropion_meds:
-                    critical_alerts.append(
-                        f"{med_name} CONTRAINDICADO: PHQ-9 Item 9 = {phq9_item_9} (riesgo suicida)"
-                    )
-                    actions.append(
-                        ActionItem(
-                            category="pharmacological",
-                            priority="critical",
-                            task=f"CONTRAINDICADO: {med_name} — riesgo suicida detectado (PHQ-9 Item 9 = {phq9_item_9})",
-                            rationale="FDA Black Box Warning: bupropion aumenta riesgo de suicidio en adultos jóvenes. Requiere revisión clínica.",
-                        )
-                    )
-
-        # 5. QT prolongation aggregation
-        qt_meds = []
-        if med_names:
-            placeholders = ",".join(["?"] * len(med_names))
-            cursor.execute(
-                f"""
-                SELECT m.generic_name, m.qt_prolongation_risk
-                FROM medications m
-                WHERE m.generic_name IN ({placeholders})
-                  AND m.qt_prolongation_risk IN ('moderate', 'high')
-            """,
-                med_names,
-            )
-
-            for row in cursor.fetchall():
-                med_name, risk = row
-                qt_meds.append(f"{med_name} ({risk})")
-
-            if len(qt_meds) >= 2:
-                major_alerts.append(f"Riesgo QT prolongado: {', '.join(qt_meds)}")
-                actions.append(
-                    ActionItem(
-                        category="diagnostic",
-                        priority="high",
-                        task="Obtener ECG — múltiples medicamentos con riesgo QT",
-                        rationale=f"Medicamentos: {', '.join(qt_meds)}. Riesgo de Torsades de Pointes.",
-                    )
-                )
-
-        # 6. Obesity-inducing medications audit
-        obesity_meds = []
-        if med_names:
-            placeholders = ",".join(["?"] * len(med_names))
-            cursor.execute(
-                f"""
-                SELECT m.generic_name, m.weight_effect, m.avg_weight_change_kg
-                FROM medications m
-                WHERE m.generic_name IN ({placeholders})
-                  AND m.is_obesity_inducing = 1
-            """,
-                med_names,
-            )
-
-            for row in cursor.fetchall():
-                med_name, effect, weight_change = row
-                obesity_meds.append(f"{med_name} (+{weight_change}kg promedio)")
-
-            if obesity_meds:
-                moderate_alerts.append(
-                    f"Medicamentos obesogénicos: {'; '.join(obesity_meds)}"
-                )
-                actions.append(
-                    ActionItem(
-                        category="lifestyle",
-                        priority="medium",
-                        task="Evaluar alternativas no obesogénicas para medicamentos actuales",
-                        rationale=f"Medicamentos que aumentan peso: {'; '.join(obesity_meds)}",
-                    )
-                )
-
-        # Build evidence
-        for med in encounter.medications:
+            canonical = _match_medication(med.name)
+            if canonical:
+                matched_meds.append((canonical, MEDICATIONS[canonical]))
             dose = getattr(med, "dose_amount", "") or ""
             freq = getattr(med, "frequency", "") or ""
             evidence.append(
@@ -335,6 +229,154 @@ class DrugInteractionMotor(BaseClinicalMotor):
                     code=med.code or "CUSTOM",
                     value=med.name,
                     display=f"{med.name} {dose} {freq}".strip(),
+                )
+            )
+
+        med_ids = [MEDICATIONS[name]["id"] for name, _ in matched_meds]
+
+        # 1. Drug-Drug Interactions
+        for i, (name_a, data_a) in enumerate(matched_meds):
+            id_a = data_a["id"]
+            for j in range(i + 1, len(matched_meds)):
+                name_b = matched_meds[j][0]
+                id_b = matched_meds[j][1]["id"]
+                pair = (min(id_a, id_b), max(id_a, id_b))
+                if pair in INTERACTIONS:
+                    inter = INTERACTIONS[pair]
+                    severity = inter["severity"]
+                    msg = (
+                        f"{name_a} + {name_b}: {inter['effect']} "
+                        f"[{inter['mechanism']}] — {inter['management']}"
+                    )
+                    if severity == "critical":
+                        critical_alerts.append(msg)
+                    elif severity == "major":
+                        major_alerts.append(msg)
+                    else:
+                        moderate_alerts.append(msg)
+                    actions.append(
+                        ActionItem(
+                            category="diagnostic",
+                            priority="high"
+                            if severity in ("critical", "major")
+                            else "medium",
+                            task=f"Revisar interacción {name_a} + {name_b}",
+                            rationale=inter["management"],
+                        )
+                    )
+
+        # 2. Contraindications by Condition
+        for cond_code in condition_codes:
+            if cond_code in CONTRAINDICATIONS:
+                for contra in CONTRAINDICATIONS[cond_code]:
+                    if contra["med_id"] in med_ids:
+                        med_name = ID_TO_MED_NAME.get(
+                            contra["med_id"], f"med_id_{contra['med_id']}"
+                        )
+                        severity = contra["severity"]
+                        msg = (
+                            f"CONTRAINDICACIÓN: {med_name} en {cond_code} — "
+                            f"{contra['rationale']}. Alternativa: {contra['alt']}"
+                        )
+                        if severity == "absolute":
+                            critical_alerts.append(msg)
+                        else:
+                            major_alerts.append(msg)
+                        actions.append(
+                            ActionItem(
+                                category="diagnostic",
+                                priority="high",
+                                task=f"Evaluar suspensión de {med_name} ({cond_code})",
+                                rationale=contra["rationale"],
+                            )
+                        )
+
+        # 3. Renal Dosing
+        egfr_obs = encounter.get_observation("EGFR-001")
+        egfr = safe_float(egfr_obs.value) if egfr_obs else None
+
+        if egfr is not None:
+            for name, data in matched_meds:
+                med_id = data["id"]
+                if med_id in RENAL_DOSING:
+                    for adj in RENAL_DOSING[med_id]:
+                        if adj["min"] <= egfr < adj["max"]:
+                            msg = (
+                                f"Ajuste renal {name}: eGFR={egfr:.0f} mL/min — "
+                                f"{adj['adjustment']}. {adj['notes']}"
+                            )
+                            if "contraindicated" in adj["adjustment"].lower():
+                                critical_alerts.append(msg)
+                            else:
+                                moderate_alerts.append(msg)
+                            actions.append(
+                                ActionItem(
+                                    category="renal",
+                                    priority="high"
+                                    if "contraindicated" in adj["adjustment"].lower()
+                                    else "medium",
+                                    task=f"Ajustar dosis de {name} (eGFR={egfr:.0f})",
+                                    rationale=adj["adjustment"],
+                                )
+                            )
+                            break
+
+        # 4. Pregnancy Safety
+        pregnancy_status = getattr(encounter.metadata, "pregnancy_status", None)
+        if pregnancy_status == "positive":
+            for name, data in matched_meds:
+                if data.get("teratogenic"):
+                    preg_cat = data.get("preg_cat", "unknown")
+                    msg = (
+                        f"RIESGO TERATOGÉNICO: {name} — Categoría {preg_cat}. "
+                        f"Consultar obstetra antes de continuar."
+                    )
+                    if preg_cat in ("X", "D"):
+                        critical_alerts.append(msg)
+                    else:
+                        major_alerts.append(msg)
+                    actions.append(
+                        ActionItem(
+                            category="pregnancy",
+                            priority="high",
+                            task=f"Evaluar riesgo/beneficio de {name} en embarazo",
+                            rationale=f"Categoría embarazo: {preg_cat}",
+                        )
+                    )
+
+        # 5. QT Prolongation Aggregation
+        for name, data in matched_meds:
+            if data.get("qt_risk") in ("high", "moderate"):
+                qt_meds.append(name)
+
+        if len(qt_meds) >= 2:
+            msg = f"Riesgo QT prolongado (agregación): {', '.join(qt_meds)}"
+            major_alerts.append(msg)
+            actions.append(
+                ActionItem(
+                    category="diagnostic",
+                    priority="high",
+                    task="Obtener ECG basal y monitoreo QTc",
+                    rationale=f"{len(qt_meds)} fármacos con riesgo QT",
+                )
+            )
+
+        # 6. Obesity-Inducing Medications Audit
+        for name, data in matched_meds:
+            if data.get("weight_effect") == "gain":
+                avg_change = data.get("avg_loss", 0)
+                obesity_meds.append(f"{name} (+{abs(avg_change)}kg promedio)")
+
+        if obesity_meds:
+            moderate_alerts.append(
+                f"Medicamentos obesogénicos: {'; '.join(obesity_meds)}"
+            )
+            actions.append(
+                ActionItem(
+                    category="lifestyle",
+                    priority="medium",
+                    task="Evaluar alternativas no obesogénicas para medicamentos actuales",
+                    rationale=f"Medicamentos que aumentan peso: {'; '.join(obesity_meds)}",
                 )
             )
 
@@ -368,8 +410,8 @@ class DrugInteractionMotor(BaseClinicalMotor):
         all_findings = critical_alerts + major_alerts + moderate_alerts
         if all_findings:
             explanation = "; ".join(all_findings)
-
-        conn.close()
+        else:
+            explanation = verdict
 
         return AdjudicationResult(
             calculated_value=verdict,
@@ -377,7 +419,7 @@ class DrugInteractionMotor(BaseClinicalMotor):
             evidence=evidence,
             requirement_id=self.REQUIREMENT_ID,
             estado_ui=estado,
-            dato_faltante="Base de datos de interacciones: cobertura limitada a 53 fármacos. No sustituye Lexicomp ni Micromedex."
+            dato_faltante="Base de datos de interacciones: cobertura limitada. No sustituye Lexicomp ni Micromedex."
             if estado == "INDETERMINATE_LOCKED"
             else None,
             explanation=explanation,
@@ -388,7 +430,7 @@ class DrugInteractionMotor(BaseClinicalMotor):
                 "moderate_alerts": moderate_alerts,
                 "qt_meds": qt_meds,
                 "obesity_meds": obesity_meds,
-                "n_medications_evaluated": len(med_names),
+                "n_medications_evaluated": len(matched_meds),
                 "db_coverage": "limited",
             },
         )

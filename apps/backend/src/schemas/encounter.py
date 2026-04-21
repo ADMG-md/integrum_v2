@@ -6,7 +6,7 @@ Domain types (ObesityOnsetTrigger, DrugEntry, panels, etc.) are re-exported
 from src.domain.models to maintain a single source of truth.
 """
 
-from typing import List, Optional, Any, Dict, Literal
+from typing import List, Optional, Any, Dict, Literal, Union
 from datetime import datetime
 from pydantic import BaseModel, Field, field_validator, model_validator
 
@@ -38,19 +38,24 @@ class PatientRead(PatientCreate):
     created_at: datetime
 
 
+ObservationValueType = Union[int, float, str, bool]
+
+
 class ObservationSchema(BaseModel):
     code: str
-    value: Any = Field(
+    value: ObservationValueType = Field(
         ..., description="SaMD Observation value (Numerical or Categorical)"
     )
     unit: Optional[str] = None
     category: str = "Clinical"
-    metadata_json: Dict[str, Any] = Field(default_factory=dict)
+    metadata_json: Dict[str, ObservationValueType] = Field(default_factory=dict)
     timestamp: datetime = Field(default_factory=datetime.now)
 
     @field_validator("value")
     @classmethod
-    def validate_biological_limits(cls, v: Any, info: Any) -> Any:
+    def validate_biological_limits(
+        cls, v: ObservationValueType, info: Any
+    ) -> ObservationValueType:
         LIMITS = {
             "2339-0": (20, 600),
             "8480-6": (60, 250),
@@ -177,6 +182,9 @@ class BiometricsSchema(BaseModel):
     body_fat_percent: Optional[float] = None
     fat_mass_kg: Optional[float] = None
     lean_mass_kg: Optional[float] = None
+    lbm_boer_kg: Optional[float] = Field(
+        None, description="Lean Body Mass calculada con fórmula de Boer"
+    )
     muscle_mass_kg: Optional[float] = None
     skeletal_muscle_index: Optional[float] = None
     visceral_fat_area_cm2: Optional[float] = None
@@ -375,6 +383,7 @@ class MetabolicPanelInput(BaseModel):
 
         return self
 
+
 class ConditionSchema(BaseModel):
     code: str
     title: str
@@ -461,16 +470,18 @@ class EncounterFinalizeSchema(BaseModel):
     # Outcome tracking — optional, but critical for research dataset quality.
     # Captures what happened TO the patient at this visit / since last encounter.
     weight_current_kg: Optional[float] = Field(
-        None, ge=20, le=500,
-        description="Patient weight at this encounter (enables longitudinal delta)"
+        None,
+        ge=20,
+        le=500,
+        description="Patient weight at this encounter (enables longitudinal delta)",
     )
     outcome_status: Optional[str] = Field(
-        None,
-        description="Physician global assessment: MEJORADO | ESTABLE | DETERIORO"
+        None, description="Physician global assessment: MEJORADO | ESTABLE | DETERIORO"
     )
     adverse_event: Optional[str] = Field(
-        None, max_length=500,
-        description="Adverse event since last encounter (hospitalization, CV event, severe side effect)"
+        None,
+        max_length=500,
+        description="Adverse event since last encounter (hospitalization, CV event, severe side effect)",
     )
     medication_changed: Optional[bool] = Field(
         None, description="Prescription changed at this encounter"

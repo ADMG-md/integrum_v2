@@ -16,9 +16,15 @@ import os
 load_dotenv()
 
 # Config (Loaded from environment for hardening)
-SECRET_KEY = os.getenv("SECRET_KEY", "INTEGRUM_V2_SECRET_UNSAFE_FOR_PROD")
+SECRET_KEY = os.environ.get("SECRET_KEY")
+if not SECRET_KEY:
+    # In production, we MUST have a secret key. In dev, we can fallback but with a warning.
+    if os.getenv("ENVIRONMENT") == "production":
+        raise RuntimeError("CRITICAL: SECRET_KEY environment variable is NOT SET in production.")
+    SECRET_KEY = "INTEGRUM_V2_DEV_SECRET_ONLY"
+
 ALGORITHM = os.getenv("ALGORITHM", "HS256")
-ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "1440"))
+ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "30"))
 REFRESH_TOKEN_EXPIRE_DAYS = int(os.getenv("REFRESH_TOKEN_EXPIRE_DAYS", "7"))
 
 # Argon2id primary, bcrypt fallback for existing hashes

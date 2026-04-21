@@ -22,26 +22,42 @@ from pathlib import Path
 from typing import Callable
 
 # ── Paths ────────────────────────────────────────────────────────────────────
-ROOT       = Path(__file__).parent.parent
-BACKEND    = ROOT / "apps" / "backend"
-FRONTEND   = ROOT / "apps" / "frontend"
-ENV_FILE   = BACKEND / ".env"
+ROOT = Path(__file__).parent.parent
+BACKEND = ROOT / "apps" / "backend"
+FRONTEND = ROOT / "apps" / "frontend"
+ENV_FILE = BACKEND / ".env"
 
 # ── ANSI colors ──────────────────────────────────────────────────────────────
-GREEN  = "\033[92m"
-RED    = "\033[91m"
+GREEN = "\033[92m"
+RED = "\033[91m"
 YELLOW = "\033[93m"
-CYAN   = "\033[96m"
-BOLD   = "\033[1m"
-RESET  = "\033[0m"
+CYAN = "\033[96m"
+BOLD = "\033[1m"
+RESET = "\033[0m"
 
-def ok(msg):    print(f"  {GREEN}✅{RESET} {msg}")
-def fail(msg):  print(f"  {RED}❌{RESET} {msg}")
-def warn(msg):  print(f"  {YELLOW}⚠️ {RESET} {msg}")
-def info(msg):  print(f"  {CYAN}ℹ️ {RESET} {msg}")
-def header(msg):print(f"\n{BOLD}{CYAN}{'─'*50}\n  {msg}\n{'─'*50}{RESET}")
+
+def ok(msg):
+    print(f"  {GREEN}✅{RESET} {msg}")
+
+
+def fail(msg):
+    print(f"  {RED}❌{RESET} {msg}")
+
+
+def warn(msg):
+    print(f"  {YELLOW}⚠️ {RESET} {msg}")
+
+
+def info(msg):
+    print(f"  {CYAN}ℹ️ {RESET} {msg}")
+
+
+def header(msg):
+    print(f"\n{BOLD}{CYAN}{'─' * 50}\n  {msg}\n{'─' * 50}{RESET}")
+
 
 results = {"passed": 0, "failed": 0, "warned": 0}
+
 
 def check(name: str, fn: Callable) -> bool:
     try:
@@ -63,6 +79,7 @@ def check(name: str, fn: Callable) -> bool:
         results["failed"] += 1
         return False
 
+
 # ─────────────────────────────────────────────────────────────────────────────
 # 1. DATABASE CHECKS
 # ─────────────────────────────────────────────────────────────────────────────
@@ -78,13 +95,16 @@ def check_database(fast: bool = False):
 
     db_url = os.environ.get("DATABASE_URL", "")
     if not db_url:
-        fail("DATABASE_URL not set"); results["failed"] += 1; return
+        fail("DATABASE_URL not set")
+        results["failed"] += 1
+        return
 
     # Convert asyncpg → psycopg2 for sync check
     sync_url = db_url.replace("postgresql+asyncpg://", "postgresql://")
 
     def db_connect():
         import psycopg2
+
         conn = psycopg2.connect(sync_url, connect_timeout=5)
         conn.close()
 
@@ -92,11 +112,17 @@ def check_database(fast: bool = False):
 
     def check_tables():
         import psycopg2
+
         conn = psycopg2.connect(sync_url, connect_timeout=5)
         cur = conn.cursor()
-        required = ["patients", "encounters", "adjudication_logs",
-                    "decision_audit_logs", "clinical_traceability",
-                    "patient_consents"]
+        required = [
+            "patients",
+            "encounters",
+            "adjudication_logs",
+            "decision_audit_logs",
+            "clinical_traceability",
+            "patient_consents",
+        ]
         cur.execute("""
             SELECT tablename FROM pg_tables WHERE schemaname = 'public'
         """)
@@ -112,6 +138,7 @@ def check_database(fast: bool = False):
     def check_outcome_columns():
         """Verify Fix 2 migration was applied."""
         import psycopg2
+
         conn = psycopg2.connect(sync_url, connect_timeout=5)
         cur = conn.cursor()
         cur.execute("""
@@ -120,8 +147,13 @@ def check_database(fast: bool = False):
         """)
         cols = {r[0] for r in cur.fetchall()}
         conn.close()
-        required_new = ["weight_current_kg", "outcome_status",
-                        "adverse_event", "medication_changed", "adherence_reported"]
+        required_new = [
+            "weight_current_kg",
+            "outcome_status",
+            "adverse_event",
+            "medication_changed",
+            "adherence_reported",
+        ]
         missing = [c for c in required_new if c not in cols]
         if missing:
             return f"Outcome tracking columns missing (run alembic upgrade head): {missing}"
@@ -131,6 +163,7 @@ def check_database(fast: bool = False):
 
     def check_row_counts():
         import psycopg2
+
         conn = psycopg2.connect(sync_url, connect_timeout=5)
         cur = conn.cursor()
         counts = {}
@@ -138,18 +171,24 @@ def check_database(fast: bool = False):
             cur.execute(f"SELECT COUNT(*) FROM {table}")
             counts[table] = cur.fetchone()[0]
         conn.close()
-        info(f"Row counts → patients:{counts['patients']} | "
-             f"encounters:{counts['encounters']} | "
-             f"adj_logs:{counts['adjudication_logs']}")
+        info(
+            f"Row counts → patients:{counts['patients']} | "
+            f"encounters:{counts['encounters']} | "
+            f"adj_logs:{counts['adjudication_logs']}"
+        )
         return True
 
     check("Row counts", check_row_counts)
 
     if not fast:
+
         def check_migrations():
             result = subprocess.run(
                 ["python3", "-m", "alembic", "current"],
-                cwd=BACKEND, capture_output=True, text=True, timeout=15
+                cwd=BACKEND,
+                capture_output=True,
+                text=True,
+                timeout=15,
             )
             if result.returncode != 0:
                 return f"alembic current failed: {result.stderr[:200]}"
@@ -171,25 +210,30 @@ def check_backend(fast: bool = False):
 
     def check_imports():
         import src.schemas.encounter  # noqa
-        import src.schemas.audit      # noqa
-        import src.models.encounter   # noqa
-        import src.models.audit       # noqa
+        import src.schemas.audit  # noqa
+        import src.models.encounter  # noqa
+        import src.models.audit  # noqa
+
         return True
 
     check("Core schemas + models importable", check_imports)
 
     def check_motor_registry():
         from src.engines.specialty_runner import PRIMARY_MOTORS, GATED_MOTORS
+
         total = len(PRIMARY_MOTORS) + len(GATED_MOTORS)
         if total < 40:
             return f"Expected >= 40 motors, got {total}"
-        info(f"Motors: PRIMARY={len(PRIMARY_MOTORS)}, GATED={len(GATED_MOTORS)}, TOTAL={total}")
+        info(
+            f"Motors: PRIMARY={len(PRIMARY_MOTORS)}, GATED={len(GATED_MOTORS)}, TOTAL={total}"
+        )
         return True
 
     check("Motor registry (>= 40 engines)", check_motor_registry)
 
     def check_motor_instantiation():
         from src.engines.specialty_runner import PRIMARY_MOTORS
+
         failed = []
         for name, cls in PRIMARY_MOTORS.items():
             try:
@@ -204,6 +248,7 @@ def check_backend(fast: bool = False):
 
     def check_fhir_prefix():
         from src.api.v1.endpoints.fhir import router
+
         if router.prefix != "":
             return f"FHIR router has prefix={router.prefix!r} — duplicate routes bug!"
         return True
@@ -215,7 +260,9 @@ def check_backend(fast: bool = False):
 
         # Hard block 1: SBP <= DBP
         try:
-            BiometricsSchema(weight_kg=80, height_cm=170, systolic_bp=70, diastolic_bp=90)
+            BiometricsSchema(
+                weight_kg=80, height_cm=170, systolic_bp=70, diastolic_bp=90
+            )
             return "BiometricsSchema: SBP<DBP not blocked"
         except Exception:
             pass
@@ -243,7 +290,9 @@ def check_backend(fast: bool = False):
 
         # Valid case must pass
         try:
-            BiometricsSchema(weight_kg=85, height_cm=170, systolic_bp=130, diastolic_bp=85)
+            BiometricsSchema(
+                weight_kg=85, height_cm=170, systolic_bp=130, diastolic_bp=85
+            )
         except Exception as e:
             return f"BiometricsSchema: valid case rejected: {e}"
 
@@ -253,11 +302,16 @@ def check_backend(fast: bool = False):
 
     def check_reason_codes():
         from src.schemas.audit import ReasonCode
+
         required = {
-            "AGREE_INSIGHT", "OVERRIDE_CLINICAL_INTUITION",
-            "OVERRIDE_ECONOMIC_BARRIER", "OVERRIDE_MISSING_CONTEXT",
-            "OVERRIDE_PATIENT_REFUSAL", "BIOLOGICAL_IMPOSSIBILITY",
-            "PARTIAL_AGREEMENT", "TECHNICAL_ERROR",
+            "AGREE_INSIGHT",
+            "OVERRIDE_CLINICAL_INTUITION",
+            "OVERRIDE_ECONOMIC_BARRIER",
+            "OVERRIDE_MISSING_CONTEXT",
+            "OVERRIDE_PATIENT_REFUSAL",
+            "BIOLOGICAL_IMPOSSIBILITY",
+            "PARTIAL_AGREEMENT",
+            "TECHNICAL_ERROR",
         }
         existing = {e.value for e in ReasonCode}
         missing = required - existing
@@ -270,23 +324,32 @@ def check_backend(fast: bool = False):
 
     def check_export_endpoint():
         from src.api.v1.endpoints.export import MOTOR_COLUMNS, _build_flat_row
+
         if len(MOTOR_COLUMNS) < 35:
             return f"MOTOR_COLUMNS too short: {len(MOTOR_COLUMNS)}"
-        info(f"Flat export: {len(MOTOR_COLUMNS)} motors × 5 cols + 12 base = {len(MOTOR_COLUMNS)*5+12} total columns")
+        info(
+            f"Flat export: {len(MOTOR_COLUMNS)} motors × 5 cols + 12 base = {len(MOTOR_COLUMNS) * 5 + 12} total columns"
+        )
         return True
 
     check("Research flat export endpoint registered", check_export_endpoint)
 
     if not fast:
+
         def check_pytest():
             t0 = time.time()
             result = subprocess.run(
                 ["python3", "-m", "pytest", "tests/", "-q", "--tb=no"],
-                cwd=BACKEND, capture_output=True, text=True, timeout=120
+                cwd=BACKEND,
+                capture_output=True,
+                text=True,
+                timeout=120,
             )
             elapsed = time.time() - t0
             output = (result.stdout + result.stderr).strip()
-            last_line = [l for l in output.splitlines() if l.strip()][-1] if output else ""
+            last_line = (
+                [l for l in output.splitlines() if l.strip()][-1] if output else ""
+            )
             if result.returncode != 0:
                 return f"Tests FAILED ({elapsed:.1f}s):\n    {last_line}"
             info(f"{last_line} ({elapsed:.1f}s)")
@@ -342,16 +405,24 @@ def check_frontend(fast: bool = False):
     check("Critical frontend files present", check_critical_files)
 
     def check_coherence_in_form():
-        """Verify validateCoherence() is in ConsultationForm."""
+        """Verify validateCoherence() is in ConsultationForm or extracted types module."""
         form_file = FRONTEND / "src/components/consulta/ConsultationForm.tsx"
-        content = form_file.read_text()
+        types_file = FRONTEND / "src/components/consulta/consultation-form-types.tsx"
+        step0_file = FRONTEND / "src/components/consulta/step0-historia-biometria.tsx"
+
+        # Check all files since coherence logic may be extracted
+        content = form_file.read_text() if form_file.exists() else ""
+        types_content = types_file.read_text() if types_file.exists() else ""
+        step0_content = step0_file.read_text() if step0_file.exists() else ""
+        combined = content + types_content + step0_content
+
         checks = {
             "validateCoherence function": "validateCoherence",
-            "TG+HbA1c interference rule": "TG > 400",
+            "TG+HbA1c interference rule": "tg > 400",
             "Wheeler eAG formula": "28.7",
             "min/max range on LabField": 'min="20"',
         }
-        missing = [name for name, needle in checks.items() if needle not in content]
+        missing = [name for name, needle in checks.items() if needle not in combined]
         if missing:
             return f"Missing coherence logic: {missing}"
         info(f"Coherence rules present: {list(checks.keys())}")
@@ -360,11 +431,15 @@ def check_frontend(fast: bool = False):
     check("ConsultationForm coherence validation rules", check_coherence_in_form)
 
     if not fast:
+
         def check_typescript():
             t0 = time.time()
             result = subprocess.run(
                 ["npx", "tsc", "--noEmit", "--skipLibCheck"],
-                cwd=FRONTEND, capture_output=True, text=True, timeout=120
+                cwd=FRONTEND,
+                capture_output=True,
+                text=True,
+                timeout=120,
             )
             elapsed = time.time() - t0
             if result.returncode != 0:
@@ -410,18 +485,20 @@ def check_frontend(fast: bool = False):
 # ─────────────────────────────────────────────────────────────────────────────
 def main():
     parser = argparse.ArgumentParser(description="Integrum V2 Pre-Flight Health Check")
-    parser.add_argument("--db",       action="store_true", help="Only check database")
-    parser.add_argument("--backend",  action="store_true", help="Only check backend")
+    parser.add_argument("--db", action="store_true", help="Only check database")
+    parser.add_argument("--backend", action="store_true", help="Only check backend")
     parser.add_argument("--frontend", action="store_true", help="Only check frontend")
-    parser.add_argument("--fast",     action="store_true", help="Skip slow checks (tsc, pytest, migrations)")
+    parser.add_argument(
+        "--fast", action="store_true", help="Skip slow checks (tsc, pytest, migrations)"
+    )
     args = parser.parse_args()
 
     run_all = not (args.db or args.backend or args.frontend)
 
-    print(f"\n{BOLD}{'='*50}")
+    print(f"\n{BOLD}{'=' * 50}")
     print(f"  Integrum V2 — Pre-Flight Health Check")
     print(f"  {'--fast mode' if args.fast else 'Full mode'}")
-    print(f"{'='*50}{RESET}")
+    print(f"{'=' * 50}{RESET}")
 
     t0 = time.time()
 
@@ -438,16 +515,22 @@ def main():
     elapsed = time.time() - t0
     total = results["passed"] + results["failed"] + results["warned"]
 
-    print(f"\n{BOLD}{'='*50}")
-    print(f"  Result: {results['passed']}/{total} passed, "
-          f"{results['warned']} warned, {results['failed']} failed  ({elapsed:.1f}s)")
-    print(f"{'='*50}{RESET}\n")
+    print(f"\n{BOLD}{'=' * 50}")
+    print(
+        f"  Result: {results['passed']}/{total} passed, "
+        f"{results['warned']} warned, {results['failed']} failed  ({elapsed:.1f}s)"
+    )
+    print(f"{'=' * 50}{RESET}\n")
 
     if results["failed"] > 0:
-        print(f"{RED}{BOLD}❌ NOT READY — fix failures before seeing real patients.{RESET}\n")
+        print(
+            f"{RED}{BOLD}❌ NOT READY — fix failures before seeing real patients.{RESET}\n"
+        )
         sys.exit(1)
     elif results["warned"] > 0:
-        print(f"{YELLOW}{BOLD}⚠️  READY WITH WARNINGS — review warnings before proceeding.{RESET}\n")
+        print(
+            f"{YELLOW}{BOLD}⚠️  READY WITH WARNINGS — review warnings before proceeding.{RESET}\n"
+        )
         sys.exit(0)
     else:
         print(f"{GREEN}{BOLD}✅ ALL CLEAR — system ready for real patients.{RESET}\n")

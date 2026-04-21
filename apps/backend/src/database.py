@@ -7,7 +7,13 @@ load_dotenv()
 
 DATABASE_URL = os.getenv("DATABASE_URL", "postgresql+asyncpg://integrum_user:integrum_password@localhost:5432/integrum_v2")
 
-engine = create_async_engine(DATABASE_URL, echo=True)
+engine = create_async_engine(
+    DATABASE_URL, 
+    echo=False,
+    pool_size=20,
+    max_overflow=10,
+    pool_pre_ping=True
+)
 
 SessionLocal = async_sessionmaker(
     bind=engine,

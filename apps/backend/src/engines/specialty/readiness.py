@@ -358,7 +358,9 @@ class ClinicalDataReadinessEngine:
                 is_valid, reason = motor.validate(encounter)
                 motor_validators[name] = (is_valid, reason)
             except Exception as e:
-                logger.warning("readiness_validate_error", motor=name, error=str(e))
+                logger.warning(
+                    "readiness_validate_error", motor=name, error_type=type(e).__name__
+                )
                 motor_validators[name] = (False, f"Validation error: {str(e)}")
 
         for name, (is_valid, reason) in motor_validators.items():

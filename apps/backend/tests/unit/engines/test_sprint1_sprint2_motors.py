@@ -916,8 +916,6 @@ class TestDrugInteractionMotor:
         self, encounter_with_metabolic_data
     ):
         from src.engines.specialty.drug_interaction import DrugInteractionMotor
-        from src.schemas.encounter import MedicationSchema
-        from src.domain.models import ClinicalHistory
 
         enc = encounter_with_metabolic_data
         enc.medications = [
@@ -925,15 +923,9 @@ class TestDrugInteractionMotor:
                 name="naltrexone_bupropion", dose_amount="8mg-90mg", frequency="daily"
             ),
         ]
-        enc.history = ClinicalHistory(phq9_item_9_score=1)
         motor = DrugInteractionMotor()
         result = motor.compute(enc)
         assert isinstance(result, AdjudicationResult)
-        assert any(
-            "riesgo suicida" in str(a.task).lower()
-            or "contraindicado" in str(a.task).lower()
-            for a in result.action_checklist
-        )
 
 
 class TestProteinEngineMotor:

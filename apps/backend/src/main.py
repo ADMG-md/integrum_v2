@@ -8,6 +8,9 @@ import time
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
+from sqlalchemy import text
+
+__version__ = "0.2.1" # Semantic versioning (Fixing Hardcode)
 
 # Initialize SaMD Structured Logging
 setup_logging()
@@ -27,7 +30,7 @@ limiter = Limiter(key_func=get_remote_address)
 app = FastAPI(
     title="Integrum V2 API",
     description="Core Clinical Engine (SaMD Class B) - Hardened Version",
-    version="0.2.0",
+    version=__version__,
     lifespan=lifespan,
 )
 app.state.limiter = limiter
@@ -90,7 +93,14 @@ app.include_router(api_router, prefix="/api/v1")
 @app.get("/health")
 @limiter.limit("5/minute")
 async def health_check(request: Request):
-    return {"status": "ok", "version": "0.2.0", "mode": "hardened"}
+    try:
+        from src.database import SessionLocal
+        async with SessionLocal() as db:
+            await db.execute(text("SELECT 1"))
+        return {"status": "ok", "version": __version__, "db": "connected", "mode": "hardened"}
+    except Exception as e:
+        logger.error("health_check_failed", error=str(e))
+        return {"status": "degraded", "version": __version__, "db": "error", "error": str(e)}, 503
 
 
 if __name__ == "__main__":

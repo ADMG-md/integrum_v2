@@ -12,8 +12,10 @@ class ObesityClinicalStoryInput(BaseModel):
     cvd_risk_category: Optional[
         Literal["low", "borderline", "intermediate", "high"]
     ] = None
-    metabolic_proxies_summary: Optional[str] = None  # Added V2.6
-    metabolic_proxies_active: bool = False  # Added V2.6
+    metabolic_proxies_summary: Optional[str] = None
+    metabolic_proxies_active: bool = False
+    nutrition_precision_summary: Optional[str] = None  # Added V2.7
+    pharma_precision_summary: Optional[str] = None  # Added V2.7
 
 
 class ObesityClinicalStoryOutput(BaseModel):
@@ -26,11 +28,11 @@ class ObesityClinicalStoryOutput(BaseModel):
 
 class ObesityMasterMotor:
     ENGINE_NAME = "ObesityMasterMotor"
-    ENGINE_VERSION = "0.2.0"
-    REQUIREMENT_ID = "OBESITY-MASTER"
+    ENGINE_VERSION = "0.3.0"  # Augmented Synthesis
+    REQUIREMENT_ID = "OBESITY-MASTER-V3"
 
     def get_version_hash(self) -> str:
-        return "0.2.0"
+        return "0.3.0"
 
     def __call__(self, data: ObesityClinicalStoryInput) -> AdjudicationResult:
         discordant, reason = self._detect_discordance(data)
@@ -48,13 +50,15 @@ class ObesityMasterMotor:
                     rationale=f"Perfil discordante detectado ({reason}). Requiere evaluación multidisciplinaria.",
                 )
             )
-        if data.eoss_stage >= 3:
-            actions.append(
+        
+        # Sugerencia de derivación agresiva si hay sarcopenia severa y obesidad
+        if data.sarcopenia_risk == "high":
+             actions.append(
                 ActionItem(
                     category="referral",
                     priority="high",
-                    task="Referencia a manejo especializado de obesidad",
-                    rationale=f"EOSS Stage {data.eoss_stage} indica daño orgánico establecido.",
+                    task="Evaluación por Rehabilitación/Fisiatría",
+                    rationale="Riesgo alto de Sarcopenia detectado en paciente con Obesidad. Priorizar ganancia funcional ante pérdida de peso."
                 )
             )
 
@@ -63,7 +67,7 @@ class ObesityMasterMotor:
             if (discordant or data.eoss_stage >= 3 or data.metabolic_proxies_active)
             else "INDETERMINATE_LOCKED"
         )
-        confidence = 0.90 if not discordant else 0.75
+        confidence = 0.95 if not discordant else 0.80
 
         return AdjudicationResult(
             calculated_value=headline,
@@ -82,27 +86,21 @@ class ObesityMasterMotor:
             action_checklist=actions,
             metadata={
                 "clinical_profile": profile,
-                "discordant_profile": discordant,
-                "discordance_reason": reason,
                 "headline_verdict": headline,
                 "acosta_phenotype": data.acosta_phenotype,
                 "eoss_stage": data.eoss_stage,
                 "sarcopenia_risk": data.sarcopenia_risk,
                 "bmi": data.bmi_kg_m2,
-                "cvd_risk": data.cvd_risk_category,
+                "nutrition_summary": data.nutrition_precision_summary,
+                "pharma_summary": data.pharma_precision_summary,
             },
         )
 
     def _detect_discordance(
         self, d: ObesityClinicalStoryInput
     ) -> Tuple[bool, Optional[str]]:
-        # MHO (Metabolically Healthy Obesity) but CVD risk is high is REMOVED
-        # to comply with FDA 2026 CDS guidelines (experimental engines cannot drive hard automatic alerts).
-
-        # Sarcopenic obesity: high sarcopenia risk + elevated BMI
         if d.sarcopenia_risk == "high" and d.bmi_kg_m2 >= 27:
             return True, "Obesidad sarcopénica"
-
         return False, None
 
     def _build_profile_label(
@@ -117,34 +115,39 @@ class ObesityMasterMotor:
         self, d: ObesityClinicalStoryInput, discordant: bool
     ) -> str:
         if discordant:
-            return "Perfil de obesidad de alto interés clínico; requiere revisión integral."
+            return "Perfil de obesidad de alto interés clínico (Sarcopenia); requiere revisión integral."
 
-        # MISSION 12.5: Elevate risk based on Deep Metabolic Proxies
         if d.metabolic_proxies_active:
             summary = d.metabolic_proxies_summary or ""
             if "Disfunción Mitocondrial" in summary:
-                return "Obesidad con Disfunción Mitocondrial (Vía de la Fructosa); Riesgo Metabólico Elevado."
+                return "Obesidad con Disfunción Mitocondrial (Vía de la Fructosa); Prioridad Metabólica."
             if "Metainflamación" in summary:
-                return "Obesidad con Metainflamación Sistémica Activa; Prioridad Terapéutica Alta."
+                return "Obesidad con Metainflamación Sistémica Activa; Prioridad Terapéutica."
 
         if d.eoss_stage >= 3:
-            return "Obesidad con daño establecido (EOSS ≥3)."
-        return "Obesidad sin daño avanzado aparente."
+            return f"Obesidad con daño establecido (EOSS {d.eoss_stage})."
+        return "Obesidad metabólicamente activa (EOSS <3)."
 
     def _build_explanation(
         self, d: ObesityClinicalStoryInput, discordant: bool, reason: Optional[str]
     ) -> str:
         parts = [
-            f"Fenotipo Acosta: {d.acosta_phenotype}.",
-            f"EOSS: {d.eoss_stage}.",
+            f"Paciente con fenotipo ACOSTA: {d.acosta_phenotype}.",
+            f"Grado de complicación EOSS: {d.eoss_stage}.",
             f"Riesgo de sarcopenia: {d.sarcopenia_risk}.",
-            f"BMI: {d.bmi_kg_m2:.1f}, cintura: {d.waist_cm:.1f} cm.",
+            f"Riesgo cardiovascular estimado: {d.cvd_risk_category or 'pendiente'}.",
         ]
-        if d.cvd_risk_category:
-            parts.append(f"Riesgo cardiovascular: {d.cvd_risk_category}.")
+        
+        if d.nutrition_precision_summary:
+            parts.append(f"DIRECCIÓN NUTRICIONAL: {d.nutrition_precision_summary}.")
+        
+        if d.pharma_precision_summary:
+            parts.append(f"DIRECCIÓN FARMACOLÓGICA: {d.pharma_precision_summary}.")
+
         if d.metabolic_proxies_summary:
-            parts.append(f"Firmas Metabólicas: {d.metabolic_proxies_summary}.")
+            parts.append(f"FIRMAS METABÓLICAS: {d.metabolic_proxies_summary}.")
+
         if discordant and reason:
-            parts.append(f"Discordancia detectada: {reason}.")
+            parts.append(f"NOTA: Detectada discordancia clínica ({reason}).")
 
         return " ".join(parts)

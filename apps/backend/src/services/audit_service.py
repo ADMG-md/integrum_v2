@@ -4,6 +4,10 @@ from src.engines.domain import AdjudicationResult, Encounter
 from typing import Dict, Any
 import structlog
 import uuid
+import hmac
+import hashlib
+import json
+import os
 
 logger = structlog.get_logger()
 
@@ -34,12 +38,7 @@ class AuditService:
 
             log_id = uuid.uuid4()
 
-            # Hardening: Generate Integrity Hash (HMAC-SHA256)
-            import hmac
-            import hashlib
-            import json
-            import os
-
+            # Hardening: Generate Integrity Hash (HMAC-SHA512)
             secret = os.getenv("SECRET_KEY")
             if not secret or secret == "unsafe-dev-salt":
                 if os.getenv("ENVIRONMENT") == "production":

@@ -45,6 +45,9 @@ from src.engines.specialty.aom_eligibility import ObesityPharmaEligibilityMotor
 from src.engines.specialty.glp1_titration import GLP1TitrationMotor
 from src.engines.specialty.drug_interaction import DrugInteractionMotor
 from src.engines.protein_engine import ProteinEngineMotor
+from src.engines.specialty.pediatric_nutrition import PediatricNutritionMotor
+from src.engines.specialty.precision_nutrition import PrecisionNutritionMotor
+from src.engines.specialty.pharma_precision import PharmaPrecisionMotor
 from src.engines.domain import Encounter, AdjudicationResult
 from typing import Dict, Any, List, Optional, Literal
 import structlog
@@ -105,6 +108,11 @@ PRIMARY_MOTORS = {
     # Sprint 8: Medication safety
     "DrugInteractionMotor": DrugInteractionMotor,
     "ProteinEngineMotor": ProteinEngineMotor,
+    # Sprint 9: Pediatric nutrition
+    "PediatricNutritionMotor": PediatricNutritionMotor,
+    # Sprint 10: Precision adult nutrition & pharma
+    "PrecisionNutritionMotor": PrecisionNutritionMotor,
+    "PharmaPrecisionMotor": PharmaPrecisionMotor,
 }
 
 GATED_MOTORS = {
@@ -336,6 +344,8 @@ class SpecialtyRunner:
         waist_cm = float(waist_obs.value) if waist_obs else 0.0
 
         metabolic_proxies = primary_results.get("DeepMetabolicProxyMotor")
+        nutrition = primary_results.get("PrecisionNutritionMotor")
+        pharma = primary_results.get("PharmaPrecisionMotor")
 
         return ObesityClinicalStoryInput(
             acosta_phenotype=acosta.calculated_value if acosta else "Unknown",
@@ -350,6 +360,8 @@ class SpecialtyRunner:
             metabolic_proxies_active=metabolic_proxies.estado_ui == "CONFIRMED_ACTIVE"
             if metabolic_proxies
             else False,
+            nutrition_precision_summary=nutrition.calculated_value if nutrition else None,
+            pharma_precision_summary=pharma.calculated_value if pharma else None,
         )
 
 
