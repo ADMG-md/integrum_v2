@@ -5,7 +5,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../.
 from src.engines.domain import Encounter, Observation, Condition, MedicationStatement
 from src.engines.acosta import AcostaPhenotypeMotor
 from src.engines.eoss import EOSSStagingMotor
-from src.engines.specialty_runner import specialty_runner
+from src.engines.specialty_runner import create_runner
 from src.services.report_service import report_service
 import json
 
@@ -35,7 +35,7 @@ def verify_mission_6():
         "AcostaPhenotypeMotor": AcostaPhenotypeMotor().compute(encounter),
         "EOSSStagingMotor": EOSSStagingMotor().compute(encounter)
     }
-    results.update(specialty_runner.run_all(encounter))
+    results.update(create_runner().run_all(encounter))
 
     # 3. Generate Report (which triggers SuggestionService)
     report = report_service.generate_report(results, encounter)

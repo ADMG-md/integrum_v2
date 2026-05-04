@@ -29,7 +29,7 @@ from src.engines.domain import (
     TraumaHistory,
     DrugEntry,
 )
-from src.engines.specialty_runner import specialty_runner
+from src.engines.specialty_runner import create_runner, PRIMARY_MOTORS
 from src.engines.specialty.readiness import readiness_engine
 from src.services.clinical_engine_service import clinical_bridge
 from src.services.observation_mapper import build_flat_observations
@@ -197,18 +197,18 @@ async def run_clinical_pipeline(
 
     # Data Readiness
     readiness = readiness_engine.score(
-        domain_encounter, specialty_runner.PRIMARY_MOTORS
+        domain_encounter, PRIMARY_MOTORS
     )
     readiness_report = readiness.to_dict()
 
     # Run engines (has per-motor try/except internally)
     try:
-        results = specialty_runner.run_all(domain_encounter)
+        results = create_runner().run_all(domain_encounter)
     except Exception as e:
         import logging
 
         logging.getLogger("integrum.encounter").error(
-            f"specialty_runner.run_all() critical failure for encounter {encounter_id}: {e}",
+            f"create_runner().run_all() critical failure for encounter {encounter_id}: {e}",
             exc_info=True,
         )
         raise HTTPException(
@@ -221,7 +221,7 @@ async def run_clinical_pipeline(
         )
 
     # Audit Trail
-    engines_map = {m.__class__.__name__: m for m in specialty_runner.get_all_motors()}
+    engines_map = {m.__class__.__name__: m for m in create_runner().get_all_motors()}
     audit_results = await audit_service.log_adjudications(
         db, encounter_id, results, engines_map
     )

@@ -6,7 +6,7 @@ import math
 sys.path.append(os.path.join(os.getcwd(), "apps/backend"))
 
 from src.engines.domain import Encounter, Observation, Condition
-from src.engines.specialty_runner import specialty_runner
+from src.engines.specialty_runner import create_runner
 
 def verify_math_properties():
     print("🧪 VERIFYING DOMAIN MATH PROPERTIES (FORENSIC FIXES)")
@@ -44,7 +44,7 @@ def verify_orchestration():
     print("\n🧪 VERIFYING UNIFIED ORCHESTRATION")
     
     # Check if legacy motors are registered in SpecialtyRunner
-    motor_names = [m.__class__.__name__ for m in specialty_runner.get_all_motors()]
+    motor_names = [m.__class__.__name__ for m in create_runner().get_all_motors()]
     print(f"   Registered Motors: {motor_names}")
     
     expected = ["KleiberScalingMotor", "CoxHazardMotor", "MarkovProgressionMotor", "SleepApneaPrecisionMotor"]

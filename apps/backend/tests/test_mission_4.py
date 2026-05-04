@@ -5,7 +5,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../.
 from src.schemas.encounter import EncounterCreate
 from src.engines.domain import Encounter, Observation, Condition, MedicationStatement
 from src.engines.acosta import AcostaPhenotypeMotor
-from src.engines.specialty_runner import specialty_runner
+from src.engines.specialty_runner import create_runner
 
 def verify_m4_logic():
     print("Testing M4 Clinical Logic (End-to-End simulation)...")
@@ -38,7 +38,7 @@ def verify_m4_logic():
     # Note: We need a motor that specifically looks for Genomic/Epigenetic to show M4 power.
     # For now, let's see if our registered motors pick anything up.
     # Our Metabolic motor looks for Glucose/Triglycerides.
-    results = specialty_runner.run_all(encounter)
+    results = create_runner().run_all(encounter)
     
     print("\n[Specialty Precision Findings]:")
     for name, res in results.items():

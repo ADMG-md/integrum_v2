@@ -5,7 +5,7 @@ import os
 sys.path.append(os.path.join(os.getcwd(), "apps/backend"))
 
 from src.engines.domain import Encounter, Observation, Condition
-from src.engines.specialty_runner import specialty_runner
+from src.engines.specialty_runner import create_runner
 
 def run_auditor_matrix():
     print("--- 🩺 INTEGRUM V2.2: MANDATORY AUDIT TEST MATRIX ---")
@@ -21,7 +21,7 @@ def run_auditor_matrix():
         ],
         metadata={"sex": "F"}
     )
-    res1 = specialty_runner.run_all(e1).get("AcostaPhenotypeMotor")
+    res1 = create_runner().run_all(e1).get("AcostaPhenotypeMotor")
     print(f"\n[TEST_01] GAD-7=12 (0.65 Threshold):")
     assert res1 is not None, "Motor skipped due to validation failure"
     assert res1.confidence == 0.65, f"Expected 0.65, got {res1.confidence}"
@@ -40,7 +40,7 @@ def run_auditor_matrix():
         ],
         metadata={"sex": "M"}
     )
-    res2 = specialty_runner.run_all(e2).get("AcostaPhenotypeMotor")
+    res2 = create_runner().run_all(e2).get("AcostaPhenotypeMotor")
     print(f"\n[TEST_02] Early Satiety (< 0.65):")
     assert res2 is not None
     assert res2.confidence == 0.60
@@ -63,7 +63,7 @@ def run_auditor_matrix():
             "prev_muscle_mass_kg": 25.0    # Delta Muscle = 0.8
         }
     )
-    res3 = specialty_runner.run_all(e3).get("SarcopeniaMonitorMotor")
+    res3 = create_runner().run_all(e3).get("SarcopeniaMonitorMotor")
     print("\n[TEST_03] RPL Guard (Delta < 2.0kg):")
     # rpl should NOT be in metadata or be 0.0 if guard worked
     assert res3.metadata.get("rpl", 0.0) == 0.0
@@ -83,7 +83,7 @@ def run_auditor_matrix():
         ],
         metadata={"sex": "M"}
     )
-    res4 = specialty_runner.run_all(e4).get("ProteinEngineMotor")
+    res4 = create_runner().run_all(e4).get("ProteinEngineMotor")
     print("\n[TEST_04] Renal Priority (IBW vs FFM):")
     target = res4.metadata.get("target_grams")
     print(f"   Protein target: {target}g")
@@ -106,7 +106,7 @@ def run_auditor_matrix():
         ],
         metadata={"sex": "M"}
     )
-    res5 = specialty_runner.run_all(e5).get("ProteinEngineMotor")
+    res5 = create_runner().run_all(e5).get("ProteinEngineMotor")
     print("\n[TEST_05] Pharma Shield Activation:")
     assert res5 is not None
     pharma_str = " ".join(res5.recomendacion_farmacologica)

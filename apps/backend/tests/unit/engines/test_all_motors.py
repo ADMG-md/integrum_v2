@@ -15,7 +15,7 @@ from src.engines.domain import (
     Condition,
 )
 from src.engines.base_models import AdjudicationResult
-from src.engines.specialty_runner import specialty_runner
+from src.engines.specialty_runner import create_runner
 
 
 @pytest.fixture
@@ -92,165 +92,165 @@ def minimal_encounter():
 class TestPrimaryMotors:
     def test_all_primary_motors_run(self, minimal_encounter):
         """All primary motors should execute without error."""
-        results = specialty_runner.run_all(minimal_encounter)
+        results = create_runner().run_all(minimal_encounter)
         # 26 primary motors registered after cleanup
         assert len(results) >= 18, (
             f"Expected >=18 results, got {len(results)}: {list(results.keys())}"
         )
 
     def test_acosta_phenotype(self, minimal_encounter):
-        results = specialty_runner.run_all(minimal_encounter)
+        results = create_runner().run_all(minimal_encounter)
         r = results["AcostaPhenotypeMotor"]
         assert isinstance(r, AdjudicationResult)
         assert r.calculated_value is not None
 
     def test_eoss_staging(self, minimal_encounter):
-        results = specialty_runner.run_all(minimal_encounter)
+        results = create_runner().run_all(minimal_encounter)
         r = results["EOSSStagingMotor"]
         assert isinstance(r, AdjudicationResult)
 
     def test_sarcopenia(self, minimal_encounter):
-        results = specialty_runner.run_all(minimal_encounter)
+        results = create_runner().run_all(minimal_encounter)
         r = results["SarcopeniaMotor"]
         assert isinstance(r, AdjudicationResult)
 
     def test_biological_age(self, minimal_encounter):
-        results = specialty_runner.run_all(minimal_encounter)
+        results = create_runner().run_all(minimal_encounter)
         r = results["BiologicalAgeMotor"]
         assert isinstance(r, AdjudicationResult)
 
     def test_metabolic_precision(self, minimal_encounter):
-        results = specialty_runner.run_all(minimal_encounter)
+        results = create_runner().run_all(minimal_encounter)
         r = results["MetabolicPrecisionMotor"]
         assert isinstance(r, AdjudicationResult)
 
     def test_deep_metabolic_proxy(self, minimal_encounter):
-        results = specialty_runner.run_all(minimal_encounter)
+        results = create_runner().run_all(minimal_encounter)
         r = results["DeepMetabolicProxyMotor"]
         assert isinstance(r, AdjudicationResult)
 
     def test_lifestyle360(self, minimal_encounter):
-        results = specialty_runner.run_all(minimal_encounter)
+        results = create_runner().run_all(minimal_encounter)
         r = results["Lifestyle360Motor"]
         assert isinstance(r, AdjudicationResult)
 
     def test_anthropometry(self, minimal_encounter):
-        results = specialty_runner.run_all(minimal_encounter)
+        results = create_runner().run_all(minimal_encounter)
         r = results["AnthropometryMotor"]
         assert isinstance(r, AdjudicationResult)
 
     def test_endocrine(self, minimal_encounter):
-        results = specialty_runner.run_all(minimal_encounter)
+        results = create_runner().run_all(minimal_encounter)
         r = results["EndocrineMotor"]
         assert isinstance(r, AdjudicationResult)
 
     def test_hypertension(self, minimal_encounter):
-        results = specialty_runner.run_all(minimal_encounter)
+        results = create_runner().run_all(minimal_encounter)
         r = results["HypertensionMotor"]
         assert isinstance(r, AdjudicationResult)
 
     def test_inflammation(self, minimal_encounter):
-        results = specialty_runner.run_all(minimal_encounter)
+        results = create_runner().run_all(minimal_encounter)
         r = results["InflammationMotor"]
         assert isinstance(r, AdjudicationResult)
 
     def test_sleep_apnea(self, minimal_encounter):
-        results = specialty_runner.run_all(minimal_encounter)
+        results = create_runner().run_all(minimal_encounter)
         r = results["SleepApneaMotor"]
         assert isinstance(r, AdjudicationResult)
 
     def test_laboratory_stewardship(self, minimal_encounter):
-        results = specialty_runner.run_all(minimal_encounter)
+        results = create_runner().run_all(minimal_encounter)
         r = results["LaboratoryStewardshipMotor"]
         assert isinstance(r, AdjudicationResult)
 
     def test_functional_sarcopenia(self, minimal_encounter):
-        results = specialty_runner.run_all(minimal_encounter)
+        results = create_runner().run_all(minimal_encounter)
         if "FunctionalSarcopeniaMotor" in results:
             r = results["FunctionalSarcopeniaMotor"]
             assert isinstance(r, AdjudicationResult)
 
     def test_fli(self, minimal_encounter):
-        results = specialty_runner.run_all(minimal_encounter)
+        results = create_runner().run_all(minimal_encounter)
         if "FLIMotor" in results:
             assert isinstance(results["FLIMotor"], AdjudicationResult)
 
     def test_vai(self, minimal_encounter):
-        results = specialty_runner.run_all(minimal_encounter)
+        results = create_runner().run_all(minimal_encounter)
         if "VAIMotor" in results:
             assert isinstance(results["VAIMotor"], AdjudicationResult)
 
     def test_apob_apoa1(self, minimal_encounter):
-        results = specialty_runner.run_all(minimal_encounter)
+        results = create_runner().run_all(minimal_encounter)
         if "ApoBApoA1Motor" in results:
             assert isinstance(results["ApoBApoA1Motor"], AdjudicationResult)
 
     def test_pulse_pressure(self, minimal_encounter):
-        results = specialty_runner.run_all(minimal_encounter)
+        results = create_runner().run_all(minimal_encounter)
         r = results["PulsePressureMotor"]
         assert isinstance(r, AdjudicationResult)
 
     def test_nfs(self, minimal_encounter):
-        results = specialty_runner.run_all(minimal_encounter)
+        results = create_runner().run_all(minimal_encounter)
         if "NFSMotor" in results:
             assert isinstance(results["NFSMotor"], AdjudicationResult)
 
     def test_glp1_monitor(self, minimal_encounter):
-        results = specialty_runner.run_all(minimal_encounter)
+        results = create_runner().run_all(minimal_encounter)
         if "GLP1MonitoringMotor" in results:
             assert isinstance(results["GLP1MonitoringMotor"], AdjudicationResult)
 
     def test_ace_score(self, minimal_encounter):
-        results = specialty_runner.run_all(minimal_encounter)
+        results = create_runner().run_all(minimal_encounter)
         if "ACEScoreEngine" in results:
             assert isinstance(results["ACEScoreEngine"], AdjudicationResult)
 
     def test_metformin_b12(self, minimal_encounter):
-        results = specialty_runner.run_all(minimal_encounter)
+        results = create_runner().run_all(minimal_encounter)
         if "MetforminB12Motor" in results:
             assert isinstance(results["MetforminB12Motor"], AdjudicationResult)
 
     def test_cancer_screening(self, minimal_encounter):
-        results = specialty_runner.run_all(minimal_encounter)
+        results = create_runner().run_all(minimal_encounter)
         if "CancerScreeningMotor" in results:
             assert isinstance(results["CancerScreeningMotor"], AdjudicationResult)
 
     def test_sglt2i_benefit(self, minimal_encounter):
-        results = specialty_runner.run_all(minimal_encounter)
+        results = create_runner().run_all(minimal_encounter)
         if "SGLT2iBenefitMotor" in results:
             assert isinstance(results["SGLT2iBenefitMotor"], AdjudicationResult)
 
     def test_kfre(self, minimal_encounter):
-        results = specialty_runner.run_all(minimal_encounter)
+        results = create_runner().run_all(minimal_encounter)
         if "KFREMotor" in results:
             assert isinstance(results["KFREMotor"], AdjudicationResult)
 
     def test_charlson(self, minimal_encounter):
-        results = specialty_runner.run_all(minimal_encounter)
+        results = create_runner().run_all(minimal_encounter)
         if "CharlsonMotor" in results:
             assert isinstance(results["CharlsonMotor"], AdjudicationResult)
 
     def test_free_testosterone(self, minimal_encounter):
-        results = specialty_runner.run_all(minimal_encounter)
+        results = create_runner().run_all(minimal_encounter)
         if "FreeTestosteroneMotor" in results:
             assert isinstance(results["FreeTestosteroneMotor"], AdjudicationResult)
 
     def test_vitamin_d(self, minimal_encounter):
-        results = specialty_runner.run_all(minimal_encounter)
+        results = create_runner().run_all(minimal_encounter)
         if "VitaminDMotor" in results:
             assert isinstance(results["VitaminDMotor"], AdjudicationResult)
 
 
 class TestGatedMotors:
     def test_gated_motors_run(self, minimal_encounter):
-        results = specialty_runner.run_all(minimal_encounter)
+        results = create_runner().run_all(minimal_encounter)
         # CVDHazardMotor runs because patient has HTN + BMI >= 30
         assert "CVDHazardMotor" in results
         # MarkovProgressionMotor is gated: requires DM2/prediabetes (not present in minimal)
         assert "MarkovProgressionMotor" not in results
 
     def test_cvd_hazard(self, minimal_encounter):
-        results = specialty_runner.run_all(minimal_encounter)
+        results = create_runner().run_all(minimal_encounter)
         r = results["CVDHazardMotor"]
         assert isinstance(r, AdjudicationResult)
 
@@ -260,7 +260,7 @@ class TestGatedMotors:
 
         enc = minimal_encounter
         enc.history = ClinicalHistory(has_type2_diabetes=True)
-        results = specialty_runner.run_all(enc)
+        results = create_runner().run_all(enc)
         assert "MarkovProgressionMotor" in results
         r = results["MarkovProgressionMotor"]
         assert isinstance(r, AdjudicationResult)
@@ -273,7 +273,7 @@ class TestGatedMotors:
 
 class TestAggregatorMotors:
     def test_obesity_master(self, minimal_encounter):
-        results = specialty_runner.run_all(minimal_encounter)
+        results = create_runner().run_all(minimal_encounter)
         assert "ObesityMasterMotor" in results
         r = results["ObesityMasterMotor"]
         # ObesityMaster now returns AdjudicationResult (V2.7 contract fix)
@@ -282,7 +282,7 @@ class TestAggregatorMotors:
         assert r.calculated_value is not None
 
     def test_clinical_guidelines(self, minimal_encounter):
-        results = specialty_runner.run_all(minimal_encounter)
+        results = create_runner().run_all(minimal_encounter)
         assert "ClinicalGuidelinesMotor" in results
         r = results["ClinicalGuidelinesMotor"]
         assert isinstance(r, AdjudicationResult)

@@ -13,17 +13,10 @@ import math
 from dataclasses import dataclass
 from typing import Optional, TYPE_CHECKING
 
+from src.domain.models import safe_float
+
 if TYPE_CHECKING:
     from src.domain.models import Encounter
-
-
-def _safe_float(val) -> Optional[float]:
-    if val is None:
-        return None
-    try:
-        return float(val)
-    except (ValueError, TypeError):
-        return None
 
 
 # ============================================================
@@ -42,7 +35,7 @@ class RenalFunction:
     def from_encounter(cls, enc: Encounter) -> RenalFunction:
         creat = enc.metabolic_panel.creatinine_mg_dl
         age_obs = enc.get_observation("AGE-001")
-        age = _safe_float(age_obs.value) if age_obs else None
+        age = safe_float(age_obs.value) if age_obs else None
 
         egfr = None
         if creat and age and age > 0:
@@ -63,13 +56,13 @@ class RenalFunction:
         uacr = None
         uacr_obs = enc.get_observation("UACR-001")
         if uacr_obs:
-            uacr = _safe_float(uacr_obs.value)
+            uacr = safe_float(uacr_obs.value)
         else:
             alb_obs = enc.get_observation("UALB-001")
             ucr_obs = enc.get_observation("UCREAT-001")
             if alb_obs and ucr_obs:
-                alb = _safe_float(alb_obs.value)
-                ucr = _safe_float(ucr_obs.value)
+                alb = safe_float(alb_obs.value)
+                ucr = safe_float(ucr_obs.value)
                 if alb and ucr and ucr > 0:
                     uacr = round((alb / ucr) * 1000, 1)
 
@@ -183,10 +176,10 @@ class AnthropometricData:
         waist_obs = enc.get_observation("WAIST-001")
         hip_obs = enc.get_observation("HIP-001")
 
-        w = _safe_float(w_obs.value) if w_obs else None
-        h = _safe_float(h_obs.value) if h_obs else None
-        waist = _safe_float(waist_obs.value) if waist_obs else None
-        hip = _safe_float(hip_obs.value) if hip_obs else None
+        w = safe_float(w_obs.value) if w_obs else None
+        h = safe_float(h_obs.value) if h_obs else None
+        waist = safe_float(waist_obs.value) if waist_obs else None
+        hip = safe_float(hip_obs.value) if hip_obs else None
 
         bmi = w / ((h / 100) ** 2) if w and h and h > 0 else None
         wht = waist / h if waist and h and h > 0 else None
@@ -208,11 +201,11 @@ class AnthropometricData:
         ffm = None
         ffm_obs = enc.get_observation("BIA-FFM-KG")
         if ffm_obs:
-            ffm = _safe_float(ffm_obs.value)
+            ffm = safe_float(ffm_obs.value)
         else:
             mm_obs = enc.get_observation("MMA-001") or enc.get_observation("MUSCLE-KG")
             if mm_obs:
-                mm = _safe_float(mm_obs.value)
+                mm = safe_float(mm_obs.value)
                 if mm is not None:
                     ffm = mm * 1.15
 
@@ -254,8 +247,8 @@ class Hemodynamics:
     def from_encounter(cls, enc: Encounter) -> Hemodynamics:
         sbp_obs = enc.get_observation("8480-6")
         dbp_obs = enc.get_observation("8462-4")
-        sbp = _safe_float(sbp_obs.value) if sbp_obs else None
-        dbp = _safe_float(dbp_obs.value) if dbp_obs else None
+        sbp = safe_float(sbp_obs.value) if sbp_obs else None
+        dbp = safe_float(dbp_obs.value) if dbp_obs else None
 
         pp = round(sbp - dbp, 1) if sbp and dbp else None
         map_val = round(dbp + (sbp - dbp) / 3, 1) if sbp and dbp else None
@@ -300,7 +293,7 @@ class ProxyValues:
     def from_encounter(cls, enc: Encounter) -> ProxyValues:
         ua_obs = enc.get_observation("UA-001")
         uric_acid = (
-            _safe_float(ua_obs.value) if ua_obs else enc.metabolic_panel.uric_acid_mg_dl
+            safe_float(ua_obs.value) if ua_obs else enc.metabolic_panel.uric_acid_mg_dl
         )
 
         return cls(

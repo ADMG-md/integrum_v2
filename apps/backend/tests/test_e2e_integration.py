@@ -13,7 +13,7 @@ from src.engines.domain import (
     DemographicsSchema,
     MetabolicPanelSchema,
 )
-from src.engines.specialty_runner import specialty_runner
+from src.engines.specialty_runner import create_runner
 from src.schemas.encounter import AdjudicationResultSchema
 from src.schemas.report import ClinicalReportSchema
 
@@ -37,7 +37,7 @@ def verify_e2e_flow():
         metadata={"sex": "M", "age": 45}
     )
     
-    results = specialty_runner.run_all(e)
+    results = create_runner().run_all(e)
     # Inject Acosta and EOSS which are usually run in the endpoint loop
     from src.engines.acosta import AcostaPhenotypeMotor
     from src.engines.eoss import EOSSStagingMotor

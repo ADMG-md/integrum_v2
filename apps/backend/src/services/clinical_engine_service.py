@@ -28,6 +28,17 @@ class ClinicalIntelligenceBridge:
     VAI    = "CALC-VAI"
     FIB4   = "CALC-FIB4"
 
+    # Raw observation codes for anthropometry
+    WEIGHT = "29463-7"
+    HEIGHT = "8302-2"
+    WAIST = "WAIST-001"
+    HIP = "HIP-001"
+
+    # Raw lab codes
+    GLUCOSE = "GLUC-001"
+    INSULIN = "INS-001"
+    TRIGLYCERIDES = "TG-001"
+
     # Raw lab codes still needed for FIB-4 (not in calculators yet)
     AST = "29230-0"
     ALT = "22538-3"
@@ -91,8 +102,8 @@ class ClinicalIntelligenceBridge:
 
         waist_obs = encounter.get_observation("WAIST-001")
         bmi_obs = encounter.get_observation(self.BMI)  # already injected above
-        tg = encounter.cardio_panel.triglycerides_mg_dl
-        hdl = encounter.cardio_panel.hdl_mg_dl
+        tg = encounter.metabolic_panel.triglycerides_mg_dl
+        hdl = encounter.metabolic_panel.hdl_mg_dl
         gender = encounter.demographics.gender or ""
 
         if not all([waist_obs, bmi_obs, tg, hdl]) or hdl <= 0:
