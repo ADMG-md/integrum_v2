@@ -6,7 +6,7 @@ These are pure Pydantic models with no API/HTTP concerns — they belong to the
 domain layer of Clean Architecture.
 """
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 from typing import List, Optional, Any, Dict, Literal
 from datetime import datetime, date
 from enum import Enum
@@ -178,6 +178,13 @@ class ClinicalHistory(BaseModel):
 
 
 class Observation(BaseModel):
+    """Immutable clinical observation (lab result, vital sign, etc.).
+    
+    Safety: frozen=True prevents accidental mutation after creation,
+    ensuring audit trail integrity (IEC 62304 §5.1.2).
+    """
+    model_config = ConfigDict(frozen=True)
+    
     code: str
     value: Any
     unit: Optional[str] = None

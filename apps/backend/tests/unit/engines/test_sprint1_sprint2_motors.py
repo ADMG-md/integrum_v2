@@ -41,9 +41,11 @@ class TestGLP1MonitoringMotor:
         enc = encounter_with_glp1_therapy
         enc.metadata["prev_weight_kg"] = 96.0
         enc.metadata["prev_muscle_mass_kg"] = 64.0
-        for o in enc.observations:
-            if o.code in ["MMA-001", "MUSCLE-KG", "BIA-MUSCLE-KG"]:
-                o.value = 63.0
+        # Replace mutable observations with new immutable instances (M-03)
+        enc.observations = [
+            Observation(code="MMA-001", value=63.0, unit="kg") if o.code in ["MMA-001", "MUSCLE-KG", "BIA-MUSCLE-KG"] else o
+            for o in enc.observations
+        ]
         motor = GLP1MonitoringMotor()
         result = motor.compute(enc)
         assert isinstance(result, AdjudicationResult)
@@ -74,9 +76,11 @@ class TestMetforminB12Motor:
         from src.engines.specialty.metformin_b12 import MetforminB12Motor
 
         enc = encounter_with_metformin
-        for o in enc.observations:
-            if o.code == "VITB12-001":
-                o.value = 400.0
+        # Replace mutable observation with new immutable instance (M-03)
+        enc.observations = [
+            Observation(code="VITB12-001", value=400.0, unit="pg/mL") if o.code == "VITB12-001" else o
+            for o in enc.observations
+        ]
         motor = MetforminB12Motor()
         result = motor.compute(enc)
         assert isinstance(result, AdjudicationResult)
@@ -104,9 +108,11 @@ class TestCancerScreeningMotor:
         from src.engines.specialty.cancer_screening import CancerScreeningMotor
 
         enc = encounter_with_metabolic_data
-        for o in enc.observations:
-            if o.code == "AGE-001":
-                o.value = 30.0
+        # Replace mutable observation with new immutable instance (M-03)
+        enc.observations = [
+            Observation(code="AGE-001", value=30.0) if o.code == "AGE-001" else o
+            for o in enc.observations
+        ]
         motor = CancerScreeningMotor()
         result = motor.compute(enc)
         assert isinstance(result, AdjudicationResult)
@@ -116,9 +122,11 @@ class TestCancerScreeningMotor:
         from src.engines.specialty.cancer_screening import CancerScreeningMotor
 
         enc = encounter_with_metabolic_data
-        for o in enc.observations:
-            if o.code == "AGE-001":
-                o.value = 55.0
+        # Replace mutable observation with new immutable instance (M-03)
+        enc.observations = [
+            Observation(code="AGE-001", value=55.0) if o.code == "AGE-001" else o
+            for o in enc.observations
+        ]
         motor = CancerScreeningMotor()
         result = motor.compute(enc)
         assert isinstance(result, AdjudicationResult)
