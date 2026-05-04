@@ -2,6 +2,7 @@ from datetime import datetime, timedelta, timezone
 from typing import Optional, List
 from jose import JWTError, jwt
 from passlib.context import CryptContext
+import uuid
 from pydantic import BaseModel
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
@@ -47,30 +48,34 @@ class AuthService:
         return pwd_context.hash(password)
 
     @staticmethod
-    def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
+    def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> tuple[str, str]:
+        """Returns (token, jti) so callers can blacklist the jti on logout."""
         to_encode = data.copy()
+        jti = str(uuid.uuid4())
         if expires_delta:
             expire = datetime.now(timezone.utc) + expires_delta
         else:
             expire = datetime.now(timezone.utc) + timedelta(
                 minutes=ACCESS_TOKEN_EXPIRE_MINUTES
             )
-        to_encode.update({"exp": expire})
+        to_encode.update({"exp": expire, "jti": jti})
         encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
-        return encoded_jwt
+        return encoded_jwt, jti
 
     @staticmethod
-    def create_refresh_token(data: dict, expires_delta: Optional[timedelta] = None):
+    def create_refresh_token(data: dict, expires_delta: Optional[timedelta] = None) -> tuple[str, str]:
+        """Returns (token, jti) so callers can blacklist the jti on logout."""
         to_encode = data.copy()
+        jti = str(uuid.uuid4())
         if expires_delta:
             expire = datetime.now(timezone.utc) + expires_delta
         else:
             expire = datetime.now(timezone.utc) + timedelta(
                 days=REFRESH_TOKEN_EXPIRE_DAYS
             )
-        to_encode.update({"exp": expire, "type": "refresh"})
+        to_encode.update({"exp": expire, "type": "refresh", "jti": jti})
         encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
-        return encoded_jwt
+        return encoded_jwt, jti
 
     @staticmethod
     def decode_refresh_token(token: str) -> Optional[dict]:
@@ -94,8 +99,14 @@ class AuthService:
         try:
             payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
             email: str = payload.get("sub")
+            jti: str = payload.get("jti")
             if email is None:
                 raise credentials_exception
+            # SEC-02: reject blacklisted tokens
+            if jti:
+                from src.services.redis_service import is_token_revoked
+                if await is_token_revoked(jti):
+                    raise credentials_exception
             token_data = TokenData(email=email)
         except JWTError:
             raise credentials_exception

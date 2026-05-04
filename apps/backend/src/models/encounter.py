@@ -33,6 +33,9 @@ class Patient(Base):
     )
 
     _full_name_encrypted: Mapped[str] = mapped_column("full_name", String(1024))
+    full_name_hash: Mapped[Optional[str]] = mapped_column(
+        String(64), index=True, nullable=True
+    )
     _dob_encrypted: Mapped[Optional[str]] = mapped_column(
         "date_of_birth", String(1024), nullable=True
     )
@@ -59,6 +62,7 @@ class Patient(Base):
     @full_name.setter
     def full_name(self, value: str):
         self._full_name_encrypted = _get_vault().encrypt(value)
+        self.full_name_hash = _get_vault().generate_blind_index(value)
 
     @property
     def external_id(self) -> str:

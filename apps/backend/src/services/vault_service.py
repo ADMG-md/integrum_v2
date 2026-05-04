@@ -44,8 +44,13 @@ class VaultService:
         try:
             return self.cipher.encrypt(plain_text.encode()).decode()
         except Exception as e:
+            # SEC-03: NEVER silently return PHI in plain text.
+            # A failed encryption must be loud and blocking — not silent.
             logger.error("vault_encryption_failed", error=str(e))
-            return plain_text
+            raise RuntimeError(
+                f"CRITICAL: PHI encryption failed. Data will NOT be persisted unencrypted. "
+                f"Check VAULT_MASTER_KEY integrity. Original error: {type(e).__name__}"
+            ) from e
 
     def decrypt(self, encrypted_text: str) -> str:
         if not encrypted_text:

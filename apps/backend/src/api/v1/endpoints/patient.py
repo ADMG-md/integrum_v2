@@ -49,7 +49,11 @@ async def get_patients(
     """
     stmt = select(Patient).where(Patient.tenant_id == current_user.tenant_id)
     if q:
-        stmt = stmt.where(Patient.full_name.ilike(f"%{q}%"))
+        # ARCH-03: full_name is encrypted — search via HMAC blind index, not ilike.
+        # Exact match only (blind indexes don't support partial/fuzzy search by design).
+        from src.services.vault_service import vault_service
+        name_hash = vault_service.generate_blind_index(q)
+        stmt = stmt.where(Patient.full_name_hash == name_hash)
 
     result = await db.execute(stmt)
     patients = result.scalars().all()

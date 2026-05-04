@@ -41,7 +41,10 @@ async def upload_lab_pdf(
         result = extraction_service.extract_from_pdf(tmp_path)
         return result
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error processing PDF: {str(e)}")
+        # SEC-04: log internally, never expose internal extraction errors to client
+        import structlog
+        structlog.get_logger().error("pdf_extraction_error", filename=file.filename, error_type=type(e).__name__)
+        raise HTTPException(status_code=500, detail="Error processing PDF. Verify the file is a valid lab report.")
     finally:
         if os.path.exists(tmp_path):
             os.remove(tmp_path)
