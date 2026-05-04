@@ -23,10 +23,16 @@ async def init_prod_db():
 
     async_session = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
 
+    # NEW-02 fix: NEVER drop_all — it destroys all data in production.
+    # For schema migrations, use Alembic. This script is ONLY for initial dev seeding.
+    if os.getenv("ENVIRONMENT") == "production":
+        raise RuntimeError(
+            "CRITICAL: init_security_db.py must NOT run in production. "
+            "Use Alembic migrations for schema changes."
+        )
+
     async with engine.begin() as conn:
-        # For prototype: Ensure fresh state for new roles
-        # Note: In production use Alembic migrations instead
-        await conn.run_sync(Base.metadata.drop_all)
+        # create_all is idempotent — safe to run multiple times (tables already existing are skipped)
         await conn.run_sync(Base.metadata.create_all)
 
     async with async_session() as session:

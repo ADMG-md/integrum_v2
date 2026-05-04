@@ -17,7 +17,8 @@ class UserCreate(BaseModel):
     email: EmailStr
     password: str
     full_name: str
-    role: UserRole = UserRole.PHYSICIAN
+    # SECURITY: role is NOT accepted from clients — assigned server-side only.
+    # Prevents privilege escalation (H-06).
 
 
 class Token(BaseModel):
@@ -53,7 +54,7 @@ async def register(
         email=user_in.email,
         hashed_password=hashed_password,
         full_name=user_in.full_name,
-        role=user_in.role.value,
+        role=UserRole.PHYSICIAN.value,  # H-06: always server-side, never from client
     )
     db.add(user)
     await db.commit()
@@ -129,5 +130,5 @@ async def refresh_token(
     return {
         "access_token": new_access_token,
         "token_type": "bearer",
-        "expires_in": AuthService.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
+        "expires_in": ACCESS_TOKEN_EXPIRE_MINUTES * 60,  # NEW-05: use module-level constant
     }
