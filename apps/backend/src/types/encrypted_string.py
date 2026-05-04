@@ -7,8 +7,8 @@ import vault_service directly, preserving Clean Architecture boundaries.
 
 from sqlalchemy import TypeDecorator, String
 from cryptography.fernet import Fernet, InvalidToken
-import os
 import structlog
+from src.config import settings
 
 logger = structlog.get_logger()
 
@@ -32,7 +32,7 @@ class EncryptedString(TypeDecorator):
     @classmethod
     def _get_cipher(cls) -> Fernet:
         if cls._cipher is None:
-            key = os.getenv("VAULT_MASTER_KEY", "").encode()
+            key = settings.VAULT_MASTER_KEY.encode()
             if not key:
                 raise RuntimeError("VAULT_MASTER_KEY environment variable is not set")
             cls._cipher = Fernet(key)
@@ -50,10 +50,10 @@ class EncryptedString(TypeDecorator):
             return None
         try:
             return self._get_cipher().decrypt(value.encode()).decode()
-        except InvalidToken:
-            # Graceful fallback for legacy unencrypted data
-            logger.warning("encrypted_string.decrypt_failed", value_preview=value[:20])
-            return value
+        except InvalidToken as e:
+            # SEC-04: NEVER fallback to ciphertext on decryption failure.
+            logger.error("encrypted_string.decrypt_failed", error=str(e))
+            raise RuntimeError(f"CRITICAL: Decryption failed for field. Key mismatch or data corruption.") from e
         except Exception as e:
             logger.error("encrypted_string.decrypt_error", error=str(e))
-            return value
+            raise RuntimeError(f"CRITICAL: Decryption error: {type(e).__name__}") from e

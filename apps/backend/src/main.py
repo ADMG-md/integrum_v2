@@ -37,15 +37,9 @@ app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 # Hardening: CORS Restricted (Synced with environment)
-import os
-from dotenv import load_dotenv
+from src.config import settings
 
-load_dotenv()
-
-raw_origins = os.getenv(
-    "ALLOWED_ORIGINS", "http://localhost:3000,http://127.0.0.1:3000,http://0.0.0.0:3000"
-)
-ALLOWED_ORIGINS = [origin.strip() for origin in raw_origins.split(",")]
+ALLOWED_ORIGINS = settings.cors_origins_list
 
 app.add_middleware(
     CORSMiddleware,

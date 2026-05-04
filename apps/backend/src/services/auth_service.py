@@ -11,17 +11,12 @@ from sqlalchemy import select
 from src.database import get_db
 from src.models.user import UserModel, UserRole
 
-from dotenv import load_dotenv
-import os
-
-load_dotenv()
+from src.config import settings
 
 # Config (Loaded from environment for hardening)
-SECRET_KEY = os.environ.get("SECRET_KEY")
+SECRET_KEY = settings.SECRET_KEY
 if not SECRET_KEY:
-    # P0-5: Fail-fast unless explicitly in development mode.
-    # docker-compose without ENVIRONMENT set defaults to production-safe behavior.
-    if os.getenv("ENVIRONMENT", "production").lower() != "development":
+    if settings.ENVIRONMENT != "development":
         raise RuntimeError(
             "CRITICAL: SECRET_KEY environment variable is NOT SET. "
             "Set ENVIRONMENT=development to allow dev fallback."
@@ -30,9 +25,9 @@ if not SECRET_KEY:
     warnings.warn("Using hardcoded dev SECRET_KEY. NEVER use in production.", stacklevel=2)
     SECRET_KEY = "INTEGRUM_V2_DEV_SECRET_ONLY"
 
-ALGORITHM = os.getenv("ALGORITHM", "HS256")
-ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "30"))
-REFRESH_TOKEN_EXPIRE_DAYS = int(os.getenv("REFRESH_TOKEN_EXPIRE_DAYS", "7"))
+ALGORITHM = settings.ALGORITHM
+ACCESS_TOKEN_EXPIRE_MINUTES = settings.ACCESS_TOKEN_EXPIRE_MINUTES
+REFRESH_TOKEN_EXPIRE_DAYS = settings.REFRESH_TOKEN_EXPIRE_DAYS
 
 # Argon2id primary, bcrypt fallback for existing hashes
 pwd_context = CryptContext(schemes=["argon2", "bcrypt"], deprecated="auto")

@@ -1,11 +1,9 @@
 import hashlib
 import hmac
 from cryptography.fernet import Fernet
-from dotenv import load_dotenv
-import os
+from src.config import settings
 import structlog
 
-load_dotenv()
 logger = structlog.get_logger()
 
 class VaultService:
@@ -15,11 +13,11 @@ class VaultService:
     Ensures even with DB access, PII is unreadable.
     """
     def __init__(self):
-        self.key = os.getenv("VAULT_MASTER_KEY")
+        self.key = settings.VAULT_MASTER_KEY
         if not self.key:
             # R-03 Fix (H-015): Fail-fast to prevent data corruption.
             # A generated key would make all previously encrypted data unreadable.
-            allow_dev = os.getenv("ALLOW_DEV_VAULT_KEY", "false").lower() == "true"
+            allow_dev = settings.ALLOW_DEV_VAULT_KEY
             if allow_dev:
                 logger.warning(
                     "vault_dev_mode_active",

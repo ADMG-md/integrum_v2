@@ -7,7 +7,8 @@ import uuid
 import hmac
 import hashlib
 import json
-import os
+import json
+from src.config import settings
 
 logger = structlog.get_logger()
 
@@ -39,9 +40,9 @@ class AuditService:
             log_id = uuid.uuid4()
 
             # Hardening: Generate Integrity Hash (HMAC-SHA512)
-            secret = os.getenv("SECRET_KEY")
+            secret = settings.SECRET_KEY
             if not secret or secret == "unsafe-dev-salt":
-                if os.getenv("ENVIRONMENT") == "production":
+                if settings.ENVIRONMENT != "development":
                     raise RuntimeError(
                         "SECRET_KEY must be set in production for audit integrity. "
                         "Refusing to generate HMAC with default salt."

@@ -118,29 +118,21 @@ class TestR03VaultServiceFailFast:
         """R-03: Missing VAULT_MASTER_KEY without dev flag must raise RuntimeError."""
         from src.services.vault_service import VaultService
 
-        def fake_getenv(key, default=None):
-            if key == "VAULT_MASTER_KEY":
-                return None
-            if key == "ALLOW_DEV_VAULT_KEY":
-                return "false"
-            return default
-
         # Directly test the constructor with mocked environment
-        with patch("src.services.vault_service.load_dotenv"):
-            with patch("src.services.vault_service.os.getenv", side_effect=fake_getenv):
+        with patch("src.config.settings.VAULT_MASTER_KEY", ""):
+            with patch("src.config.settings.ALLOW_DEV_VAULT_KEY", False):
                 with pytest.raises(RuntimeError, match="VAULT_MASTER_KEY"):
                     VaultService()
 
     def test_vault_allows_dev_mode_with_explicit_flag(self, monkeypatch):
         """R-03: Dev mode should work when ALLOW_DEV_VAULT_KEY=true."""
-        monkeypatch.delenv("VAULT_MASTER_KEY", raising=False)
-        monkeypatch.setenv("ALLOW_DEV_VAULT_KEY", "true")
-
         from src.services.vault_service import VaultService
 
-        vault = VaultService()
-        # Should not raise; key should be a bytes-like object
-        assert vault.key is not None
+        with patch("src.config.settings.VAULT_MASTER_KEY", ""):
+            with patch("src.config.settings.ALLOW_DEV_VAULT_KEY", True):
+                vault = VaultService()
+                # Should not raise; key should be a bytes-like object
+                assert vault.key is not None
 
 
 # ============================================================

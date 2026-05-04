@@ -4,17 +4,17 @@ Handles:
   - Account lockout: per-account failed login tracking (SEC-01)
   - JWT blacklist: jti-based token revocation for access + refresh tokens (SEC-02)
 """
-import os
+from src.config import settings
 import redis.asyncio as aioredis
 import structlog
 
 logger = structlog.get_logger()
 
-REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379/0")
+REDIS_URL = settings.REDIS_URL
 
 # Lockout config (overridable via env)
-MAX_FAILED_ATTEMPTS = int(os.getenv("MAX_FAILED_LOGIN_ATTEMPTS", "5"))
-LOCKOUT_SECONDS = int(os.getenv("ACCOUNT_LOCKOUT_SECONDS", "900"))  # 15 min
+MAX_FAILED_ATTEMPTS = settings.MAX_FAILED_LOGIN_ATTEMPTS
+LOCKOUT_SECONDS = settings.ACCOUNT_LOCKOUT_SECONDS
 
 
 def _get_redis() -> aioredis.Redis:

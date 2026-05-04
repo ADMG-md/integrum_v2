@@ -1,11 +1,8 @@
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
 from sqlalchemy.orm import DeclarativeBase
-from dotenv import load_dotenv
-import os
+from src.config import settings
 
-load_dotenv()
-
-DATABASE_URL = os.getenv("DATABASE_URL", "postgresql+asyncpg://integrum_user:integrum_password@localhost:5432/integrum_v2")
+DATABASE_URL = settings.DATABASE_URL
 
 engine = create_async_engine(
     DATABASE_URL, 
