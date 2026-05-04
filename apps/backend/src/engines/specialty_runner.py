@@ -155,18 +155,11 @@ class SpecialtyRunner:
         "ObesityMasterMotor",  # T3: Internal aggregation
     }
 
-    _instance = None
-    _primary_motors: Dict[str, Any] = {}
-    _aggregator_motors: Dict[str, Any] = {}
-    _gated_motors: Dict[str, Any] = {}
-
-    def __new__(cls):
-        if cls._instance is None:
-            cls._instance = super(SpecialtyRunner, cls).__new__(cls)
-            cls._instance._primary_motors = {}
-            cls._instance._aggregator_motors = {}
-            cls._instance._gated_motors = {}
-        return cls._instance
+    _RESEARCH_MOTORS = {
+        "DeepMetabolicProxyMotor",  # T4: Experimental metabolic proxies
+        "BiologicalAgeMotor",  # T3: Research proxy (PhenoAge)
+        "ObesityMasterMotor",  # T3: Internal aggregation
+    }
 
     def run_all(
         self, encounter: Encounter, clinical_mode: bool = False
@@ -185,9 +178,8 @@ class SpecialtyRunner:
                 )
                 continue
 
-            if name not in self._primary_motors:
-                self._primary_motors[name] = motor_cls()
-            motor = self._primary_motors[name]
+            # Instantiate per-request to avoid state leakage (C-02)
+            motor = motor_cls()
 
             try:
                 if hasattr(motor, "run"):
@@ -209,6 +201,12 @@ class SpecialtyRunner:
             except Exception as e:
                 logger.error(
                     "motor_execution_error", motor=name, error_type=type(e).__name__
+                )
+                # C-03: Do not silence clinical errors
+                results[name] = AdjudicationResult(
+                    calculated_value=f"System Error: {str(e)}",
+                    confidence=0.0,
+                    estado_ui="INDETERMINATE_LOCKED"
                 )
 
         # 2. Risk Engines (Gated / Experimental Phase)
@@ -254,9 +252,8 @@ class SpecialtyRunner:
                         )
                         continue
 
-                if name not in self._gated_motors:
-                    self._gated_motors[name] = motor_cls()
-                motor = self._gated_motors[name]
+                # Instantiate per-request
+                motor = motor_cls()
 
                 if hasattr(motor, "run"):
                     res = motor.run(encounter)
@@ -267,13 +264,17 @@ class SpecialtyRunner:
                 logger.warning(
                     "gated_motor_error", motor=name, error_type=type(e).__name__
                 )
+                results[name] = AdjudicationResult(
+                    calculated_value=f"System Error: {str(e)}",
+                    confidence=0.0,
+                    estado_ui="INDETERMINATE_LOCKED"
+                )
 
         # 3. Aggregator Engines (Decision Support Phase)
         if "AcostaPhenotypeMotor" in results and "EOSSStagingMotor" in results:
             try:
-                if "ObesityMasterMotor" not in self._aggregator_motors:
-                    self._aggregator_motors["ObesityMasterMotor"] = AGGREGATOR_MOTORS["ObesityMasterMotor"]()
-                ob_motor = self._aggregator_motors["ObesityMasterMotor"]
+                # Instantiate per-request
+                ob_motor = AGGREGATOR_MOTORS["ObesityMasterMotor"]()
                 if clinical_mode:
                     logger.info(
                         "motor_clinical_mode_skip",
@@ -291,12 +292,15 @@ class SpecialtyRunner:
                     motor="ObesityMasterMotor",
                     error_type=type(e).__name__,
                 )
+                results["ObesityMasterMotor"] = AdjudicationResult(
+                    calculated_value=f"System Error: {str(e)}",
+                    confidence=0.0,
+                    estado_ui="INDETERMINATE_LOCKED"
+                )
 
         if "ClinicalGuidelinesMotor" in AGGREGATOR_MOTORS:
             try:
-                if "ClinicalGuidelinesMotor" not in self._aggregator_motors:
-                    self._aggregator_motors["ClinicalGuidelinesMotor"] = AGGREGATOR_MOTORS["ClinicalGuidelinesMotor"]()
-                gui_motor = self._aggregator_motors["ClinicalGuidelinesMotor"]
+                gui_motor = AGGREGATOR_MOTORS["ClinicalGuidelinesMotor"]()
                 context = {"cvd_risk_category": cvd_risk_category}
                 results["ClinicalGuidelinesMotor"] = gui_motor.compute(
                     encounter, context
@@ -306,6 +310,11 @@ class SpecialtyRunner:
                     "aggregator_error",
                     motor="ClinicalGuidelinesMotor",
                     error_type=type(e).__name__,
+                )
+                results["ClinicalGuidelinesMotor"] = AdjudicationResult(
+                    calculated_value=f"System Error: {str(e)}",
+                    confidence=0.0,
+                    estado_ui="INDETERMINATE_LOCKED"
                 )
 
         return results

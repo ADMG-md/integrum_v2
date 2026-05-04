@@ -9,7 +9,7 @@ AFTER:  Delega TODOS los cálculos a calculators.py (SSOT).
         Observation objects en el encounter para consumo de los motores.
 """
 from src.engines.domain import Encounter, Observation
-from src.engines.calculators import MetabolicIndices, AnthropometricData, LipidProfile
+from src.domain.calculators import MetabolicIndices, AnthropometricData, LipidProfile
 from typing import Optional
 import math
 

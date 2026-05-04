@@ -11,8 +11,7 @@ from src.engines.specialty.bio_age import PhenoAgeLevineInput, BiologicalAgeMoto
 
 def test_specialty_runner_excludes_draft_motors():
     """Verifies SpecialtyRunner includes formerly orphaned specialty motors."""
-    runner = SpecialtyRunner()
-    names = set(runner._primary_motors.keys())
+    names = set(PRIMARY_MOTORS.keys())
 
     # Should contain formalized ones
     assert "AcostaPhenotypeMotor" in names

@@ -355,49 +355,49 @@ class Encounter(BaseModel):
 
     def _get_renal(self):
         if self._renal is None:
-            from src.engines.calculators import RenalFunction
+            from src.domain.calculators import RenalFunction
 
             self._renal = RenalFunction.from_encounter(self)
         return self._renal
 
     def _get_lipid(self):
         if self._lipid is None:
-            from src.engines.calculators import LipidProfile
+            from src.domain.calculators import LipidProfile
 
             self._lipid = LipidProfile.from_encounter(self)
         return self._lipid
 
     def _get_metabolic(self):
         if self._metabolic is None:
-            from src.engines.calculators import MetabolicIndices
+            from src.domain.calculators import MetabolicIndices
 
             self._metabolic = MetabolicIndices.from_encounter(self)
         return self._metabolic
 
     def _get_anthro(self):
         if self._anthro is None:
-            from src.engines.calculators import AnthropometricData
+            from src.domain.calculators import AnthropometricData
 
             self._anthro = AnthropometricData.from_encounter(self)
         return self._anthro
 
     def _get_hemodynamics(self):
         if self._hemodynamics is None:
-            from src.engines.calculators import Hemodynamics
+            from src.domain.calculators import Hemodynamics
 
             self._hemodynamics = Hemodynamics.from_encounter(self)
         return self._hemodynamics
 
     def _get_context(self):
         if self._context is None:
-            from src.engines.calculators import ClinicalContext
+            from src.domain.calculators import ClinicalContext
 
             self._context = ClinicalContext.from_encounter(self)
         return self._context
 
     def _get_proxies(self):
         if self._proxies is None:
-            from src.engines.calculators import ProxyValues
+            from src.domain.calculators import ProxyValues
 
             self._proxies = ProxyValues.from_encounter(self)
         return self._proxies
