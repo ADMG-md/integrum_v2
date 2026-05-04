@@ -134,7 +134,7 @@ AGGREGATOR_MOTORS = {
 
 class SpecialtyRunner:
     """
-    Singleton orchestrator for Specialty Micro-Engines.
+    Stateless orchestrator for Specialty Micro-Engines.
     Executes multiple specialized clinical audits in two phases:
     1. Primary Engines (Independent)
     2. Aggregator Engines (Dependent on Primary Outputs)
@@ -149,12 +149,6 @@ class SpecialtyRunner:
     """
 
     # T3/T4 motors excluded from clinical mode
-    _RESEARCH_MOTORS = {
-        "DeepMetabolicProxyMotor",  # T4: Experimental metabolic proxies
-        "BiologicalAgeMotor",  # T3: Research proxy (PhenoAge)
-        "ObesityMasterMotor",  # T3: Internal aggregation
-    }
-
     _RESEARCH_MOTORS = {
         "DeepMetabolicProxyMotor",  # T4: Experimental metabolic proxies
         "BiologicalAgeMotor",  # T3: Research proxy (PhenoAge)
@@ -320,21 +314,14 @@ class SpecialtyRunner:
         return results
 
     def get_all_motors(self) -> List[Any]:
-        for name, motor_cls in PRIMARY_MOTORS.items():
-            if name not in self._primary_motors:
-                self._primary_motors[name] = motor_cls()
-        for name, motor_cls in AGGREGATOR_MOTORS.items():
-            if name not in self._aggregator_motors:
-                self._aggregator_motors[name] = motor_cls()
-        for name, motor_cls in GATED_MOTORS.items():
-            if name not in self._gated_motors:
-                self._gated_motors[name] = motor_cls()
-                
-        return (
-            list(self._primary_motors.values())
-            + list(self._aggregator_motors.values())
-            + list(self._gated_motors.values())
-        )
+        motors = []
+        for motor_cls in PRIMARY_MOTORS.values():
+            motors.append(motor_cls())
+        for motor_cls in AGGREGATOR_MOTORS.values():
+            motors.append(motor_cls())
+        for motor_cls in GATED_MOTORS.values():
+            motors.append(motor_cls())
+        return motors
 
     def _build_obesity_input(
         self,
@@ -396,5 +383,9 @@ class SpecialtyRunner:
         )
 
 
-# Export a singleton instance
+# Factory function to create a new stateless runner instance
+def create_runner() -> SpecialtyRunner:
+    return SpecialtyRunner()
+
+# Export a stateless instance
 specialty_runner = SpecialtyRunner()

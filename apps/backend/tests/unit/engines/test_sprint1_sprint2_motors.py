@@ -41,9 +41,13 @@ class TestGLP1MonitoringMotor:
         enc = encounter_with_glp1_therapy
         enc.metadata["prev_weight_kg"] = 96.0
         enc.metadata["prev_muscle_mass_kg"] = 64.0
+        for o in enc.observations:
+            if o.code in ["MMA-001", "MUSCLE-KG", "BIA-MUSCLE-KG"]:
+                o.value = 63.0
         motor = GLP1MonitoringMotor()
         result = motor.compute(enc)
         assert isinstance(result, AdjudicationResult)
+        assert result.estado_ui == "INDETERMINATE_LOCKED", "Should not alert if muscle loss is normal"
 
     def test_compute_with_excessive_muscle_loss(self, encounter_with_glp1_therapy):
         from src.engines.specialty.glp1_monitor import GLP1MonitoringMotor
@@ -54,6 +58,7 @@ class TestGLP1MonitoringMotor:
         result = motor.compute(enc)
         assert isinstance(result, AdjudicationResult)
         assert result.metadata["muscle_loss_pct"] > 10
+        assert result.estado_ui == "CONFIRMED_ACTIVE", "Should trigger alert for excessive muscle loss"
 
 
 class TestMetforminB12Motor:
@@ -105,6 +110,7 @@ class TestCancerScreeningMotor:
         motor = CancerScreeningMotor()
         result = motor.compute(enc)
         assert isinstance(result, AdjudicationResult)
+        assert result.estado_ui == "INDETERMINATE_LOCKED", "No cancer screening gaps expected for young patient"
 
     def test_multiple_gaps_older_obese_patient(self, encounter_with_metabolic_data):
         from src.engines.specialty.cancer_screening import CancerScreeningMotor
@@ -117,6 +123,7 @@ class TestCancerScreeningMotor:
         result = motor.compute(enc)
         assert isinstance(result, AdjudicationResult)
         assert result.metadata["gaps"] > 0
+        assert result.estado_ui == "CONFIRMED_ACTIVE", "Should flag gaps for older patient"
 
 
 # ============================================================
