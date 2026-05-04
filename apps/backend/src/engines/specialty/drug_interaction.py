@@ -311,7 +311,7 @@ class DrugInteractionMotor(BaseClinicalMotor):
                                 moderate_alerts.append(msg)
                             actions.append(
                                 ActionItem(
-                                    category="renal",
+                                    category="pharmacological",
                                     priority="high"
                                     if "contraindicated" in adj["adjustment"].lower()
                                     else "medium",
@@ -322,7 +322,7 @@ class DrugInteractionMotor(BaseClinicalMotor):
                             break
 
         # 4. Pregnancy Safety
-        pregnancy_status = getattr(encounter.metadata, "pregnancy_status", None)
+        pregnancy_status = encounter.metadata.get("pregnancy_status") if encounter.metadata else None
         if pregnancy_status == "positive":
             for name, data in matched_meds:
                 if data.get("teratogenic"):
@@ -337,7 +337,7 @@ class DrugInteractionMotor(BaseClinicalMotor):
                         major_alerts.append(msg)
                     actions.append(
                         ActionItem(
-                            category="pregnancy",
+                            category="pharmacological",
                             priority="high",
                             task=f"Evaluar riesgo/beneficio de {name} en embarazo",
                             rationale=f"Categoría embarazo: {preg_cat}",
