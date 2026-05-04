@@ -1,6 +1,11 @@
 from src.engines.base import BaseClinicalMotor
 from src.engines.domain import Encounter, AdjudicationResult, ClinicalEvidence
+from src.engines.confidence_standards import CONFIDENCE_VALUES, ConfidenceLevel
 from typing import Tuple
+
+# Clinical thresholds per evidence
+HS_CRP_HIGH_RISK_THRESHOLD: float = 3.0  # Pearson et al., 2003 (AHA/CDC)
+NLR_ELEVATED_THRESHOLD: float = 2.5      # Zahorec R, 2001
 
 
 class InflammationMotor(BaseClinicalMotor):
@@ -39,26 +44,26 @@ class InflammationMotor(BaseClinicalMotor):
         findings = []
         evidence = []
 
-        # 1. HS-CRP Assessment
-        if crp.value > 3.0:
+        # 1. HS-CRP Assessment (Pearson et al., 2003)
+        if crp.value > HS_CRP_HIGH_RISK_THRESHOLD:
             findings.append("Systemic Meta-inflammation (High risk)")
             evidence.append(
                 ClinicalEvidence(
-                    type="Observation", code="hs-CRP", value=crp.value, threshold=">3.0"
+                    type="Observation", code="hs-CRP", value=crp.value, threshold=f">{HS_CRP_HIGH_RISK_THRESHOLD}"
                 )
             )
 
-        # 2. Neutrophil-to-Lymphocyte Ratio (NLR)
+        # 2. Neutrophil-to-Lymphocyte Ratio (NLR) (Zahorec R, 2001)
         if neu and lym and lym.value > 0:
             nlr = neu.value / lym.value
-            if nlr > 2.5:
+            if nlr > NLR_ELEVATED_THRESHOLD:
                 findings.append("Elevated NLR (Chronic Inflammatory stress)")
                 evidence.append(
                     ClinicalEvidence(
                         type="Observation",
                         code="NLR",
                         value=round(nlr, 2),
-                        threshold=">2.5",
+                        threshold=f">{NLR_ELEVATED_THRESHOLD}",
                     )
                 )
 
@@ -66,6 +71,6 @@ class InflammationMotor(BaseClinicalMotor):
             calculated_value=" | ".join(findings)
             if findings
             else "Low Inflammatory Profile",
-            confidence=0.9,
+            confidence=CONFIDENCE_VALUES[ConfidenceLevel.VALIDATED_BIOMARKER],
             evidence=evidence,
         )
