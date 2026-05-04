@@ -1,5 +1,6 @@
 from pydantic import BaseModel, Field
 from typing import List, Tuple, Any, Literal, Optional, TYPE_CHECKING, Dict
+import math
 from src.engines.base_models import AdjudicationResult, ClinicalEvidence
 
 if TYPE_CHECKING:
@@ -145,7 +146,6 @@ class BiologicalAgeMotor:
         Implementation of the Levine (2018) PhenoAge Algorithm.
         Based on: 10.18632/aging.101414 (Corrected Supplement Constants)
         """
-        import math
         
         # 1. SI Conversions for Regression
         age = d.chronological_age_years

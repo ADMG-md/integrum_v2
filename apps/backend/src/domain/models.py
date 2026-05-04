@@ -200,6 +200,7 @@ class MedicationStatement(BaseModel):
     code: str
     name: str
     is_active: bool = True
+    dose_amount: Optional[str] = None
 
 
 # --- Clinical Panels (pure domain data — moved from schemas/) ---
@@ -508,10 +509,6 @@ class Encounter(BaseModel):
     @property
     def mets_ir(self) -> Optional[float]:
         return self._get_metabolic().mets_ir
-
-    @property
-    def bmi(self) -> Optional[float]:
-        return self._get_anthro().bmi
 
     @property
     def glucose_mg_dl(self) -> Optional[float]:

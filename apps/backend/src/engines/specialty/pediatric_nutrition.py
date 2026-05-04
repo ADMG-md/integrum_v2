@@ -6,8 +6,11 @@ from src.engines.domain import (
     ActionItem,
 )
 from typing import Tuple, List, Optional
+import structlog
 
 from src.engines.confidence_standards import CONFIDENCE_VALUES, ConfidenceLevel
+
+logger = structlog.get_logger()
 
 
 class PediatricNutritionMotor(BaseClinicalMotor):
@@ -62,40 +65,24 @@ class PediatricNutritionMotor(BaseClinicalMotor):
                 return group
         return None
 
-    def _has_diagnosis(self, encounter: Encounter, code_patterns: List[str]) -> bool:
-        if not encounter.conditions:
-            return False
-        for cond in encounter.conditions:
-            for pattern in code_patterns:
-                if pattern.lower() in cond.code.lower():
-                    return True
-        return False
-
-    def _has_obesity(self, encounter: Encounter) -> bool:
-        if not encounter.conditions:
-            return False
-        for cond in encounter.conditions:
-            if "e66" in cond.code.lower():
-                return True
-        return False
-
     def _check_bmi_percentile(self, encounter: Encounter) -> Optional[float]:
         try:
-            anthropometry = getattr(encounter, "anthropometry", None)
-            if anthropometry and anthropometry.bmi is not None:
-                if anthropometry.age_years and anthropometry.age_years < 18:
-                    bmi = anthropometry.bmi
-                    if anthropometry.age_years < 5:
-                        return bmi
-                    elif anthropometry.age_years < 10:
-                        return bmi
-                    else:
-                        if bmi >= 25:
-                            return 85
-                        elif bmi >= 30:
-                            return 95
-        except Exception:
-            pass
+            # Audit: Accessing delegated property directly
+            bmi = encounter.bmi
+            age = encounter.demographics.age_years if encounter.demographics else None
+            
+            if bmi is not None and age is not None and age < 18:
+                if age < 5:
+                    return bmi
+                elif age < 10:
+                    return bmi
+                else:
+                    if bmi >= 30:
+                        return 95
+                    elif bmi >= 25:
+                        return 85
+        except Exception as e:
+            logger.error("pediatric_bmi_percentile_calculation_failed", error=str(e), encounter_id=encounter.id)
         return None
 
     def _is_restrictive_eating(self, encounter: Encounter) -> bool:
@@ -115,9 +102,9 @@ class PediatricNutritionMotor(BaseClinicalMotor):
         monitoring_frequency = "trimestral"
         confidence = CONFIDENCE_VALUES[ConfidenceLevel.PEER_REVIEWED]  # Default
 
-        has_asd = self._has_diagnosis(encounter, ["f84", "autism", "tea"])
-        has_adhd = self._has_diagnosis(encounter, ["f90", "adhd", "tdah"])
-        has_obesity = self._has_obesity(encounter)
+        has_asd = any(c.code.lower().startswith("f84") for c in encounter.conditions)
+        has_adhd = any(c.code.lower().startswith("f90") for c in encounter.conditions)
+        has_obesity = any(c.code.lower().startswith("e66") for c in encounter.conditions)
         bmi_percentile = self._check_bmi_percentile(encounter)
 
         if has_asd:

@@ -1,6 +1,7 @@
 from src.engines.acosta import AcostaPhenotypeMotor
 from src.engines.eoss import EOSSStagingMotor
 from src.engines.sarcopenia import SarcopeniaMonitorMotor
+from src.engines.metabolic import KleiberBMRMotor
 from src.engines.specialty.bio_age import BiologicalAgeMotor
 from src.engines.specialty.lifestyle import Lifestyle360Motor
 from src.engines.specialty.metabolic import MetabolicPrecisionMotor
@@ -67,6 +68,7 @@ PRIMARY_MOTORS = {
     "MetabolicPrecisionMotor": MetabolicPrecisionMotor,
     "DeepMetabolicProxyMotor": DeepMetabolicProxyMotor,
     "Lifestyle360Motor": Lifestyle360Motor,
+    "KleiberBMRMotor": KleiberBMRMotor,
     # Specialty engines
     "AnthropometryMotor": AnthropometryPrecisionMotor,
     "EndocrineMotor": EndocrinePrecisionMotor,
@@ -386,6 +388,3 @@ class SpecialtyRunner:
 # Factory function to create a new stateless runner instance
 def create_runner() -> SpecialtyRunner:
     return SpecialtyRunner()
-
-# Export a stateless instance
-specialty_runner = SpecialtyRunner()

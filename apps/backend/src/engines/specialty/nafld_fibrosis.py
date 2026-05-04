@@ -48,7 +48,7 @@ class NFSMotor(BaseClinicalMotor):
 
     def compute(self, encounter: Encounter) -> AdjudicationResult:
         age_obs = encounter.get_observation("AGE-001")
-        age = safe_float(age_obs.value) if age_obs else None
+        age = safe_float(age_obs.value) if age_obs else encounter.demographics.age_years
         bmi = encounter.bmi
         ast_obs = encounter.get_observation("AST-001")
         ast_val = (
@@ -76,17 +76,23 @@ class NFSMotor(BaseClinicalMotor):
                 explanation="Datos insuficientes para calcular NFS.",
             )
 
-        has_dm = encounter.history.has_type2_diabetes if encounter.history else False
-        dm_flag = 1.13 if has_dm else 0
+        # NFS Formula Coefficients (Angulo et al., 2007)
+        INTERCEPT = -1.675
+        COEFF_AGE = 0.037
+        COEFF_BMI = 0.094
+        COEFF_DM = 1.13
+        COEFF_AST_ALT = 0.99
+        COEFF_PLT = 0.013
+        COEFF_ALB = 0.66
 
         nfs = (
-            -1.675
-            + 0.037 * age
-            + 0.094 * bmi
-            + dm_flag
-            + 0.99 * (ast_val / alt_val)
-            - 0.013 * plt_val
-            - 0.66 * albumin
+            INTERCEPT
+            + COEFF_AGE * age
+            + COEFF_BMI * bmi
+            + (COEFF_DM if has_dm else 0)
+            + COEFF_AST_ALT * (ast_val / alt_val)
+            - COEFF_PLT * plt_val
+            - COEFF_ALB * albumin
         )
         nfs = round(nfs, 3)
 

@@ -7,6 +7,7 @@ from src.engines.domain import (
     safe_float,
 )
 from typing import Tuple
+import math
 
 from src.engines.confidence_standards import CONFIDENCE_VALUES, ConfidenceLevel
 
@@ -59,8 +60,7 @@ class KFREMotor(BaseClinicalMotor):
 
         # 4-variable KFRE (Tangri 2016)
         # Log-linear model with spline terms
-        import math
-
+        
         age_term = 0.0299 * (age - 60) if age > 60 else 0
         egfr_term = -0.584 * math.log(max(egfr, 5))
         uacr_term = 0.417 * math.log(max(uacr, 1))

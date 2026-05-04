@@ -1,5 +1,6 @@
-from pydantic import BaseModel
-from typing import Dict, Any, Optional, Literal
+from pydantic import BaseModel, Field
+from typing import Dict, Any, Optional, Literal, List, Tuple
+import copy
 from src.engines.domain import (
     Encounter,
     AdjudicationResult,
@@ -355,8 +356,7 @@ class MarkovProgressionMotor:
     def __call__(
         self, data: Optional[MarkovProgressionInput]
     ) -> MarkovProgressionOutput:
-        import copy
-
+        
         if data is None:
             return MarkovProgressionOutput(
                 status="insufficient_data",

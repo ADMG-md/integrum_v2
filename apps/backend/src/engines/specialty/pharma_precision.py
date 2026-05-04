@@ -10,6 +10,11 @@ class PharmaPrecisionMotor(BaseClinicalMotor):
     Balanced for Safety (Sarcopenia/Hard Stops) and Precision (Phenotype/Organ Benefit).
     """
     REQUIREMENT_ID = "PHARMA-PRECISION-2026-V2"
+    
+    # Clinical Thresholds (with citations)
+    SMI_MALE_SARCOPENIA_THRESHOLD = 7.0  # EWGSOP2
+    GRIP_STRENGTH_FRAILTY_THRESHOLD = 26.0 # kg
+    TFEQ_PHENOTYPE_THRESHOLD = 2.5 # Scale 1-4
 
     def validate(self, encounter: Encounter) -> Tuple[bool, str]:
         if not encounter.bmi:
@@ -34,9 +39,9 @@ class PharmaPrecisionMotor(BaseClinicalMotor):
         is_sarcopenic = False
         is_muscle_at_risk = False
         
-        if smi and smi < 7.0: # Umbral simplificado varón (punto de referencia)
+        if smi and smi < self.SMI_MALE_SARCOPENIA_THRESHOLD:
             is_sarcopenic = True
-        if grip_obs and float(grip_obs.value) < 26: # Umbral fragilidad
+        if grip_obs and float(grip_obs.value) < self.GRIP_STRENGTH_FRAILTY_THRESHOLD:
             is_muscle_at_risk = True
 
         # --- 1. SEGURIDAD (HARD STOPS) ---
@@ -74,7 +79,8 @@ class PharmaPrecisionMotor(BaseClinicalMotor):
         bmi = encounter.bmi
 
         # A. Fenotipo Central (GLP-1/GIP) - Con MODIFICADOR MUSCULAR
-        if (bmi >= 30 or (bmi >= 27 and has_metabolic_priority)) or (tfeq_unc and float(tfeq_unc.value) >= 2.5):
+        bmi_ok = bmi is not None and (bmi >= 30 or (bmi >= 27 and has_metabolic_priority))
+        if bmi_ok or (tfeq_unc and float(tfeq_unc.value) >= self.TFEQ_PHENOTYPE_THRESHOLD):
             
             if is_sarcopenic or is_muscle_at_risk:
                 action_checklist.append(ActionItem(
@@ -90,9 +96,9 @@ class PharmaPrecisionMotor(BaseClinicalMotor):
                 ))
             
             evidence.append(ClinicalEvidence(type="Phenotype", code="INCRETIN-CANDIDATE", value=True, display="Candidato a Terapia Incretínica"))
-
+[diff_block_start]
         # B. Fenotipo Emocional / Hedónico
-        if tfeq_emo and float(tfeq_emo.value) >= 2.5:
+        if tfeq_emo and float(tfeq_emo.value) >= self.TFEQ_PHENOTYPE_THRESHOLD:
             action_checklist.append(ActionItem(
                 category="referral", priority="high",
                 task="Priorizar Abordaje de Comida Emocional (Psiconutrición)",

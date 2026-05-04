@@ -9,6 +9,9 @@ class ProteinEngineMotor(BaseClinicalMotor):
     Calculates precision protein targets with Nephro-Shield and Urate-Shield.
     """
     REQUIREMENT_ID = "KDIGO-2024 / PROT-V2"
+    
+    BASE_PROTEIN_FACTOR = 1.1
+    RENAL_PROTEIN_FACTOR = 0.8
 
     def validate(self, encounter: Encounter) -> Tuple[bool, str]:
         if not encounter.fat_free_mass:
@@ -32,7 +35,7 @@ class ProteinEngineMotor(BaseClinicalMotor):
         uric = encounter.uric_acid
         
         # 1. Base Target Calculation (1.0 - 1.2 g/kg over FFM)
-        target_factor = 1.1
+        target_factor = self.BASE_PROTEIN_FACTOR
         total_protein = ffm * target_factor
         
         # 2. Nephro-Shield (KDIGO 2024 / Auditor Correction)
@@ -40,9 +43,9 @@ class ProteinEngineMotor(BaseClinicalMotor):
         if (egfr and egfr < 60) or (uacr and uacr >= 30):
             renal_risk = True
             # AUDITOR RULE: Renal restriction is strictly over IBW to avoid malnutrition or overload
-            target_factor = 0.8
+            target_factor = self.RENAL_PROTEIN_FACTOR
             total_protein = ibw * target_factor
-            limiters.append(f"ERC / Albuminuria Detectada - Prioridad Renal (0.8g/kg IBW)")
+            limiters.append(f"ERC / Albuminuria Detectada - Prioridad Renal ({self.RENAL_PROTEIN_FACTOR}g/kg IBW)")
         
         evidence.append(ClinicalEvidence(
             type="Calculation",

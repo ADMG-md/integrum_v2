@@ -92,9 +92,11 @@ class MetabolicPrecisionMotor(BaseClinicalMotor):
     }
 
     def validate(self, encounter: Encounter) -> Tuple[bool, str]:
-        if not encounter.get_observation(self.CODES["GLUCOSE"]) and \
-           not encounter.get_observation(self.CODES["HBA1C"]) and \
-           not encounter.bmi:
+        if not (
+            encounter.get_observation(self.CODES["GLUCOSE"])
+            or encounter.get_observation(self.CODES["HBA1C"])
+            or encounter.bmi
+        ):
             return False, "Insufficient data for metabolic precision audit"
         return True, ""
 

@@ -53,11 +53,14 @@ class KleiberBMRMotor:
 
         return self._execute_calculation(float(weight_obs.value))
 
+    KLEIBER_SCALING_FACTOR = 70.0
+    KLEIBER_EXPONENT = 0.75
+
     def _execute_calculation(self, weight_kg: float) -> KleiberBMROutput:
         # Kleiber’s law: BMR ≈ 70 * weight^0.75 (clásico en humanos, ajustable)
-        bmr = 70.0 * (weight_kg**0.75)
+        bmr = self.KLEIBER_SCALING_FACTOR * (weight_kg**self.KLEIBER_EXPONENT)
         explanation = (
-            "BMR estimado con ley de Kleiber (70 * peso^0.75). "
+            f"BMR estimado con ley de Kleiber ({self.KLEIBER_SCALING_FACTOR} * peso^{self.KLEIBER_EXPONENT}). "
             "Uso: referencia metabólica, no prescripción calórica directa."
         )
         return KleiberBMROutput(
