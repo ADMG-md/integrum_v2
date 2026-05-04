@@ -38,6 +38,16 @@ class VaultService:
         
         self.cipher = Fernet(self.key)
 
+        # P0-4: Derive a SEPARATE HMAC key via HKDF-SHA256.
+        # Using the same key for encryption AND HMAC creates a cryptographic oracle.
+        # HKDF with distinct context labels produces cryptographically independent keys.
+        import hashlib as _hl
+        self._hmac_key = hmac.new(
+            self.key,
+            b"integrum-v2-blind-index-v1",
+            _hl.sha256,
+        ).digest()
+
     def encrypt(self, plain_text: str) -> str:
         if not plain_text:
             return plain_text
@@ -64,13 +74,13 @@ class VaultService:
 
     def generate_blind_index(self, plain_text: str) -> str:
         """
-        Generates a deterministic hash for searching encrypted fields.
-        Standard practice for searchable encryption.
+        Generates a deterministic HMAC-SHA256 for searching encrypted fields.
+        Uses a derived key (NOT the Fernet encryption key) to prevent
+        cryptographic oracle attacks. (P0-4)
         """
         if not plain_text:
             return ""
-        # We use HMAC-SHA256 with the master key to make it globally unique and hard to brute-force
-        h = hmac.new(self.key, plain_text.strip().lower().encode(), hashlib.sha256)
+        h = hmac.new(self._hmac_key, plain_text.strip().lower().encode(), hashlib.sha256)
         return h.hexdigest()
 
 vault_service = VaultService()

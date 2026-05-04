@@ -19,9 +19,15 @@ load_dotenv()
 # Config (Loaded from environment for hardening)
 SECRET_KEY = os.environ.get("SECRET_KEY")
 if not SECRET_KEY:
-    # In production, we MUST have a secret key. In dev, we can fallback but with a warning.
-    if os.getenv("ENVIRONMENT") == "production":
-        raise RuntimeError("CRITICAL: SECRET_KEY environment variable is NOT SET in production.")
+    # P0-5: Fail-fast unless explicitly in development mode.
+    # docker-compose without ENVIRONMENT set defaults to production-safe behavior.
+    if os.getenv("ENVIRONMENT", "production").lower() != "development":
+        raise RuntimeError(
+            "CRITICAL: SECRET_KEY environment variable is NOT SET. "
+            "Set ENVIRONMENT=development to allow dev fallback."
+        )
+    import warnings
+    warnings.warn("Using hardcoded dev SECRET_KEY. NEVER use in production.", stacklevel=2)
     SECRET_KEY = "INTEGRUM_V2_DEV_SECRET_ONLY"
 
 ALGORITHM = os.getenv("ALGORITHM", "HS256")

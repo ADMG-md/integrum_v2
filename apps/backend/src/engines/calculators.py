@@ -194,9 +194,16 @@ class AnthropometricData:
 
         bri = None
         if waist and h and h > 0:
-            import math as _m
-
-            bri = (waist / (2 * _m.pi)) / (h / 100)
+            # P0-2: Body Roundness Index — Thomas DM et al, J Obes 2010;2010:301895
+            # Formula: BRI = 364.2 - 365.5 × sqrt(1 - (waist_m/(2π))^2 / (height_m/2)^2)
+            # waist in cm → m; height in cm → m
+            waist_m = waist / 100.0
+            height_m = h / 100.0
+            _term = (waist_m / (2 * math.pi)) ** 2 / (height_m / 2) ** 2
+            if _term < 1.0:  # geometrically valid (waist < height/π ≈ physiological)
+                bri = round(364.2 - 365.5 * math.sqrt(1.0 - _term), 2)
+            else:
+                bri = None  # physiologically impossible input
 
         ffm = None
         ffm_obs = enc.get_observation("BIA-FFM-KG")

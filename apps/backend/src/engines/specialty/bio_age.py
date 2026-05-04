@@ -158,11 +158,16 @@ class BiologicalAgeMotor:
 
         # 2. Linear Predictor (xb) - Levine 2018 Elastic Net Coefficients
         # Reference Table S3 (NHANES III Training)
+        # P0-6: CRP=0.0 is analytically valid (no detectable inflammation) but
+        # math.log(0) = -inf which silently corrupts the Gompertz CDF.
+        # Floor at 0.01 mg/L — below detection limit of any clinical analyzer.
+        # SOURCE: Levine 2018 R implementation uses log(CRP) with CRP in mg/L.
+        crp_safe = max(crp, 0.01)
         xb = -19.907 + \
              (-0.0336 * alb) + \
              (0.0095 * cre) + \
              (0.1953 * glu) + \
-             (0.0954 * math.log(crp)) + \
+             (0.0954 * math.log(crp_safe)) + \
              (-0.0120 * lym) + \
              (0.0268 * mcv) + \
              (0.3306 * rdw) + \

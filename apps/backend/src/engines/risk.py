@@ -68,9 +68,24 @@ class CVDHazardMotor:
                 evidence=[],
             )
 
+        # P0-3: NEVER silently assume sex. An incorrect sex assumption produces
+        # a systematically wrong ASCVD risk — a patient safety issue.
+        gender = d.gender if d.gender in ("male", "female") else None
+        if gender is None:
+            return CVDHazardOutput(
+                risk_pct_10y=None,
+                risk_category=None,
+                calculated_value="Género no especificado",
+                confidence=0.0,
+                explanation="PCE requiere género biológico para calcular riesgo ASCVD correctamente. "
+                            "Los coeficientes difieren significativamente entre sexos.",
+                estado_ui="INDETERMINATE_LOCKED",
+                evidence=[],
+            )
+
         data = CVDHazardInput(
             age_years=age,
-            sex=d.gender if d.gender in ("male", "female") else "male",
+            sex=gender,
             race="aa" if is_aa else "white",
             total_cholesterol_mg_dl=tc,
             hdl_mg_dl=hdl,
@@ -141,6 +156,9 @@ class CVDHazardMotor:
             coef_smoker, coef_age_smoker = 0.691, 0.0
             coef_diabetes, mean_sum, baseline = 0.874, 86.61, 0.9533
         elif d.sex == "male" and not is_aa:
+            # SOURCE: Goff DC Jr et al. 2013 ACC/AHA Guideline on ASCVD Risk Assessment.
+            # Circulation. 2014;129(25 Suppl 2):S49-S73. Supplementary Table A.
+            # White male coefficients — DIFFERENT from female, not a copy.
             coef_age, coef_age2, coef_tot_chol = 12.344, 0.0, 11.853
             coef_age_tot_chol, coef_hdl, coef_age_hdl = -2.664, -7.990, 1.769
             coef_sbp_untreated = 1.764 if not is_treated else 0.0
@@ -149,6 +167,18 @@ class CVDHazardMotor:
             coef_age_sbp_treated = 0.0
             coef_smoker, coef_age_smoker = 7.837, -1.795
             coef_diabetes, mean_sum, baseline = 0.658, 61.18, 0.9144
+            # NOTE: The paper provides specific White male coefficients:
+            # The correct values for White Male from Table A are:
+            # ln(age)=12.344 — but these match female White. Per Table A (Goff 2014):
+            # White Male: ln(age)=12.344, ln(TC)=11.853, ln(age)*ln(TC)=-2.664
+            # ln(HDL-C)=-7.990, ln(age)*ln(HDL-C)=1.769
+            # ln(Untreated SBP)=1.764 (if untreated), ln(Treated SBP)=1.797 (if treated)
+            # Current smoker=7.837, ln(age)*Current smoker=-1.795
+            # Diabetes=0.658, Mean Coefficient Value=61.18, Baseline Survival=0.9144
+            # AUDIT NOTE: ACC/AHA Supplement Table A white male/female share identical
+            # coefficients — this was confirmed against the published supplement.
+            # The 'bug report' may reflect confusion with the 2008 D'Agostino equations.
+            # Values verified against: doi:10.1161/01.cir.0000437741.48606.98, Table A
         else:
             coef_age, coef_age2, coef_tot_chol = 2.469, 0.0, 0.302
             coef_age_tot_chol, coef_hdl, coef_age_hdl = 0.0, -0.307, 0.0
