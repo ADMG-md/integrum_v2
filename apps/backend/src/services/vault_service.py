@@ -41,12 +41,16 @@ class VaultService:
         # P0-4: Derive a SEPARATE HMAC key via HKDF-SHA256.
         # Using the same key for encryption AND HMAC creates a cryptographic oracle.
         # HKDF with distinct context labels produces cryptographically independent keys.
-        import hashlib as _hl
-        self._hmac_key = hmac.new(
-            self.key,
-            b"integrum-v2-blind-index-v1",
-            _hl.sha256,
-        ).digest()
+        from cryptography.hazmat.primitives.kdf.hkdf import HKDF
+        from cryptography.hazmat.primitives import hashes
+        
+        hkdf = HKDF(
+            algorithm=hashes.SHA256(),
+            length=32,
+            salt=None,
+            info=b"integrum-v2-blind-index-v1",
+        )
+        self._hmac_key = hkdf.derive(self.key)
 
     def encrypt(self, plain_text: str) -> str:
         if not plain_text:
@@ -68,9 +72,13 @@ class VaultService:
         try:
             return self.cipher.decrypt(encrypted_text.encode()).decode()
         except Exception as e:
-            # If not searchable or not encrypted, return as is (handle migration gracefully)
-            logger.debug("vault_decryption_skipped", error=str(e))
-            return encrypted_text
+            # SEC-04: NEVER fallback to ciphertext on decryption failure.
+            # Returning raw ciphertext to the caller when decryption fails exposes the system to leakage.
+            logger.error("vault_decryption_failed", error=str(e))
+            raise RuntimeError(
+                f"CRITICAL: PHI decryption failed. Key mismatch or data corruption. "
+                f"Original error: {type(e).__name__}"
+            ) from e
 
     def generate_blind_index(self, plain_text: str) -> str:
         """

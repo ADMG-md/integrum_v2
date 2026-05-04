@@ -139,14 +139,15 @@ class CVDHazardMotor:
         is_aa = d.race == "aa"
 
         if d.sex == "female" and not is_aa:
-            coef_age, coef_age2, coef_tot_chol = 12.344, 0.0, 11.853
-            coef_age_tot_chol, coef_hdl, coef_age_hdl = -2.664, -7.990, 1.769
-            coef_sbp_untreated = 1.764 if not is_treated else 0.0
+            # White Female coefficients
+            coef_age, coef_age2, coef_tot_chol = -29.799, 4.884, 13.540
+            coef_age_tot_chol, coef_hdl, coef_age_hdl = -3.114, -13.578, 3.149
+            coef_sbp_untreated = 1.957 if not is_treated else 0.0
             coef_age_sbp_untreated = 0.0
-            coef_sbp_treated = 1.797 if is_treated else 0.0
+            coef_sbp_treated = 2.019 if is_treated else 0.0
             coef_age_sbp_treated = 0.0
-            coef_smoker, coef_age_smoker = 7.837, -1.795
-            coef_diabetes, mean_sum, baseline = 0.658, 61.18, 0.9144
+            coef_smoker, coef_age_smoker = 7.574, -1.665
+            coef_diabetes, mean_sum, baseline = 0.661, -29.18, 0.9665
         elif d.sex == "female" and is_aa:
             coef_age, coef_age2, coef_tot_chol = 17.114, 0.0, 0.940
             coef_age_tot_chol, coef_hdl, coef_age_hdl = 0.0, -18.920, 4.475
@@ -180,7 +181,9 @@ class CVDHazardMotor:
             # coefficients — this was confirmed against the published supplement.
             # The 'bug report' may reflect confusion with the 2008 D'Agostino equations.
             # Values verified against: doi:10.1161/01.cir.0000437741.48606.98, Table A
+            # Values verified against: doi:10.1161/01.cir.0000437741.48606.98, Table A
         else:
+            # Black Male coefficients (and fallback for 'other')
             coef_age, coef_age2, coef_tot_chol = 2.469, 0.0, 0.302
             coef_age_tot_chol, coef_hdl, coef_age_hdl = 0.0, -0.307, 0.0
             coef_sbp_untreated = 1.809 if not is_treated else 0.0
