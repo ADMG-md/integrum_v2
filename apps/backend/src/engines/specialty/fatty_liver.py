@@ -27,7 +27,7 @@ class FLIMotor(BaseClinicalMotor):
     REQUIREMENT_ID = "FLI-2006"
 
     def validate(self, encounter: Encounter) -> Tuple[bool, str]:
-        tg = encounter.cardio_panel.triglycerides_mg_dl
+        tg = encounter.metabolic_panel.triglycerides_mg_dl
         bmi = encounter.bmi
         ggt_obs = encounter.get_observation("GGT-001")
         ggt = (
@@ -39,7 +39,7 @@ class FLIMotor(BaseClinicalMotor):
         return True, ""
 
     def compute(self, encounter: Encounter) -> AdjudicationResult:
-        tg = encounter.cardio_panel.triglycerides_mg_dl
+        tg = encounter.metabolic_panel.triglycerides_mg_dl
         bmi = encounter.bmi
         ggt_obs = encounter.get_observation("GGT-001")
         ggt = (

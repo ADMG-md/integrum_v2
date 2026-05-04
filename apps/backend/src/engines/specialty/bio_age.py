@@ -32,6 +32,7 @@ class PhenoAgeLevineOutput(AdjudicationResult):
 class BiologicalAgeMotor:
     ENGINE_NAME = "PhenoAgeLevineMotor"
     ENGINE_VERSION = "0.2.0"
+    REQUIREMENT_ID = "LEVINE-2018"  # DOI: 10.18632/aging.101414 (PhenoAge epigenetic clock)
 
     def get_version_hash(self) -> str:
         return "0.2.0"

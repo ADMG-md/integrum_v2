@@ -7,7 +7,7 @@ Test IDs: T-GUI-01 through T-GUI-03 (Traceability Matrix).
 import pytest
 from src.engines.specialty.guidelines import ClinicalGuidelinesMotor
 from src.engines.domain import Encounter, Observation, MedicationStatement
-from src.schemas.encounter import DemographicsSchema, MetabolicPanelSchema, CardioPanelSchema
+from src.schemas.encounter import DemographicsSchema, MetabolicPanelSchema
 
 @pytest.fixture
 def motor():
@@ -17,14 +17,13 @@ def _make_encounter(medications=None, observations=None, ldl=None, glucose=None,
     """Helper: creates a valid Encounter for guideline auditing."""
     mp = MetabolicPanelSchema(
         glucose_mg_dl=glucose,
-        insulin_mu_u_ml=insulin
+        insulin_mu_u_ml=insulin,
+        ldl_mg_dl=ldl
     )
-    cp = CardioPanelSchema(ldl_mg_dl=ldl)
     return Encounter(
         id="test-enc",
         demographics=DemographicsSchema(age_years=55, gender="male"),
         metabolic_panel=mp,
-        cardio_panel=cp,
         medications=medications or [],
         observations=observations or [],
         metadata={"age": 55, "sex": "male"}

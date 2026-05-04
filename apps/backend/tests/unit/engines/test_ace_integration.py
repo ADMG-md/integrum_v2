@@ -4,7 +4,6 @@ from src.engines.domain import Encounter, ClinicalHistory, TraumaHistory
 from src.schemas.encounter import (
     DemographicsSchema,
     MetabolicPanelSchema,
-    CardioPanelSchema,
 )
 
 
@@ -19,7 +18,6 @@ def test_ace_validate_missing(motor):
         id="1",
         demographics=DemographicsSchema(age_years=50, gender="male"),
         metabolic_panel=MetabolicPanelSchema(),
-        cardio_panel=CardioPanelSchema(),
         history=ClinicalHistory(trauma=None),
         observations=[],
         metadata={},
@@ -34,7 +32,6 @@ def test_ace_validate_success(motor):
         id="2",
         demographics=DemographicsSchema(age_years=50, gender="male"),
         metabolic_panel=MetabolicPanelSchema(),
-        cardio_panel=CardioPanelSchema(),
         history=ClinicalHistory(trauma=TraumaHistory(ace_score=2)),
         observations=[],
         metadata={},
@@ -49,7 +46,6 @@ def test_ace_very_high(motor):
         id="3",
         demographics=DemographicsSchema(age_years=40, gender="female"),
         metabolic_panel=MetabolicPanelSchema(),
-        cardio_panel=CardioPanelSchema(),
         history=ClinicalHistory(trauma=TraumaHistory(ace_score=9)),
         observations=[],
         metadata={},
@@ -67,7 +63,6 @@ def test_ace_high(motor):
         id="4",
         demographics=DemographicsSchema(age_years=45, gender="male"),
         metabolic_panel=MetabolicPanelSchema(),
-        cardio_panel=CardioPanelSchema(),
         history=ClinicalHistory(trauma=TraumaHistory(ace_score=6)),
         observations=[],
         metadata={},
@@ -83,7 +78,6 @@ def test_ace_moderate_high(motor):
         id="5",
         demographics=DemographicsSchema(age_years=50, gender="male"),
         metabolic_panel=MetabolicPanelSchema(),
-        cardio_panel=CardioPanelSchema(),
         history=ClinicalHistory(trauma=TraumaHistory(ace_score=4)),
         observations=[],
         metadata={},
@@ -99,7 +93,6 @@ def test_ace_moderate(motor):
         id="6",
         demographics=DemographicsSchema(age_years=50, gender="male"),
         metabolic_panel=MetabolicPanelSchema(),
-        cardio_panel=CardioPanelSchema(),
         history=ClinicalHistory(trauma=TraumaHistory(ace_score=2)),
         observations=[],
         metadata={},
@@ -114,7 +107,6 @@ def test_ace_low(motor):
         id="7",
         demographics=DemographicsSchema(age_years=50, gender="male"),
         metabolic_panel=MetabolicPanelSchema(),
-        cardio_panel=CardioPanelSchema(),
         history=ClinicalHistory(trauma=TraumaHistory(ace_score=0)),
         observations=[],
         metadata={},

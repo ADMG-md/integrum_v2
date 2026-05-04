@@ -8,6 +8,7 @@ class LipidRiskPrecisionMotor(BaseClinicalMotor):
     Motor de Riesgo Cardiovascular y Lípidos (Guías ACC/AHA 2026).
     Implementa metas de LDL-C basadas en riesgo y análisis de Colesterol Remanente.
     """
+    REQUIREMENT_ID = "ACC-AHA-CHOL-2019"  # DOI: 10.1016/j.jacc.2018.11.003 (Grundy et al, J Am Coll Cardiol 2019)
     
     CODES = {
         "LDL": "18262-6",

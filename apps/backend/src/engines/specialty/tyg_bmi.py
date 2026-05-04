@@ -37,7 +37,7 @@ class TyGBMIMotor(BaseClinicalMotor):
     THRESHOLDS_FEMALE = (220, 250)
 
     def validate(self, encounter: Encounter) -> Tuple[bool, str]:
-        tg = encounter.cardio_panel.triglycerides_mg_dl
+        tg = encounter.metabolic_panel.triglycerides_mg_dl
         glu = encounter.glucose_mg_dl
         bmi = encounter.bmi
         if not all([tg, glu, bmi]):
@@ -46,7 +46,7 @@ class TyGBMIMotor(BaseClinicalMotor):
 
     def compute(self, encounter: Encounter) -> AdjudicationResult:
         is_male = encounter.metadata.get("sex", "").lower() in ["male", "m"]
-        tg = encounter.cardio_panel.triglycerides_mg_dl
+        tg = encounter.metabolic_panel.triglycerides_mg_dl
         glu = encounter.glucose_mg_dl
         bmi = encounter.bmi
 

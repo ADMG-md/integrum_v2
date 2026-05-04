@@ -17,7 +17,6 @@ from src.engines.domain import (
     Observation,
     DemographicsSchema,
     MetabolicPanelSchema,
-    CardioPanelSchema,
     AdjudicationResult,
 )
 from src.engines.specialty.functional_sarcopenia import FunctionalSarcopeniaMotor
@@ -37,9 +36,7 @@ def _make_encounter(observations=None, sex="male"):
             wbc_k_ul=7,
             lymphocyte_percent=30,
             ferritin_ng_ml=100,
-            hs_crp_mg_l=1.5,
-        ),
-        cardio_panel=CardioPanelSchema(
+            hs_crp_mg_l=1.5, 
             total_cholesterol_mg_dl=200,
             ldl_mg_dl=130,
             hdl_mg_dl=45,

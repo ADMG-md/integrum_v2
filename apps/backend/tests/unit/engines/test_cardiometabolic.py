@@ -4,7 +4,6 @@ from src.engines.domain import Encounter, Observation
 from src.schemas.encounter import (
     DemographicsSchema,
     MetabolicPanelSchema,
-    CardioPanelSchema,
 )
 
 
@@ -19,7 +18,6 @@ def test_cmi_validate_missing(motor):
         id="1",
         demographics=DemographicsSchema(age_years=50, gender="male"),
         metabolic_panel=MetabolicPanelSchema(),
-        cardio_panel=CardioPanelSchema(),
         observations=[],
         metadata={},
     )
@@ -32,8 +30,7 @@ def test_cmi_validate_success(motor):
     enc = Encounter(
         id="2",
         demographics=DemographicsSchema(age_years=50, gender="male"),
-        metabolic_panel=MetabolicPanelSchema(),
-        cardio_panel=CardioPanelSchema(triglycerides_mg_dl=150, hdl_mg_dl=40),
+        metabolic_panel=MetabolicPanelSchema(triglycerides_mg_dl=150, hdl_mg_dl=40),
         observations=[
             Observation(code="WAIST-001", value=90),
             Observation(code="8302-2", value=170),
@@ -49,8 +46,7 @@ def test_cmi_male_high(motor):
     enc = Encounter(
         id="3",
         demographics=DemographicsSchema(age_years=50, gender="male"),
-        metabolic_panel=MetabolicPanelSchema(),
-        cardio_panel=CardioPanelSchema(triglycerides_mg_dl=200, hdl_mg_dl=35),
+        metabolic_panel=MetabolicPanelSchema(triglycerides_mg_dl=200, hdl_mg_dl=35),
         observations=[
             Observation(code="WAIST-001", value=100),
             Observation(code="8302-2", value=170),
@@ -67,8 +63,7 @@ def test_cmi_male_low(motor):
     enc = Encounter(
         id="4",
         demographics=DemographicsSchema(age_years=50, gender="male"),
-        metabolic_panel=MetabolicPanelSchema(),
-        cardio_panel=CardioPanelSchema(triglycerides_mg_dl=80, hdl_mg_dl=60),
+        metabolic_panel=MetabolicPanelSchema(triglycerides_mg_dl=80, hdl_mg_dl=60),
         observations=[
             Observation(code="WAIST-001", value=70),
             Observation(code="8302-2", value=175),
@@ -85,8 +80,7 @@ def test_cmi_female_high(motor):
     enc = Encounter(
         id="5",
         demographics=DemographicsSchema(age_years=50, gender="female"),
-        metabolic_panel=MetabolicPanelSchema(),
-        cardio_panel=CardioPanelSchema(triglycerides_mg_dl=180, hdl_mg_dl=40),
+        metabolic_panel=MetabolicPanelSchema(triglycerides_mg_dl=180, hdl_mg_dl=40),
         observations=[
             Observation(code="WAIST-001", value=85),
             Observation(code="8302-2", value=160),
@@ -103,8 +97,7 @@ def test_cmi_sex_difference(motor):
     enc_male = Encounter(
         id="6",
         demographics=DemographicsSchema(age_years=50, gender="male"),
-        metabolic_panel=MetabolicPanelSchema(),
-        cardio_panel=CardioPanelSchema(triglycerides_mg_dl=150, hdl_mg_dl=40),
+        metabolic_panel=MetabolicPanelSchema(triglycerides_mg_dl=150, hdl_mg_dl=40),
         observations=[
             Observation(code="WAIST-001", value=90),
             Observation(code="8302-2", value=170),
@@ -114,8 +107,7 @@ def test_cmi_sex_difference(motor):
     enc_female = Encounter(
         id="7",
         demographics=DemographicsSchema(age_years=50, gender="female"),
-        metabolic_panel=MetabolicPanelSchema(),
-        cardio_panel=CardioPanelSchema(triglycerides_mg_dl=150, hdl_mg_dl=40),
+        metabolic_panel=MetabolicPanelSchema(triglycerides_mg_dl=150, hdl_mg_dl=40),
         observations=[
             Observation(code="WAIST-001", value=90),
             Observation(code="8302-2", value=160),

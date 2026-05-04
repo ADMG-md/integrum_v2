@@ -1,7 +1,7 @@
 import pytest
 from src.engines.specialty.bio_age import BiologicalAgeMotor, PhenoAgeLevineInput
 from src.engines.domain import Encounter, Observation
-from src.schemas.encounter import DemographicsSchema, MetabolicPanelSchema, CardioPanelSchema
+from src.schemas.encounter import DemographicsSchema, MetabolicPanelSchema, MetabolicPanelSchema
 from datetime import datetime
 
 def test_encounter_phenoage_input_assembly():
@@ -18,7 +18,7 @@ def test_encounter_phenoage_input_assembly():
         alkaline_phosphatase_u_l=75,
         wbc_k_ul=6.5
     )
-    cardio = CardioPanelSchema()
+    cardio = MetabolicPanelSchema()
     
     encounter = Encounter(
         id="test-1",
@@ -37,7 +37,7 @@ def test_encounter_phenoage_input_missing_marker():
     # Test that missing markers return None DTO
     demographics = DemographicsSchema(age_years=50)
     metabolic = MetabolicPanelSchema(albumin_g_dl=4.5) # Missing others
-    cardio = CardioPanelSchema()
+    cardio = MetabolicPanelSchema()
     
     encounter = Encounter(
         id="test-2",

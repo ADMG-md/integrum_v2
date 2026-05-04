@@ -33,12 +33,8 @@ from src.engines.specialty_runner import specialty_runner
 from src.engines.specialty.readiness import readiness_engine
 from src.services.clinical_engine_service import clinical_bridge
 from src.services.observation_mapper import build_flat_observations
-from src.schemas.encounter import (
-    EncounterCreate,
-    DemographicsSchema,
-    MetabolicPanelSchema,
-    CardioPanelSchema,
-)
+from src.domain.models import DemographicsSchema, MetabolicPanelSchema
+from src.schemas.encounter import EncounterCreate
 from src.models.encounter import Patient, EncounterModel
 from src.models.consent import PatientConsent
 from src.services.timeline_service import timeline_service
@@ -105,42 +101,6 @@ def calculate_age(patient: Patient) -> int:
     return DEFAULT_CLINICAL_AGE
 
 
-def build_history_domain(payload: EncounterCreate) -> Optional[ClinicalHistory]:
-    """Convert payload history to domain ClinicalHistory."""
-    if not payload.history:
-        return None
-
-    return ClinicalHistory(
-        onset_trigger=payload.history.onset_trigger,
-        age_of_onset=payload.history.age_of_onset,
-        max_weight_ever_kg=payload.history.max_weight_ever_kg,
-        current_medications=[
-            DrugEntry(**m.model_dump()) for m in payload.history.current_medications
-        ],
-        previous_medications=[
-            DrugEntry(**m.model_dump()) for m in payload.history.previous_medications
-        ],
-        trauma=TraumaHistory(**payload.history.trauma.model_dump())
-        if payload.history.trauma
-        else None,
-        has_type2_diabetes=payload.history.has_type2_diabetes,
-        has_prediabetes=payload.history.has_prediabetes,
-        has_hypertension=payload.history.has_hypertension,
-        has_dyslipidemia=payload.history.has_dyslipidemia,
-        has_nafld=payload.history.has_nafld,
-        has_gout=payload.history.has_gout,
-        has_hypothyroidism=payload.history.has_hypothyroidism,
-        has_pcos=payload.history.has_pcos,
-        has_osa=payload.history.has_osa,
-        has_glaucoma=payload.history.has_glaucoma,
-        has_seizures_history=payload.history.has_seizures_history,
-        has_eating_disorder_history=payload.history.has_eating_disorder_history,
-        family_history_thyroid_cancer=payload.history.family_history_thyroid_cancer,
-        smoking_status=payload.history.smoking_status or "never",
-        alcohol_intake=payload.history.alcohol_intake or "none",
-    )
-
-
 def build_domain_encounter(
     encounter_id: str,
     payload: EncounterCreate,
@@ -148,24 +108,14 @@ def build_domain_encounter(
     age: int,
 ) -> Encounter:
     """Build the enriched domain Encounter model from payload and patient data."""
-    history_domain = build_history_domain(payload)
     flat_observations = build_flat_observations(payload, patient.gender)
 
     demographics = DemographicsSchema(age_years=age, gender=patient.gender)
 
-    metabolic = MetabolicPanelSchema()
-    cardio = CardioPanelSchema()
-
-    if payload.metabolic:
-        m_data = payload.metabolic.model_dump(exclude_unset=True)
-        metabolic = MetabolicPanelSchema(**m_data)
-        cardio = CardioPanelSchema(**m_data)
-
     domain_encounter = Encounter(
         id=encounter_id,
         demographics=demographics,
-        metabolic_panel=metabolic,
-        cardio_panel=cardio,
+        metabolic_panel=payload.metabolic or MetabolicPanelSchema(),
         conditions=[Condition(**c.model_dump()) for c in payload.conditions],
         observations=[
             o if isinstance(o, Observation) else Observation(**o.model_dump())
@@ -177,7 +127,7 @@ def build_domain_encounter(
             )
             for m in payload.medications
         ],
-        history=history_domain,
+        history=payload.history,
         reason_for_visit=payload.reason_for_visit,
         personal_history=payload.personal_history,
         family_history=payload.family_history,
@@ -333,3 +283,127 @@ async def process_encounter(
         "results": persistent_results,
         "data_readiness": readiness_report,
     }
+
+
+async def finalize_encounter_logic(
+    db: AsyncSession,
+    encounter_id: str,
+    payload,  # EncounterFinalizeSchema
+    current_user,
+) -> Dict[str, Any]:
+    """
+    DT-01: Business logic for finalizing a clinical encounter.
+
+    Extracted from the HTTP endpoint to follow Clean Architecture.
+    Responsibilities:
+    - Tenant isolation check
+    - MinCiencias audit compliance (version hash + confidence validation)
+    - Agreement rate calculation
+    - Outcome field persistence
+    - Encounter status transition → FINALIZED
+    """
+    from src.models.encounter import EncounterModel
+    from src.models.audit import DecisionAuditLog, DecisionType, ReasonCode
+
+    stmt = select(EncounterModel).where(EncounterModel.id == encounter_id)
+    result = await db.execute(stmt)
+    encounter = result.scalar_one_or_none()
+
+    if not encounter:
+        raise HTTPException(status_code=404, detail="Encounter not found")
+
+    # Tenant isolation: a physician can only finalize their own tenant's encounters
+    if encounter.tenant_id != current_user.tenant_id:
+        raise HTTPException(
+            status_code=403,
+            detail="Access denied: encounter belongs to a different tenant.",
+        )
+
+    original_results = encounter.phenotype_result or {}
+    total_audits = len(payload.audit_payload) if payload.audit_payload else 0
+    agreements_count = 0
+
+    if not payload.audit_payload and len(original_results) > 0:
+        raise HTTPException(
+            status_code=400,
+            detail="AUDIT_REQUIRED: All AI interpretations must be audited before finalization.",
+        )
+
+    if payload.audit_payload:
+        for audit in payload.audit_payload:
+            eng_name = audit["engine_name"]
+            req_decision = audit["decision_type"]
+            req_hash = audit.get("engine_version_hash")
+
+            # Validation 1: Version Hash Mismatch (integrity guard)
+            orig_hash = (
+                original_results.get(eng_name, {}).get("integrity_hash") or "UNKNOWN"
+            )
+            if req_hash != orig_hash:
+                raise HTTPException(
+                    status_code=409,
+                    detail=f"Version mismatch for {eng_name}. UI sent {req_hash}, DB expects {orig_hash}.",
+                )
+
+            # Validation 2: Cannot blindly AGREE on low-confidence or locked insights
+            orig_confidence = original_results.get(eng_name, {}).get("confidence", 1.0)
+            estado_ui = original_results.get(eng_name, {}).get("estado_ui", "ANALYZED")
+
+            if req_decision == "AGREEMENT" and (
+                estado_ui == "INDETERMINATE_LOCKED" or orig_confidence < 0.65
+            ):
+                raise HTTPException(
+                    status_code=400,
+                    detail=(
+                        f"Integrity Violation: Cannot blindly validate '{eng_name}' "
+                        f"(Confidence: {orig_confidence}). Requires manual Override."
+                    ),
+                )
+
+            if req_decision == "AGREEMENT":
+                agreements_count += 1
+
+            try:
+                audit_log = DecisionAuditLog(
+                    encounter_id=encounter_id,
+                    engine_name=eng_name,
+                    engine_version_hash=req_hash,
+                    decision_type=DecisionType(req_decision),
+                    reason_code=ReasonCode(audit["reason_code"]),
+                    physician_id=current_user.id,
+                )
+                db.add(audit_log)
+            except ValueError as e:
+                raise HTTPException(status_code=400, detail=str(e))
+
+    # Agreement rate (MinCiencias compliance metric)
+    if total_audits > 0:
+        encounter.agreement_rate = round((agreements_count / total_audits) * 100, 2)
+
+    encounter.status = "FINALIZED"
+    encounter.clinical_notes = payload.clinical_notes
+    encounter.plan_of_action = payload.plan_of_action
+    encounter.physician_id = current_user.id
+
+    # Outcome tracking (research dataset quality)
+    if payload.weight_current_kg is not None:
+        encounter.weight_current_kg = payload.weight_current_kg
+    if payload.outcome_status is not None:
+        encounter.outcome_status = payload.outcome_status
+    if payload.adverse_event is not None:
+        encounter.adverse_event = payload.adverse_event
+    if payload.medication_changed is not None:
+        encounter.medication_changed = payload.medication_changed
+    if payload.adherence_reported is not None:
+        encounter.adherence_reported = payload.adherence_reported
+
+    await db.commit()
+
+    logger.info(
+        "encounter_finalized",
+        encounter_id=encounter_id,
+        physician_id=current_user.id,
+        agreement_rate=encounter.agreement_rate,
+    )
+    return {"status": "finalized", "encounter_id": encounter_id}
+

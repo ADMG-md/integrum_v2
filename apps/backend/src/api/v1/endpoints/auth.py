@@ -12,7 +12,7 @@ from src.services.redis_service import (
     blacklist_token,
     is_token_revoked,
 )
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, field_validator
 from slowapi import Limiter
 from slowapi.util import get_remote_address
 from jose import jwt, JWTError
@@ -30,6 +30,18 @@ class UserCreate(BaseModel):
     full_name: str
     # SECURITY: role is NOT accepted from clients — assigned server-side only.
     # Prevents privilege escalation (H-06).
+
+    @field_validator("password")
+    @classmethod
+    def validate_password_complexity(cls, v: str) -> str:
+        # DT-08: NIST SP 800-63B minimum requirements for a SaMD system
+        if len(v) < 8:
+            raise ValueError("Password must be at least 8 characters")
+        if not any(c.isupper() for c in v):
+            raise ValueError("Password must contain at least one uppercase letter")
+        if not any(c.isdigit() for c in v):
+            raise ValueError("Password must contain at least one digit")
+        return v
 
 
 class Token(BaseModel):

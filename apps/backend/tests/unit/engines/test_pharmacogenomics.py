@@ -1,5 +1,5 @@
 import pytest
-from src.engines.domain import Encounter, ClinicalHistory, MetabolicPanelSchema, CardioPanelSchema, Observation, DemographicsSchema
+from src.engines.domain import Encounter, ClinicalHistory, MetabolicPanelSchema, MetabolicPanelSchema, Observation, DemographicsSchema
 from src.engines.specialty.pharmacogenomics import PharmacogenomicProxyMotor
 
 @pytest.fixture
@@ -9,8 +9,7 @@ def base_encounter():
         id="PGX-001",
         demographics=demo,
         history=ClinicalHistory(),
-        metabolic_panel=MetabolicPanelSchema(),
-        cardio_panel=CardioPanelSchema()
+        metabolic_panel=MetabolicPanelSchema()
     )
 
 def test_mthfr_proxy(base_encounter):

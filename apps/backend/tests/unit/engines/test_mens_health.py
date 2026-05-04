@@ -4,7 +4,7 @@ from src.engines.domain import (
     MetabolicPanelSchema, ActionItem
 )
 from src.domain.models import ClinicalHistory
-from src.schemas.encounter import CardioPanelSchema
+from src.schemas.encounter import MetabolicPanelSchema
 from src.engines.specialty.mens_health import MensHealthMotor
 
 def _male_enc(**overrides) -> Encounter:
@@ -12,7 +12,7 @@ def _male_enc(**overrides) -> Encounter:
     history_kw = overrides.pop("history_kwargs", {"onset_trigger": "unknown", "pregnancy_status": "not_applicable"})
     history = ClinicalHistory(**history_kw)
     metabolic = overrides.pop("metabolic_panel", MetabolicPanelSchema())
-    cardio = overrides.pop("cardio_panel", CardioPanelSchema())
+    cardio = overrides.pop("cardio_panel", MetabolicPanelSchema())
     demo = DemographicsSchema(age_years=50, gender="male", weight_kg=90, height_cm=175)
     
     return Encounter(

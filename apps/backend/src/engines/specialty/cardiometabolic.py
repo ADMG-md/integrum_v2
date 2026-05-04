@@ -33,8 +33,8 @@ class CMIMotor(BaseClinicalMotor):
     def validate(self, encounter: Encounter) -> Tuple[bool, str]:
         waist = encounter.get_observation("WAIST-001")
         height = encounter.get_observation("8302-2")
-        tg = encounter.cardio_panel.triglycerides_mg_dl
-        hdl = encounter.cardio_panel.hdl_mg_dl
+        tg = encounter.metabolic_panel.triglycerides_mg_dl
+        hdl = encounter.metabolic_panel.hdl_mg_dl
         if not all([waist, height, tg, hdl]):
             return False, "CMI requires: Waist, Height, TG, HDL."
         return True, ""
@@ -43,8 +43,8 @@ class CMIMotor(BaseClinicalMotor):
         is_male = encounter.metadata.get("sex", "").lower() in ["male", "m"]
         waist = safe_float(encounter.get_observation("WAIST-001").value)
         height = safe_float(encounter.get_observation("8302-2").value)
-        tg = encounter.cardio_panel.triglycerides_mg_dl
-        hdl = encounter.cardio_panel.hdl_mg_dl
+        tg = encounter.metabolic_panel.triglycerides_mg_dl
+        hdl = encounter.metabolic_panel.hdl_mg_dl
 
         if not all([waist, height, tg, hdl]) or height == 0 or hdl == 0:
             return AdjudicationResult(

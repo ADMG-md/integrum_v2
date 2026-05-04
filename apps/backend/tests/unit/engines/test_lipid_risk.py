@@ -12,7 +12,6 @@ from src.engines.domain import Encounter, Observation
 from src.schemas.encounter import (
     DemographicsSchema,
     MetabolicPanelSchema,
-    CardioPanelSchema,
 )
 
 
@@ -27,7 +26,6 @@ def _make_encounter(id="lipid-test", observations=None):
         id=id,
         demographics=DemographicsSchema(age_years=55, gender="male"),
         metabolic_panel=MetabolicPanelSchema(),
-        cardio_panel=CardioPanelSchema(),
         observations=observations or [],
         metadata={"sex": "M"},
     )
@@ -80,7 +78,6 @@ def test_lipid_target_very_high_risk(motor):
         id="4",
         demographics=DemographicsSchema(age_years=65, gender="male"),
         metabolic_panel=MetabolicPanelSchema(),
-        cardio_panel=CardioPanelSchema(),
         observations=[
             Observation(code="18262-6", value=100),
             Observation(code="2093-3", value=180),

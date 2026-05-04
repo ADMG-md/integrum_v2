@@ -12,7 +12,6 @@ from src.engines.domain import Encounter, Observation
 from src.schemas.encounter import (
     DemographicsSchema,
     MetabolicPanelSchema,
-    CardioPanelSchema,
 )
 
 
@@ -23,7 +22,7 @@ def motor():
 
 def _make_encounter(id="vai-test", observations=None, cardio=None, metadata=None):
     """Helper: creates a valid Encounter for VAI testing."""
-    cp = CardioPanelSchema()
+    cp = MetabolicPanelSchema()
     if cardio:
         for k, v in cardio.items():
             setattr(cp, k, v)
@@ -33,8 +32,7 @@ def _make_encounter(id="vai-test", observations=None, cardio=None, metadata=None
     return Encounter(
         id=id,
         demographics=DemographicsSchema(age_years=50, gender="male"),
-        metabolic_panel=MetabolicPanelSchema(),
-        cardio_panel=cp,
+        metabolic_panel=cp,
         observations=observations or [],
         metadata=default_meta,
     )

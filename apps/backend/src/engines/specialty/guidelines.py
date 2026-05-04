@@ -80,8 +80,8 @@ class ClinicalGuidelinesMotor(BaseClinicalMotor):
         # Requires basic vitals or lipids to provide guidance
         has_vitals = encounter.get_observation(self.CODES["SBP"]) is not None
         has_lipids = (
-            encounter.cardio_panel.ldl_mg_dl is not None
-            or encounter.cardio_panel.total_cholesterol_mg_dl is not None
+            encounter.metabolic_panel.ldl_mg_dl is not None
+            or encounter.metabolic_panel.total_cholesterol_mg_dl is not None
         )
         if not (has_vitals or has_lipids):
             return False, "Insufficient vitals or lipids for guideline audit"
@@ -143,7 +143,7 @@ class ClinicalGuidelinesMotor(BaseClinicalMotor):
                     )
 
         # 2. Dyslipidemia & Clinical Inertia (ESC 2021)
-        ldl = encounter.cardio_panel.ldl_mg_dl
+        ldl = encounter.metabolic_panel.ldl_mg_dl
         is_on_statin = self._is_on_class(encounter, "STATIN")
         cvd_risk = context.get("cvd_risk_category") if context else None
 

@@ -12,7 +12,6 @@ from src.engines.domain import Encounter
 from src.schemas.encounter import (
     DemographicsSchema,
     MetabolicPanelSchema,
-    CardioPanelSchema,
 )
 
 
@@ -23,15 +22,14 @@ def motor():
 
 def _make_encounter(id="apo-test", cardio=None):
     """Helper: creates a valid Encounter for ApoB/ApoA1 testing."""
-    cp = CardioPanelSchema()
+    cp = MetabolicPanelSchema()
     if cardio:
         for k, v in cardio.items():
             setattr(cp, k, v)
     return Encounter(
         id=id,
         demographics=DemographicsSchema(age_years=50, gender="male"),
-        metabolic_panel=MetabolicPanelSchema(),
-        cardio_panel=cp,
+        metabolic_panel=cp,
         observations=[],
         metadata={},
     )

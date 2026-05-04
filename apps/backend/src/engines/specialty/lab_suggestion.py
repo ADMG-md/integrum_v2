@@ -300,7 +300,7 @@ class LaboratorySuggestionMotor(BaseClinicalMotor):
             available.add(obs.code)
 
         mp = encounter.metabolic_panel
-        cp = encounter.cardio_panel
+        cp = encounter.metabolic_panel
 
         if mp and mp.glucose_mg_dl:
             available.add("2339-0")
@@ -324,7 +324,7 @@ class LaboratorySuggestionMotor(BaseClinicalMotor):
             available.add("GGT-001")
         if mp and mp.vitamin_d_ng_ml:
             available.add("VITD-001")
-        if mp and mp.tsh_uIU_ml:
+        if mp and mp.tsh_u_iu_ml:
             available.add("11579-0")
         if mp and mp.hs_crp_mg_l:
             available.add("30522-7")

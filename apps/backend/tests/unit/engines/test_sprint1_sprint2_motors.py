@@ -15,7 +15,6 @@ from src.engines.domain import (
     Observation,
     DemographicsSchema,
     MetabolicPanelSchema,
-    CardioPanelSchema,
     AdjudicationResult,
 )
 from src.domain.models import ClinicalHistory, TraumaHistory
@@ -137,7 +136,7 @@ class TestFLIMotor:
         from src.engines.specialty.fatty_liver import FLIMotor
 
         enc = encounter_with_metabolic_data
-        enc.cardio_panel.triglycerides_mg_dl = 80.0
+        enc.metabolic_panel.triglycerides_mg_dl = 80.0
         enc.metabolic_panel.ggt_u_l = 20.0
         enc.metabolic_panel.ast_u_l = 25.0
         enc.metabolic_panel.alt_u_l = 20.0
@@ -200,7 +199,7 @@ class TestApoBApoA1Motor:
         from src.engines.specialty.apob_ratio import ApoBApoA1Motor
 
         enc = minimal_encounter
-        enc.cardio_panel.apoa1_mg_dl = None
+        enc.metabolic_panel.apoa1_mg_dl = None
         motor = ApoBApoA1Motor()
         is_valid, reason = motor.validate(enc)
         assert not is_valid
@@ -209,8 +208,8 @@ class TestApoBApoA1Motor:
         from src.engines.specialty.apob_ratio import ApoBApoA1Motor
 
         enc = encounter_with_metabolic_data
-        enc.cardio_panel.apob_mg_dl = 80.0
-        enc.cardio_panel.apoa1_mg_dl = 150.0
+        enc.metabolic_panel.apob_mg_dl = 80.0
+        enc.metabolic_panel.apoa1_mg_dl = 150.0
         motor = ApoBApoA1Motor()
         result = motor.compute(enc)
         assert isinstance(result, AdjudicationResult)
@@ -220,8 +219,8 @@ class TestApoBApoA1Motor:
         from src.engines.specialty.apob_ratio import ApoBApoA1Motor
 
         enc = encounter_with_metabolic_data
-        enc.cardio_panel.apob_mg_dl = 140.0
-        enc.cardio_panel.apoa1_mg_dl = 90.0
+        enc.metabolic_panel.apob_mg_dl = 140.0
+        enc.metabolic_panel.apoa1_mg_dl = 90.0
         motor = ApoBApoA1Motor()
         result = motor.compute(enc)
         assert isinstance(result, AdjudicationResult)
@@ -241,8 +240,8 @@ class TestVAIMotor:
         from src.engines.specialty.visceral_adiposity import VAIMotor
 
         enc = encounter_with_metabolic_data
-        enc.cardio_panel.triglycerides_mg_dl = 80.0
-        enc.cardio_panel.hdl_mg_dl = 55.0
+        enc.metabolic_panel.triglycerides_mg_dl = 80.0
+        enc.metabolic_panel.hdl_mg_dl = 55.0
         enc.observations = [o for o in enc.observations if o.code != "WAIST-001"]
         enc.observations.append(Observation(code="WAIST-001", value=80.0, unit="cm"))
         motor = VAIMotor()
@@ -556,7 +555,7 @@ class TestTyGBMIMotor:
         from src.engines.specialty.tyg_bmi import TyGBMIMotor
 
         enc = encounter_with_metabolic_data
-        enc.cardio_panel.triglycerides_mg_dl = 70.0
+        enc.metabolic_panel.triglycerides_mg_dl = 70.0
         enc.metabolic_panel.glucose_mg_dl = 80.0
         enc.observations = [
             o for o in enc.observations if o.code not in ("29463-7", "8302-2")
@@ -593,9 +592,9 @@ class TestCVDReclassifierMotor:
         from src.engines.specialty.cvd_reclassifier import CVDReclassifierMotor
 
         enc = encounter_with_metabolic_data
-        enc.cardio_panel.ldl_mg_dl = 90.0
-        enc.cardio_panel.triglycerides_mg_dl = 80.0
-        enc.cardio_panel.hdl_mg_dl = 60.0
+        enc.metabolic_panel.ldl_mg_dl = 90.0
+        enc.metabolic_panel.triglycerides_mg_dl = 80.0
+        enc.metabolic_panel.hdl_mg_dl = 60.0
         enc.metabolic_panel.hs_crp_mg_l = 0.5
         enc.metabolic_panel.glucose_mg_dl = 85.0
         enc.observations = [
@@ -616,8 +615,8 @@ class TestCVDReclassifierMotor:
         from src.engines.specialty.cvd_reclassifier import CVDReclassifierMotor
 
         enc = encounter_with_metabolic_data
-        enc.cardio_panel.ldl_mg_dl = 170.0
-        enc.cardio_panel.triglycerides_mg_dl = 200.0
+        enc.metabolic_panel.ldl_mg_dl = 170.0
+        enc.metabolic_panel.triglycerides_mg_dl = 200.0
         enc.metabolic_panel.hs_crp_mg_l = 3.0
         motor = CVDReclassifierMotor()
         result = motor.compute(enc)

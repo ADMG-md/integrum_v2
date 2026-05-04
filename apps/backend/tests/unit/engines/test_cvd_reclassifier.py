@@ -12,7 +12,6 @@ from src.engines.domain import Encounter, Observation
 from src.schemas.encounter import (
     DemographicsSchema,
     MetabolicPanelSchema,
-    CardioPanelSchema,
 )
 
 
@@ -27,7 +26,6 @@ def test_cvd_validate_missing_ldl(motor):
         id="1",
         demographics=DemographicsSchema(age_years=55, gender="male"),
         metabolic_panel=MetabolicPanelSchema(),
-        cardio_panel=CardioPanelSchema(),
         observations=[],
         metadata={"sex": "M"},
     )
@@ -41,8 +39,7 @@ def test_cvd_validate_success(motor):
     enc = Encounter(
         id="2",
         demographics=DemographicsSchema(age_years=55, gender="male"),
-        metabolic_panel=MetabolicPanelSchema(),
-        cardio_panel=CardioPanelSchema(ldl_mg_dl=130),
+        metabolic_panel=MetabolicPanelSchema(ldl_mg_dl=130),
         observations=[],
         metadata={"sex": "M"},
     )
@@ -55,8 +52,7 @@ def test_cvd_ldl_190_plus(motor):
     enc = Encounter(
         id="3",
         demographics=DemographicsSchema(age_years=55, gender="male"),
-        metabolic_panel=MetabolicPanelSchema(),
-        cardio_panel=CardioPanelSchema(ldl_mg_dl=210),
+        metabolic_panel=MetabolicPanelSchema(ldl_mg_dl=210),
         observations=[],
         metadata={"sex": "M"},
     )
@@ -70,8 +66,7 @@ def test_cvd_multiple_risk_factors(motor):
     enc = Encounter(
         id="4",
         demographics=DemographicsSchema(age_years=55, gender="male"),
-        metabolic_panel=MetabolicPanelSchema(hs_crp_mg_l=2.5),
-        cardio_panel=CardioPanelSchema(ldl_mg_dl=160, triglycerides_mg_dl=180),
+        metabolic_panel=MetabolicPanelSchema(hs_crp_mg_l=2.5, ldl_mg_dl=160, triglycerides_mg_dl=180),
         observations=[],
         metadata={"sex": "M"},
     )
@@ -85,8 +80,7 @@ def test_cvd_single_risk_factor(motor):
     enc = Encounter(
         id="5",
         demographics=DemographicsSchema(age_years=55, gender="male"),
-        metabolic_panel=MetabolicPanelSchema(),
-        cardio_panel=CardioPanelSchema(ldl_mg_dl=140, triglycerides_mg_dl=180),
+        metabolic_panel=MetabolicPanelSchema(ldl_mg_dl=140, triglycerides_mg_dl=180),
         observations=[],
         metadata={"sex": "M"},
     )
@@ -100,8 +94,7 @@ def test_cvd_no_risk_factors(motor):
     enc = Encounter(
         id="6",
         demographics=DemographicsSchema(age_years=55, gender="male"),
-        metabolic_panel=MetabolicPanelSchema(),
-        cardio_panel=CardioPanelSchema(ldl_mg_dl=100),
+        metabolic_panel=MetabolicPanelSchema(ldl_mg_dl=100),
         observations=[],
         metadata={"sex": "M"},
     )
@@ -115,8 +108,7 @@ def test_cvd_ckd_risk_factor(motor):
     enc = Encounter(
         id="7",
         demographics=DemographicsSchema(age_years=55, gender="male"),
-        metabolic_panel=MetabolicPanelSchema(),
-        cardio_panel=CardioPanelSchema(ldl_mg_dl=140, triglycerides_mg_dl=180),
+        metabolic_panel=MetabolicPanelSchema(ldl_mg_dl=140, triglycerides_mg_dl=180),
         observations=[Observation(code="EGFR-001", value=45)],
         metadata={"sex": "M"},
     )
@@ -129,8 +121,7 @@ def test_cvd_metabolic_syndrome(motor):
     enc = Encounter(
         id="8",
         demographics=DemographicsSchema(age_years=50, gender="male"),
-        metabolic_panel=MetabolicPanelSchema(glucose_mg_dl=105),
-        cardio_panel=CardioPanelSchema(
+        metabolic_panel=MetabolicPanelSchema(glucose_mg_dl=105, 
             ldl_mg_dl=130, triglycerides_mg_dl=160, hdl_mg_dl=35
         ),
         observations=[

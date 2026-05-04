@@ -3,9 +3,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.database import get_db
 from src.services.timeline_service import timeline_service
 from typing import Dict, List, Any
+import structlog
 
 from src.services.auth_service import check_role
 from src.models.user import UserRole, UserModel
+
+logger = structlog.get_logger()
 
 router = APIRouter()
 
@@ -25,7 +28,5 @@ async def get_patient_timeline(
             return {"message": "No history found for this patient", "timeline": {}}
         return {"patient_id": patient_id, "timeline": data}
     except Exception as e:
-        # SEC-04: log internally, never expose internal errors to client
-        import structlog
-        structlog.get_logger().error("timeline_error", patient_id=patient_id, error_type=type(e).__name__)
+        logger.error("timeline_error", patient_id=patient_id, error_type=type(e).__name__)
         raise HTTPException(status_code=500, detail="Error retrieving clinical timeline")

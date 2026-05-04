@@ -8,7 +8,7 @@ if backend_root not in sys.path:
     sys.path.append(backend_root)
 
 from src.engines.domain import Encounter, Observation
-from src.schemas.encounter import DemographicsSchema, MetabolicPanelSchema, CardioPanelSchema
+from src.schemas.encounter import DemographicsSchema, MetabolicPanelSchema, MetabolicPanelSchema
 from src.engines.specialty_runner import SpecialtyRunner
 
 class TestScrappyResilienceV2(unittest.TestCase):
@@ -38,7 +38,7 @@ class TestScrappyResilienceV2(unittest.TestCase):
         
         demographics = DemographicsSchema(age_years=45.0, gender="female")
         metabolic = MetabolicPanelSchema() # ZERO LABS
-        cardio = CardioPanelSchema() # ZERO LABS
+        cardio = MetabolicPanelSchema() # ZERO LABS
         
         encounter = Encounter(
             id="test-scrappy-001",

@@ -4,7 +4,7 @@ from src.schemas.encounter import (
     EncounterFinalizeSchema,
     ProcessResponseSchema,
 )
-from src.services.encounter_orchestrator import process_encounter
+from src.services.encounter_orchestrator import process_encounter, finalize_encounter_logic
 from src.database import get_db
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
@@ -49,96 +49,9 @@ async def finalize_encounter(
     """
     Finalize the clinical encounter, locking it for further changes.
     Persists clinical notes and prescribed action plan.
+    Business logic delegated to encounter_orchestrator.finalize_encounter_logic (DT-01).
     """
-    from src.models.encounter import EncounterModel
-
-    stmt = select(EncounterModel).where(EncounterModel.id == encounter_id)
-    result = await db.execute(stmt)
-    encounter = result.scalar_one_or_none()
-
-    if not encounter:
-        raise HTTPException(status_code=404, detail="Encounter not found")
-
-    # Human-AI Interaction Audit (MinCiencias Compliance) & Integrity Validation
-    original_results = encounter.phenotype_result or {}
-    total_audits = len(payload.audit_payload) if payload.audit_payload else 0
-    agreements_count = 0
-
-    if not payload.audit_payload and len(original_results) > 0:
-        raise HTTPException(
-            status_code=400,
-            detail="AUDIT_REQUIRED: All AI interpretations must be audited before finalization.",
-        )
-
-    from src.models.audit import DecisionAuditLog, DecisionType, ReasonCode
-
-    if payload.audit_payload:
-        for audit in payload.audit_payload:
-            eng_name = audit["engine_name"]
-            req_decision = audit["decision_type"]
-            req_hash = audit.get("engine_version_hash")
-
-            # Validation 1: Version Hash Mismatch
-            orig_hash = (
-                original_results.get(eng_name, {}).get("integrity_hash") or "UNKNOWN"
-            )
-            if req_hash != orig_hash:
-                raise HTTPException(
-                    status_code=409,
-                    detail=f"Version mismatch for {eng_name}. UI sent {req_hash}, DB expects {orig_hash}.",
-                )
-
-            # Validation 2: Cannot blindly force AGREEMENT on low-confidence insights
-            orig_confidence = original_results.get(eng_name, {}).get("confidence", 1.0)
-            estado_ui = original_results.get(eng_name, {}).get("estado_ui", "ANALYZED")
-
-            if req_decision == "AGREEMENT" and (
-                estado_ui == "INDETERMINATE_LOCKED" or orig_confidence < 0.65
-            ):
-                raise HTTPException(
-                    status_code=400,
-                    detail=f"Integrity Violation: Cannot blindly validate '{eng_name}' (Confidence: {orig_confidence}). It requires manual context Override.",
-                )
-
-            if req_decision == "AGREEMENT":
-                agreements_count += 1
-
-            try:
-                audit_log = DecisionAuditLog(
-                    encounter_id=encounter_id,
-                    engine_name=eng_name,
-                    engine_version_hash=req_hash,
-                    decision_type=DecisionType(req_decision),
-                    reason_code=ReasonCode(audit["reason_code"]),
-                    physician_id=current_user.id,
-                )
-                db.add(audit_log)
-            except ValueError as e:
-                raise HTTPException(status_code=400, detail=str(e))
-
-    # Calculate Agreement Rate
-    if total_audits > 0:
-        encounter.agreement_rate = round((agreements_count / total_audits) * 100, 2)
-
-    encounter.status = "FINALIZED"
-    encounter.clinical_notes = payload.clinical_notes
-    encounter.plan_of_action = payload.plan_of_action
-    encounter.physician_id = current_user.id
-
-    # Persist outcome tracking fields (research dataset quality)
-    if payload.weight_current_kg is not None:
-        encounter.weight_current_kg = payload.weight_current_kg
-    if payload.outcome_status is not None:
-        encounter.outcome_status = payload.outcome_status
-    if payload.adverse_event is not None:
-        encounter.adverse_event = payload.adverse_event
-    if payload.medication_changed is not None:
-        encounter.medication_changed = payload.medication_changed
-    if payload.adherence_reported is not None:
-        encounter.adherence_reported = payload.adherence_reported
-
-    await db.commit()
-    return {"status": "finalized", "encounter_id": encounter_id}
+    return await finalize_encounter_logic(db, encounter_id, payload, current_user)
 
 
 @router.get("/{encounter_id}")

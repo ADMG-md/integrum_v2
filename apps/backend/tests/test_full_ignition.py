@@ -10,7 +10,6 @@ from src.engines.domain import (
     MedicationStatement,
     DemographicsSchema,
     MetabolicPanelSchema,
-    CardioPanelSchema,
 )
 from src.engines.specialty_runner import specialty_runner
 from src.services.report_service import report_service
@@ -32,9 +31,7 @@ def test_full_ignition():
             hs_crp_mg_l=4.1,
             total_cholesterol_mg_dl=215.0,
             hdl_mg_dl=44.0,
-            ldl_mg_dl=138.0,
-        ),
-        cardio_panel=CardioPanelSchema(
+            ldl_mg_dl=138.0, 
             glucose_mg_dl=112.0,
             triglycerides_mg_dl=245.0,
             total_cholesterol_mg_dl=215.0,

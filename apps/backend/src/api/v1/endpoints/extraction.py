@@ -4,6 +4,9 @@ from src.services.auth_service import check_role
 from src.models.user import UserRole, UserModel
 import os
 import tempfile
+import structlog
+
+logger = structlog.get_logger()
 
 router = APIRouter()
 

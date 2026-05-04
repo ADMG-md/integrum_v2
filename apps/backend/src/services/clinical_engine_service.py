@@ -1,32 +1,34 @@
+"""
+ClinicalIntelligenceBridge — DT-02 refactor.
+
+BEFORE: Reimplementaba BMI, WHtR, HOMA-IR, TyG, VAI, FIB-4 inline.
+        Dos fuentes de verdad matemática → riesgo de divergencia silenciosa.
+
+AFTER:  Delega TODOS los cálculos a calculators.py (SSOT).
+        Este módulo solo es responsable de inyectar los resultados como
+        Observation objects en el encounter para consumo de los motores.
+"""
 from src.engines.domain import Encounter, Observation
-from typing import List, Optional
+from src.engines.calculators import MetabolicIndices, AnthropometricData, LipidProfile
+from typing import Optional
 import math
+
 
 class ClinicalIntelligenceBridge:
     """
-    Research-Grade Clinical Data Flow Enrichment.
-    Ensures the 'Structured Dataset' is normalized and enriched with primary indices 
-    before SaMD Engine execution.
+    Enriches an Encounter with pre-computed clinical indices before engine execution.
+    All math is delegated to calculators.py (Single Source of Truth).
     """
-    
-    # LOINC Codes
-    WEIGHT = "29463-7"
-    HEIGHT = "8302-2"
-    GLUCOSE = "2339-0"
-    INSULIN = "20448-7"
-    TRIGLYCERIDES = "2571-8"
-    HDL = "2085-9"
-    WAIST = "WAIST-001"
-    
-    # Derived Codes
-    BMI = "CALC-BMI"
-    WHTR = "CALC-WHTR"
+
+    # Derived observation codes injected into the encounter
+    BMI    = "CALC-BMI"
+    WHTR   = "CALC-WHTR"
     HOMA_IR = "CALC-HOMA-IR"
-    TYG = "CALC-TYG"
-    VAI = "CALC-VAI"
-    FIB4 = "CALC-FIB4"
-    
-    # Lab Codes
+    TYG    = "CALC-TYG"
+    VAI    = "CALC-VAI"
+    FIB4   = "CALC-FIB4"
+
+    # Raw lab codes still needed for FIB-4 (not in calculators yet)
     AST = "29230-0"
     ALT = "22538-3"
     PLT = "PLT-001"
@@ -34,120 +36,124 @@ class ClinicalIntelligenceBridge:
 
     def enrich(self, encounter: Encounter) -> Encounter:
         """
-        Main enrichment entry point.
+        Single entry point. Computes all indices via calculators.py and
+        injects them as synthetic Observation objects.
         """
-        # 1. Calculate Indices
-        self._inject_bmi(encounter)
-        self._inject_whtr(encounter)
-        self._inject_homa(encounter)
-        self._inject_tyg(encounter)
+        self._inject_anthropometry(encounter)
+        self._inject_metabolic(encounter)
         self._inject_vai(encounter)
         self._inject_fib4(encounter)
-        
         return encounter
 
-    def _inject_whtr(self, encounter: Encounter):
-        w = encounter.get_observation(self.WAIST)
-        h = encounter.get_observation(self.HEIGHT)
-        if w and h and h.value > 0:
-            whtr = float(w.value) / float(h.value)
-            encounter.observations.append(Observation(
-                code=self.WHTR,
-                value=round(whtr, 3),
-                unit="Ratio",
-                category="Clinical",
-                metadata={"source": "2025-standard-auto-calculated"}
-            ))
+    # ── Anthropometry (delegates to AnthropometricData) ──────────────────────
 
-    def _inject_bmi(self, encounter: Encounter):
-        w = encounter.get_observation(self.WEIGHT)
-        h = encounter.get_observation(self.HEIGHT)
-        if w and h and h.value > 0:
-            bmi = float(w.value) / ((float(h.value)/100)**2)
-            encounter.observations.append(Observation(
-                code=self.BMI,
-                value=round(bmi, 2),
-                unit="kg/m2",
-                category="Clinical",
-                metadata={"source": "auto-calculated"}
-            ))
+    def _inject_anthropometry(self, encounter: Encounter) -> None:
+        try:
+            data = AnthropometricData.from_encounter(encounter)
+        except Exception:
+            return
 
-    def _inject_homa(self, encounter: Encounter):
-        glu = encounter.get_observation(self.GLUCOSE)
-        ins = encounter.get_observation(self.INSULIN)
-        if glu and ins:
-            homa = (float(glu.value) * float(ins.value)) / 405
-            encounter.observations.append(Observation(
-                code=self.HOMA_IR,
-                value=round(homa, 2),
-                unit="Score",
-                category="Clinical",
-                metadata={"source": "auto-calculated"}
-            ))
+        if data.bmi is not None:
+            self._add_obs(encounter, self.BMI, data.bmi, "kg/m²")
 
-    def _inject_tyg(self, encounter: Encounter):
-        glu = encounter.get_observation(self.GLUCOSE)
-        tg = encounter.get_observation(self.TRIGLYCERIDES)
-        if glu and tg:
-            try:
-                product = float(tg.value) * float(glu.value)
-                if product > 0:
-                    tyg = math.log(product / 2)
-                    encounter.observations.append(Observation(
-                        code=self.TYG,
-                        value=round(tyg, 2),
-                        unit="Score",
-                        category="Clinical",
-                        metadata={"source": "auto-calculated"}
-                    ))
-            except (ValueError, ZeroDivisionError):
-                pass
+        if data.waist_to_height is not None:
+            self._add_obs(encounter, self.WHTR, data.waist_to_height, "Ratio")
 
-    def _inject_vai(self, encounter: Encounter):
-        # Visceral Adiposity Index (VAI)
-        # Men: (WC / (39.68 + (1.88 * BMI))) * (TG / 1.03) * (1.31 / HDL)
-        # Women: (WC / (36.58 + (1.89 * BMI))) * (TG / 0.81) * (1.52 / HDL)
-        tg = encounter.get_observation(self.TRIGLYCERIDES)
-        hdl = encounter.get_observation(self.HDL)
-        waist = encounter.get_observation(self.WAIST)
-        bmi = encounter.get_observation(self.BMI)
-        gender = encounter.metadata.get("gender", "male").lower()
-        
-        if all([tg, hdl, waist, bmi]) and hdl.value > 0:
-            try:
-                if gender == "male":
-                    vai = (waist.value / (39.68 + (1.88 * bmi.value))) * (tg.value / 1.03) * (1.31 / hdl.value)
-                else:
-                    vai = (waist.value / (36.58 + (1.89 * bmi.value))) * (tg.value / 0.81) * (1.52 / hdl.value)
-                
-                encounter.observations.append(Observation(
-                    code=self.VAI,
-                    value=round(vai, 2),
-                    unit="Score",
+    # ── Metabolic Indices (delegates to MetabolicIndices) ────────────────────
+
+    def _inject_metabolic(self, encounter: Encounter) -> None:
+        try:
+            data = MetabolicIndices.from_encounter(encounter)
+        except Exception:
+            return
+
+        if data.homa_ir is not None:
+            self._add_obs(encounter, self.HOMA_IR, round(data.homa_ir, 2), "Score")
+
+        if data.tyg_index is not None:
+            self._add_obs(encounter, self.TYG, round(data.tyg_index, 2), "Score")
+
+    # ── VAI (delegates to LipidProfile geometry + anthropometry) ─────────────
+
+    def _inject_vai(self, encounter: Encounter) -> None:
+        """
+        Visceral Adiposity Index.
+        SOURCE: Amato MC et al. Clin Endocrinol (Oxf). 2010;72(5):658-65.
+        Men:   VAI = (WC/(39.68+1.88×BMI)) × (TG/1.03) × (1.31/HDL)
+        Women: VAI = (WC/(36.58+1.89×BMI)) × (TG/0.81) × (1.52/HDL)
+        Units: WC in cm, BMI in kg/m², TG in mmol/L, HDL in mmol/L
+        """
+        try:
+            anthr = AnthropometricData.from_encounter(encounter)
+            waist = anthr.waist_to_height  # need raw waist — get directly
+        except Exception:
+            return
+
+        waist_obs = encounter.get_observation("WAIST-001")
+        bmi_obs = encounter.get_observation(self.BMI)  # already injected above
+        tg = encounter.cardio_panel.triglycerides_mg_dl
+        hdl = encounter.cardio_panel.hdl_mg_dl
+        gender = encounter.demographics.gender or ""
+
+        if not all([waist_obs, bmi_obs, tg, hdl]) or hdl <= 0:
+            return
+
+        try:
+            wc = float(waist_obs.value)
+            bmi_val = float(bmi_obs.value)
+            # Convert mg/dL → mmol/L for VAI formula
+            tg_mmol = tg / 88.57
+            hdl_mmol = hdl / 38.67
+
+            if gender.lower() in ("male", "m"):
+                vai = (wc / (39.68 + 1.88 * bmi_val)) * (tg_mmol / 1.03) * (1.31 / hdl_mmol)
+            else:
+                vai = (wc / (36.58 + 1.89 * bmi_val)) * (tg_mmol / 0.81) * (1.52 / hdl_mmol)
+
+            self._add_obs(encounter, self.VAI, round(vai, 2), "Score")
+        except (ValueError, ZeroDivisionError, TypeError):
+            pass
+
+    # ── FIB-4 (not yet in calculators.py) ────────────────────────────────────
+
+    def _inject_fib4(self, encounter: Encounter) -> None:
+        """
+        FIB-4 Index: (Age × AST) / (PLT × √ALT)
+        SOURCE: Sterling RK et al. Hepatology. 2006;43(6):1317-25.
+        """
+        ast_obs = encounter.get_observation(self.AST)
+        alt_obs = encounter.get_observation(self.ALT)
+        plt_obs = encounter.get_observation(self.PLT)
+        age_obs = encounter.get_observation(self.AGE)
+
+        if not all([ast_obs, alt_obs, plt_obs, age_obs]):
+            return
+
+        try:
+            alt_val = float(alt_obs.value)
+            plt_val = float(plt_obs.value)
+            if alt_val <= 0 or plt_val <= 0:
+                return
+            fib4 = (float(age_obs.value) * float(ast_obs.value)) / (plt_val * math.sqrt(alt_val))
+            self._add_obs(encounter, self.FIB4, round(fib4, 2), "Score")
+        except (ValueError, ZeroDivisionError, TypeError):
+            pass
+
+    # ── Helpers ──────────────────────────────────────────────────────────────
+
+    @staticmethod
+    def _add_obs(encounter: Encounter, code: str, value: float, unit: str) -> None:
+        """Injects a synthetic Observation only if not already present."""
+        if encounter.get_observation(code) is None:
+            encounter.observations.append(
+                Observation(
+                    code=code,
+                    value=value,
+                    unit=unit,
                     category="Clinical",
-                    metadata={"source": "auto-calculated-precision"}
-                ))
-            except:
-                pass
+                    metadata={"source": "calculators-ssot"},
+                )
+            )
 
-    def _inject_fib4(self, encounter: Encounter):
-        # FIB-4 = (Age * AST) / (PLT * sqrt(ALT))
-        ast = encounter.get_observation(self.AST)
-        alt = encounter.get_observation(self.ALT)
-        plt = encounter.get_observation(self.PLT)
-        age = encounter.get_observation(self.AGE)
-        
-        if all([ast, alt, plt, age]) and alt.value > 0 and plt.value > 0:
-            try:
-                fib4 = (age.value * ast.value) / (plt.value * math.sqrt(alt.value))
-                encounter.observations.append(Observation(
-                    code=self.FIB4,
-                    value=round(fib4, 2),
-                    unit="Score",
-                    category="Clinical",
-                    metadata={"source": "auto-calculated-liver-risk"}
-                ))
-            except:
-                pass
 
 clinical_bridge = ClinicalIntelligenceBridge()

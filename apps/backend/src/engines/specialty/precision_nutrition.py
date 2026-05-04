@@ -63,7 +63,7 @@ class PrecisionNutritionMotor(BaseClinicalMotor):
             ))
 
         # 4. IR Hepática (NAFLD-like Profile)
-        tg = encounter.cardio_panel.triglycerides_mg_dl if encounter.cardio_panel else None
+        tg = encounter.metabolic_panel.triglycerides_mg_dl if encounter.metabolic_panel else None
         alt = encounter.metabolic_panel.alt_u_l if encounter.metabolic_panel else None
         waist_obs = encounter.get_observation("WAIST-001")
         waist = float(waist_obs.value) if waist_obs else 0.0
@@ -111,9 +111,9 @@ class PrecisionNutritionMotor(BaseClinicalMotor):
             ))
 
         # --- 6. ApoE4 Proxy / Sensibilidad a Grasas Saturadas (LMHR) ---
-        ldl = getattr(encounter.cardio_panel, "ldl_mg_dl", None)
-        hdl = getattr(encounter.cardio_panel, "hdl_mg_dl", None)
-        tg = getattr(encounter.cardio_panel, "triglycerides_mg_dl", None)
+        ldl = getattr(encounter.metabolic_panel, "ldl_mg_dl", None)
+        hdl = getattr(encounter.metabolic_panel, "hdl_mg_dl", None)
+        tg = getattr(encounter.metabolic_panel, "triglycerides_mg_dl", None)
         # Some panels store homa_ir, others calculate it via helper. Let's safely extract it:
         homa = getattr(encounter.metabolic_panel, "homa_ir", None) if encounter.metabolic_panel else None
         

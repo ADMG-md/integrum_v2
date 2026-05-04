@@ -12,7 +12,6 @@ from src.engines.domain import (
     Condition,
     DemographicsSchema,
     MetabolicPanelSchema,
-    CardioPanelSchema,
 )
 from src.engines.specialty_runner import specialty_runner
 from src.schemas.encounter import AdjudicationResultSchema
@@ -27,7 +26,6 @@ def verify_e2e_flow():
         id="E2E-TEST-VOLT",
         demographics=DemographicsSchema(age_years=45, gender="male"),
         metabolic_panel=MetabolicPanelSchema(),
-        cardio_panel=CardioPanelSchema(),
         conditions=[Condition(code="E66", title="Obesity")],
         observations=[
             Observation(code="GAD-7", value=12), # Acosta Probable

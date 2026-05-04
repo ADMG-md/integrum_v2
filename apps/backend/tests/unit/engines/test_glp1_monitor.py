@@ -12,7 +12,6 @@ from src.engines.domain import Encounter, Observation, MedicationStatement
 from src.schemas.encounter import (
     DemographicsSchema,
     MetabolicPanelSchema,
-    CardioPanelSchema,
 )
 
 
@@ -27,7 +26,6 @@ def _make_encounter(id="glp-test", medications=None, observations=None, metadata
         id=id,
         demographics=DemographicsSchema(age_years=50, gender="male"),
         metabolic_panel=MetabolicPanelSchema(),
-        cardio_panel=CardioPanelSchema(),
         observations=observations or [],
         medications=medications or [],
         metadata=metadata or {},
@@ -168,7 +166,7 @@ def test_glp1_gallbladder_monitoring(motor):
         id="8",
         demographics=DemographicsSchema(age_years=50, gender="male"),
         metabolic_panel=mp,
-        cardio_panel=CardioPanelSchema(),
+        cardio_panel=MetabolicPanelSchema(),
         observations=[
             Observation(code="29463-7", value=80),
         ],

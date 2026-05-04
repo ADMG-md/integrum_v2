@@ -158,7 +158,7 @@ class TestR04EOSSBiometricTrigger:
         from src.schemas.encounter import (
             DemographicsSchema,
             MetabolicPanelSchema,
-            CardioPanelSchema,
+            MetabolicPanelSchema,
         )
 
         motor = EOSSStagingMotor()
@@ -166,7 +166,6 @@ class TestR04EOSSBiometricTrigger:
             id="r04-test",
             demographics=DemographicsSchema(age_years=45),
             metabolic_panel=MetabolicPanelSchema(),
-            cardio_panel=CardioPanelSchema(),
             observations=[
                 Observation(code="29463-7", value="100"),  # Weight 100kg
                 Observation(code="8302-2", value="170"),  # Height 170cm → BMI ~34.6
@@ -182,7 +181,7 @@ class TestR04EOSSBiometricTrigger:
         from src.schemas.encounter import (
             DemographicsSchema,
             MetabolicPanelSchema,
-            CardioPanelSchema,
+            MetabolicPanelSchema,
         )
 
         motor = EOSSStagingMotor()
@@ -190,7 +189,6 @@ class TestR04EOSSBiometricTrigger:
             id="r04-lean",
             demographics=DemographicsSchema(age_years=30),
             metabolic_panel=MetabolicPanelSchema(),
-            cardio_panel=CardioPanelSchema(),
             observations=[
                 Observation(code="29463-7", value="65"),  # Weight 65kg
                 Observation(code="8302-2", value="175"),  # Height 175cm → BMI ~21.2

@@ -23,15 +23,15 @@ class ApoBApoA1Motor(BaseClinicalMotor):
     REQUIREMENT_ID = "APORATIO-INTERHEART"
 
     def validate(self, encounter: Encounter) -> Tuple[bool, str]:
-        apob = encounter.cardio_panel.apob_mg_dl
-        apoa1 = encounter.cardio_panel.apoa1_mg_dl
+        apob = encounter.metabolic_panel.apob_mg_dl
+        apoa1 = encounter.metabolic_panel.apoa1_mg_dl
         if not apob or not apoa1:
             return False, "ApoB/ApoA1 requires: ApoB and ApoA1 values."
         return True, ""
 
     def compute(self, encounter: Encounter) -> AdjudicationResult:
-        apob = encounter.cardio_panel.apob_mg_dl
-        apoa1 = encounter.cardio_panel.apoa1_mg_dl
+        apob = encounter.metabolic_panel.apob_mg_dl
+        apoa1 = encounter.metabolic_panel.apoa1_mg_dl
 
         ratio = round(apob / apoa1, 3)
 

@@ -12,7 +12,6 @@ from src.engines.domain import Encounter, Observation
 from src.schemas.encounter import (
     DemographicsSchema,
     MetabolicPanelSchema,
-    CardioPanelSchema,
 )
 
 
@@ -30,7 +29,6 @@ def _make_encounter(id="slp-test", observations=None, metadata=None, conditions=
         id=id,
         demographics=DemographicsSchema(age_years=55, gender="male"),
         metabolic_panel=MetabolicPanelSchema(),
-        cardio_panel=CardioPanelSchema(),
         observations=observations or [],
         metadata=default_meta,
         conditions=conditions or [],

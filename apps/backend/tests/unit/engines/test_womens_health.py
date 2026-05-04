@@ -3,7 +3,7 @@ from src.engines.domain import (
     Encounter, Observation, DemographicsSchema,
     MetabolicPanelSchema, ActionItem
 )
-from src.schemas.encounter import CardioPanelSchema
+from src.schemas.encounter import MetabolicPanelSchema
 from src.domain.models import ClinicalHistory
 from src.engines.specialty.womens_health import WomensHealthMotor
 
@@ -16,7 +16,7 @@ def _female_enc(**overrides) -> Encounter:
         history_kw["onset_trigger"] = "unknown"
     history = ClinicalHistory(**history_kw)
     metabolic = overrides.pop("metabolic_panel", MetabolicPanelSchema())
-    cardio = overrides.pop("cardio_panel", CardioPanelSchema())
+    cardio = overrides.pop("cardio_panel", MetabolicPanelSchema())
     demo = DemographicsSchema(age_years=35, gender="female", weight_kg=70, height_cm=160)
     
     return Encounter(

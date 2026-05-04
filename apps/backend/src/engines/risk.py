@@ -55,8 +55,8 @@ class CVDHazardMotor:
         smoker = encounter.metadata.get("smoker", False)
         diabetic = encounter.history.has_type2_diabetes if encounter.history else False
 
-        tc = encounter.cardio_panel.total_cholesterol_mg_dl
-        hdl = encounter.cardio_panel.hdl_mg_dl
+        tc = encounter.metabolic_panel.total_cholesterol_mg_dl
+        hdl = encounter.metabolic_panel.hdl_mg_dl
         if not tc or not hdl:
             return CVDHazardOutput(
                 risk_pct_10y=None,

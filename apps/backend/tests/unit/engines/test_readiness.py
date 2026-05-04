@@ -8,7 +8,6 @@ from src.engines.domain import (
     Observation,
     DemographicsSchema,
     MetabolicPanelSchema,
-    CardioPanelSchema,
 )
 from src.engines.specialty.readiness import (
     ClinicalDataReadinessEngine,
@@ -22,7 +21,6 @@ def make_encounter(**kwargs):
         id="test-readiness",
         demographics=DemographicsSchema(age_years=55, gender="male"),
         metabolic_panel=MetabolicPanelSchema(glucose_mg_dl=100),
-        cardio_panel=CardioPanelSchema(glucose_mg_dl=100),
         observations=[],
         conditions=[],
         medications=[],
@@ -36,7 +34,6 @@ def test_empty_encounter_all_blocked():
     engine = ClinicalDataReadinessEngine()
     enc = make_encounter(
         metabolic_panel=MetabolicPanelSchema(),
-        cardio_panel=CardioPanelSchema(),
         observations=[],
     )
     report = engine.score(enc, PRIMARY_MOTORS)
@@ -61,12 +58,6 @@ def test_basic_data_some_motors_ready():
     enc = make_encounter(
         demographics=DemographicsSchema(age_years=55, gender="male"),
         metabolic_panel=MetabolicPanelSchema(
-            glucose_mg_dl=110,
-            total_cholesterol_mg_dl=220,
-            triglycerides_mg_dl=180,
-            hdl_mg_dl=42,
-        ),
-        cardio_panel=CardioPanelSchema(
             glucose_mg_dl=110,
             total_cholesterol_mg_dl=220,
             triglycerides_mg_dl=180,
@@ -102,12 +93,6 @@ def test_quickwins_correctly_identified():
             triglycerides_mg_dl=180,
             hdl_mg_dl=42,
         ),
-        cardio_panel=CardioPanelSchema(
-            glucose_mg_dl=110,
-            total_cholesterol_mg_dl=220,
-            triglycerides_mg_dl=180,
-            hdl_mg_dl=42,
-        ),
         observations=[
             Observation(code="29463-7", value=85, unit="kg", category="Anthropometry"),
             Observation(code="8302-2", value=170, unit="cm", category="Anthropometry"),
@@ -132,7 +117,6 @@ def test_priority_labs_ranked_by_unlock_count():
     enc = make_encounter(
         demographics=DemographicsSchema(age_years=55, gender="male"),
         metabolic_panel=MetabolicPanelSchema(glucose_mg_dl=110),
-        cardio_panel=CardioPanelSchema(glucose_mg_dl=110),
         observations=[
             Observation(code="29463-7", value=85, unit="kg"),
             Observation(code="8302-2", value=170, unit="cm"),
@@ -155,7 +139,6 @@ def test_tier_classification():
     enc_basic = make_encounter(
         demographics=DemographicsSchema(age_years=55, gender="male"),
         metabolic_panel=MetabolicPanelSchema(glucose_mg_dl=110),
-        cardio_panel=CardioPanelSchema(glucose_mg_dl=110),
         observations=[],
     )
     report = engine.score(enc_basic, PRIMARY_MOTORS)
@@ -178,13 +161,6 @@ def test_tier_classification():
             tsh_mi_u_l=2.5,
             ft4_ng_dl=1.2,
         ),
-        cardio_panel=CardioPanelSchema(
-            glucose_mg_dl=110,
-            total_cholesterol_mg_dl=220,
-            triglycerides_mg_dl=180,
-            hdl_mg_dl=42,
-            ldl_mg_dl=130,
-        ),
         observations=[
             Observation(code="29463-7", value=85, unit="kg"),
             Observation(code="8302-2", value=170, unit="cm"),
@@ -205,7 +181,6 @@ def test_no_clinical_logic_executed():
     enc = make_encounter(
         demographics=DemographicsSchema(age_years=55, gender="male"),
         metabolic_panel=MetabolicPanelSchema(glucose_mg_dl=110),
-        cardio_panel=CardioPanelSchema(glucose_mg_dl=110),
         observations=[],
     )
 

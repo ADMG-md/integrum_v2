@@ -4,7 +4,6 @@ from src.engines.domain import Encounter, Condition
 from src.schemas.encounter import (
     DemographicsSchema,
     MetabolicPanelSchema,
-    CardioPanelSchema,
 )
 
 
@@ -19,7 +18,6 @@ def _make_encounter(id="ped-test", age=10, gender="male", conditions=None):
         id=id,
         demographics=DemographicsSchema(age_years=age, gender=gender),
         metabolic_panel=MetabolicPanelSchema(),
-        cardio_panel=CardioPanelSchema(),
         conditions=conditions or [],
         observations=[],
         metadata={},

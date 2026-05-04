@@ -12,7 +12,6 @@ from src.engines.domain import (
     Observation,
     DemographicsSchema,
     MetabolicPanelSchema,
-    CardioPanelSchema,
     Condition,
 )
 from src.engines.base_models import AdjudicationResult
@@ -36,9 +35,7 @@ def minimal_encounter():
             lymphocyte_percent=30,
             neutrophil_percent=60,
             ferritin_ng_ml=100,
-            hs_crp_mg_l=1.5,
-        ),
-        cardio_panel=CardioPanelSchema(
+            hs_crp_mg_l=1.5, 
             total_cholesterol_mg_dl=200,
             ldl_mg_dl=130,
             hdl_mg_dl=45,

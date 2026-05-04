@@ -18,7 +18,6 @@ def runner():
 from src.schemas.encounter import (
     DemographicsSchema,
     MetabolicPanelSchema,
-    CardioPanelSchema,
 )
 
 
@@ -28,7 +27,6 @@ def empty_encounter():
         id="stress-test",
         demographics=DemographicsSchema(),
         metabolic_panel=MetabolicPanelSchema(),
-        cardio_panel=CardioPanelSchema(),
         observations=[],
     )
 

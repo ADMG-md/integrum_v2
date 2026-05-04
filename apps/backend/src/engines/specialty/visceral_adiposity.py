@@ -29,8 +29,8 @@ class VAIMotor(BaseClinicalMotor):
     def validate(self, encounter: Encounter) -> Tuple[bool, str]:
         bmi = encounter.bmi
         wc = encounter.get_observation("WAIST-001")
-        tg = encounter.cardio_panel.triglycerides_mg_dl
-        hdl = encounter.cardio_panel.hdl_mg_dl
+        tg = encounter.metabolic_panel.triglycerides_mg_dl
+        hdl = encounter.metabolic_panel.hdl_mg_dl
         if not all([bmi, wc, tg, hdl]):
             return False, "VAI requires: Waist, BMI, Triglycerides, HDL."
         return True, ""
@@ -39,8 +39,8 @@ class VAIMotor(BaseClinicalMotor):
         is_male = encounter.metadata.get("sex", "").lower() in ["male", "m"]
         bmi = encounter.bmi
         wc = safe_float(encounter.get_observation("WAIST-001").value)
-        tg = encounter.cardio_panel.triglycerides_mg_dl
-        hdl = encounter.cardio_panel.hdl_mg_dl
+        tg = encounter.metabolic_panel.triglycerides_mg_dl
+        hdl = encounter.metabolic_panel.hdl_mg_dl
 
         if is_male:
             vai = (wc / (39.68 + 1.88 * bmi)) * (tg / 1.03) * (1.31 / hdl)

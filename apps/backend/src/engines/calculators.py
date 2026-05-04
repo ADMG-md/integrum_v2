@@ -94,7 +94,7 @@ class LipidProfile:
 
     @classmethod
     def from_encounter(cls, enc: Encounter) -> LipidProfile:
-        cp = enc.cardio_panel
+        cp = enc.metabolic_panel
         tc = cp.total_cholesterol_mg_dl
         hdl = cp.hdl_mg_dl
         ldl = cp.ldl_mg_dl
@@ -138,8 +138,8 @@ class MetabolicIndices:
     def from_encounter(cls, enc: Encounter) -> MetabolicIndices:
         glu = enc.glucose_mg_dl
         ins = enc.metabolic_panel.insulin_mu_u_ml
-        tg = enc.cardio_panel.triglycerides_mg_dl
-        hdl = enc.cardio_panel.hdl_mg_dl
+        tg = enc.metabolic_panel.triglycerides_mg_dl
+        hdl = enc.metabolic_panel.hdl_mg_dl
         bmi = enc.bmi
 
         homa_ir = (glu * ins) / 405 if glu and ins and glu > 0 else None

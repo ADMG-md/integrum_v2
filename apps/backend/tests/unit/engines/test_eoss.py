@@ -7,7 +7,7 @@ Test IDs: T-EOS-01 through T-EOS-04 (Traceability Matrix).
 import pytest
 from src.engines.eoss import EOSSStagingMotor
 from src.engines.domain import Encounter, Condition, Observation
-from src.schemas.encounter import DemographicsSchema, MetabolicPanelSchema, CardioPanelSchema
+from src.schemas.encounter import DemographicsSchema, MetabolicPanelSchema, MetabolicPanelSchema
 
 @pytest.fixture
 def motor():
@@ -19,7 +19,6 @@ def _make_encounter(id="eoss-test", conditions=None, observations=None):
         id=id,
         demographics=DemographicsSchema(age_years=50, gender="male"),
         metabolic_panel=MetabolicPanelSchema(),
-        cardio_panel=CardioPanelSchema(),
         conditions=conditions or [],
         observations=observations or [],
         metadata={},

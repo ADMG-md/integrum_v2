@@ -12,7 +12,6 @@ from src.engines.domain import Encounter, Observation
 from src.schemas.encounter import (
     DemographicsSchema,
     MetabolicPanelSchema,
-    CardioPanelSchema,
 )
 
 
@@ -32,7 +31,7 @@ def _make_encounter(id="kfre-test", metabolic=None, observations=None, metadata=
             age_years=metabolic.get("age", 60) if metabolic else 60, gender="male"
         ),
         metabolic_panel=mp,
-        cardio_panel=CardioPanelSchema(),
+        cardio_panel=MetabolicPanelSchema(),
         observations=observations or [],
         metadata=metadata or {"sex": "M"},
     )

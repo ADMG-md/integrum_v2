@@ -1,7 +1,7 @@
 import pytest
 from src.engines.specialty_runner import SpecialtyRunner
 from src.domain.models import Encounter, ClinicalHistory, Observation
-from src.schemas.encounter import DemographicsSchema, MetabolicPanelSchema, CardioPanelSchema
+from src.schemas.encounter import DemographicsSchema, MetabolicPanelSchema, MetabolicPanelSchema
 
 def test_full_stack_pharmacogenomics():
     """
@@ -16,8 +16,7 @@ def test_full_stack_pharmacogenomics():
             taking_ppi_chronically=True,
             taking_otc_vitd=True
         ),
-        metabolic_panel=MetabolicPanelSchema(glucose_mg_dl=105.0, insulin_mu_u_ml=15.0),
-        cardio_panel=CardioPanelSchema(ldl_mg_dl=175.0, hdl_mg_dl=30.0, triglycerides_mg_dl=50.0),
+        metabolic_panel=MetabolicPanelSchema(glucose_mg_dl=105.0, insulin_mu_u_ml=15.0, ldl_mg_dl=175.0, hdl_mg_dl=30.0, triglycerides_mg_dl=50.0),
         observations=[
             Observation(code="29463-7", value=85.0, unit="kg"),
             Observation(code="8302-2", value=170.0, unit="cm"),

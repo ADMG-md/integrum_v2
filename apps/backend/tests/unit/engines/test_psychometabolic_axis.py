@@ -18,7 +18,7 @@ from src.engines.domain import (
     Encounter, Observation, DemographicsSchema,
     MetabolicPanelSchema, Condition, MedicationStatement,
 )
-from src.schemas.encounter import CardioPanelSchema
+from src.schemas.encounter import MetabolicPanelSchema
 from src.domain.models import ClinicalHistory
 
 
@@ -35,7 +35,7 @@ def _base_encounter(**overrides):
     metabolic_panel = overrides.pop("metabolic_panel", MetabolicPanelSchema(
         glucose_mg_dl=90,
     ))
-    cardio_panel = overrides.pop("cardio_panel", CardioPanelSchema(
+    cardio_panel = overrides.pop("cardio_panel", MetabolicPanelSchema(
         total_cholesterol_mg_dl=200,
     ))
     return Encounter(

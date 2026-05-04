@@ -20,7 +20,6 @@ from src.domain.models import (
     MedicationStatement,
     DemographicsSchema,
     MetabolicPanelSchema,
-    CardioPanelSchema,
     Encounter,
 )
 
@@ -39,6 +38,6 @@ __all__ = [
     "MedicationStatement",
     "DemographicsSchema",
     "MetabolicPanelSchema",
-    "CardioPanelSchema",
+    "MetabolicPanelSchema",
     "Encounter",
 ]

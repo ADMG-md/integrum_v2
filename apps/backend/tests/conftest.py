@@ -8,7 +8,6 @@ from src.engines.domain import (
     Observation,
     DemographicsSchema,
     MetabolicPanelSchema,
-    CardioPanelSchema,
 )
 from src.domain.models import ClinicalHistory, TraumaHistory, MedicationStatement
 from src.schemas.encounter import MedicationSchema
@@ -33,7 +32,6 @@ def empty_encounter():
         id="test-empty",
         demographics=DemographicsSchema(),
         metabolic_panel=MetabolicPanelSchema(),
-        cardio_panel=CardioPanelSchema(),
         observations=[],
     )
 
@@ -57,8 +55,6 @@ def minimal_encounter():
             neutrophil_percent=60.0,
             ferritin_ng_ml=100.0,
             hs_crp_mg_l=1.5,
-        ),
-        cardio_panel=CardioPanelSchema(
             total_cholesterol_mg_dl=200.0,
             ldl_mg_dl=130.0,
             hdl_mg_dl=45.0,
@@ -98,10 +94,8 @@ def full_encounter():
             neutrophil_percent=62.0,
             ferritin_ng_ml=80.0,
             hs_crp_mg_l=3.5,
-            tsh_uIU_ml=5.2,
+            tsh_u_iu_ml=5.2,
             ft4_ng_dl=0.7,
-        ),
-        cardio_panel=CardioPanelSchema(
             total_cholesterol_mg_dl=240.0,
             ldl_mg_dl=160.0,
             hdl_mg_dl=38.0,
@@ -148,8 +142,6 @@ def encounter_with_metabolic_data():
             ggt_u_l=65.0,
             platelets_k_u_l=220.0,
             hba1c_percent=6.2,
-        ),
-        cardio_panel=CardioPanelSchema(
             total_cholesterol_mg_dl=245.0,
             ldl_mg_dl=160.0,
             hdl_mg_dl=35.0,

@@ -4,7 +4,6 @@ from src.engines.domain import Encounter, Observation
 from src.schemas.encounter import (
     DemographicsSchema,
     MetabolicPanelSchema,
-    CardioPanelSchema,
 )
 
 
@@ -19,7 +18,6 @@ def test_hemo_validate_missing(motor):
         id="1",
         demographics=DemographicsSchema(age_years=50, gender="male"),
         metabolic_panel=MetabolicPanelSchema(),
-        cardio_panel=CardioPanelSchema(),
         observations=[],
         metadata={},
     )
@@ -33,7 +31,6 @@ def test_hemo_validate_success(motor):
         id="2",
         demographics=DemographicsSchema(age_years=50, gender="male"),
         metabolic_panel=MetabolicPanelSchema(),
-        cardio_panel=CardioPanelSchema(),
         observations=[
             Observation(code="8480-6", value=120),
             Observation(code="8462-4", value=80),
@@ -50,7 +47,6 @@ def test_hemo_wide_pulse_pressure(motor):
         id="3",
         demographics=DemographicsSchema(age_years=60, gender="male"),
         metabolic_panel=MetabolicPanelSchema(),
-        cardio_panel=CardioPanelSchema(),
         observations=[
             Observation(code="8480-6", value=160),
             Observation(code="8462-4", value=80),
@@ -68,7 +64,6 @@ def test_hemo_borderline_pulse_pressure(motor):
         id="4",
         demographics=DemographicsSchema(age_years=55, gender="male"),
         metabolic_panel=MetabolicPanelSchema(),
-        cardio_panel=CardioPanelSchema(),
         observations=[
             Observation(code="8480-6", value=135),
             Observation(code="8462-4", value=80),
@@ -86,7 +81,6 @@ def test_hemo_normal_pulse_pressure(motor):
         id="5",
         demographics=DemographicsSchema(age_years=50, gender="male"),
         metabolic_panel=MetabolicPanelSchema(),
-        cardio_panel=CardioPanelSchema(),
         observations=[
             Observation(code="8480-6", value=120),
             Observation(code="8462-4", value=80),
@@ -104,7 +98,6 @@ def test_hemo_low_map(motor):
         id="6",
         demographics=DemographicsSchema(age_years=50, gender="male"),
         metabolic_panel=MetabolicPanelSchema(),
-        cardio_panel=CardioPanelSchema(),
         observations=[
             Observation(code="8480-6", value=65),
             Observation(code="8462-4", value=55),

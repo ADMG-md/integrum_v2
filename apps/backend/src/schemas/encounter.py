@@ -17,7 +17,7 @@ from src.domain.models import (
     TraumaHistory,
     DemographicsSchema,
     MetabolicPanelSchema,
-    CardioPanelSchema,
+    ClinicalHistory,
 )
 
 
@@ -118,61 +118,7 @@ class ObservationSchema(BaseModel):
         return v
 
 
-class ClinicalHistorySchema(BaseModel):
-    """Extended clinical history for API input — adds fields beyond the domain model."""
 
-    onset_trigger: Optional[ObesityOnsetTrigger] = None
-    age_of_onset: Optional[int] = Field(None, ge=0, le=100)
-    max_weight_ever_kg: Optional[float] = Field(None, ge=20, le=500)
-
-    current_medications: List[DrugEntry] = Field(default_factory=list)
-    previous_medications: List[DrugEntry] = Field(default_factory=list)
-
-    trauma: Optional[TraumaHistory] = None
-
-    has_type2_diabetes: bool = False
-    has_prediabetes: bool = False
-    has_hypertension: bool = False
-    has_dyslipidemia: bool = False
-    has_nafld: bool = False
-    has_gout: bool = False
-    has_hypothyroidism: bool = False
-    has_pcos: bool = False
-    has_osa: bool = False
-    has_gerd: bool = False
-    has_ckd: bool = False
-
-    has_heart_failure: bool = False
-    has_coronary_disease: bool = False
-    has_stroke: bool = False
-    has_retinopathy: bool = False
-    has_neuropathy: bool = False
-
-    has_bariatric_surgery: bool = False
-    bariatric_surgery_type: Optional[str] = None
-    bariatric_surgery_date: Optional[str] = None
-    other_surgeries: Optional[str] = ""
-
-    allergies: Optional[str] = ""
-    smoking_status: Literal["never", "former", "current"] = "never"
-    alcohol_intake: Literal["none", "occasional", "frequent"] = "none"
-
-    has_statin_myalgia: bool = False
-    caffeine_anxiety_insomnia: bool = False
-    taking_otc_vitd: bool = False
-    taking_ppi_chronically: bool = False
-
-    has_glaucoma: bool = False
-    has_seizures_history: bool = False
-    has_eating_disorder_history: bool = False
-    family_history_thyroid_cancer: bool = False
-    has_active_substance_abuse: bool = False
-
-    # GLP-1/GIP contraindication screening (FDA labeling)
-    has_history_medullary_thyroid_carcinoma: bool = False
-    has_history_men2: bool = False
-    has_history_pancreatitis: bool = False
-    has_gastroparesis: bool = False
 
 
 class BiometricsSchema(BaseModel):
@@ -273,120 +219,7 @@ class LifestyleSchema(BaseModel):
     last_meal_time: Optional[str] = None
 
 
-class MetabolicPanelInput(BaseModel):
-    model_config = {"populate_by_name": True}
 
-    glucose_mg_dl: Optional[float] = Field(None, ge=40, le=600, alias="glucose_mgdl")
-    creatinine_mg_dl: Optional[float] = Field(
-        None, ge=0.2, le=10.0, alias="creatinine_mgdl"
-    )
-    hba1c_percent: Optional[float] = Field(None, ge=3.0, le=18.0)
-    insulin_mu_u_ml: Optional[float] = Field(
-        None, ge=0.5, le=500, alias="insulin_muUml"
-    )
-    c_peptide_ng_ml: Optional[float] = Field(None, ge=0.1, le=50, alias="c_peptide")
-
-    total_cholesterol_mg_dl: Optional[float] = Field(
-        None, ge=70, le=400, alias="total_chol_mgdl"
-    )
-    triglycerides_mg_dl: Optional[float] = Field(
-        None, ge=0, le=1200, alias="triglycerides_mgdl"
-    )
-    hdl_mg_dl: Optional[float] = Field(None, ge=0, le=150, alias="hdl_mgdl")
-    ldl_mg_dl: Optional[float] = Field(None, ge=0, le=400, alias="ldl_mgdl")
-    vldl_mg_dl: Optional[float] = Field(None, ge=0, le=300, alias="vldl_mgdl")
-    apob_mg_dl: Optional[float] = Field(None, ge=0, le=300, alias="apob_mgdl")
-    lpa_mg_dl: Optional[float] = Field(None, ge=0, le=300, alias="lpa_mgdl")
-    apoa1_mg_dl: Optional[float] = Field(None, ge=0, le=300, alias="apoa1_mgdl")
-
-    tsh_u_iu_ml: Optional[float] = Field(None, ge=0.01, le=100, alias="tsh_uIUmL")
-    ft4_ng_dl: Optional[float] = Field(None, ge=0.1, le=10, alias="ft4_ngdL")
-    ft3_pg_ml: Optional[float] = Field(None, ge=1.0, le=20, alias="ft3_pgmL")
-    rt3_ng_dl: Optional[float] = Field(None, ge=5, le=200, alias="rt3_ngdL")
-    shbg_nmol_l: Optional[float] = Field(None, ge=1, le=300, alias="shbg_nmolL")
-    cortisol_am_mcg_dl: Optional[float] = Field(
-        None, ge=1, le=100, alias="cortisol_am_mcgdl"
-    )
-
-    ast_u_l: Optional[float] = Field(None, ge=5, le=5000, alias="ast_uL")
-    alt_u_l: Optional[float] = Field(None, ge=5, le=5000, alias="alt_uL")
-    ggt_u_l: Optional[float] = Field(None, ge=1, le=2000, alias="ggt_uL")
-    uric_acid_mg_dl: Optional[float] = Field(None, ge=1, le=20, alias="uric_acid_mgdl")
-    platelets_k_u_l: Optional[float] = Field(
-        None, ge=10, le=1000, alias="platelets_k_uL"
-    )
-
-    # Hypertension workup
-    aldosterone_ng_dl: Optional[float] = Field(
-        None, ge=1, le=200, alias="aldosterone_ngdL"
-    )
-    renin_ng_ml_h: Optional[float] = Field(None, ge=0.1, le=500, alias="renin_ngmLh")
-
-    albumin_g_dl: Optional[float] = Field(None, ge=2.0, le=6.0, alias="albumin_gdl")
-    alkaline_phosphatase_u_l: Optional[float] = Field(
-        None, ge=20, le=1000, alias="alk_phos_ul"
-    )
-    mcv_fl: Optional[float] = Field(None, ge=60, le=120)
-    rdw_percent: Optional[float] = Field(None, ge=8, le=30)
-    wbc_k_ul: Optional[float] = Field(None, ge=1, le=100)
-    lymphocyte_percent: Optional[float] = Field(None, ge=1, le=80)
-    neutrophil_percent: Optional[float] = Field(None, ge=10, le=95)
-    ferritin_ng_ml: Optional[float] = Field(None, ge=5, le=2000)
-    hs_crp_mg_l: Optional[float] = Field(None, ge=0.0, le=50.0)
-    gada_antibodies: Optional[bool] = None
-
-    @model_validator(mode="after")
-    def validate_metabolic_coherence(self) -> "MetabolicPanelInput":
-        """
-        Cross-field coherence for metabolic panel.
-        Hard blocks for results that are logically/analytically impossible.
-        Defense-in-depth: frontend validates first; backend catches API-direct calls.
-        """
-        tg = self.triglycerides_mg_dl
-        hdl = self.hdl_mg_dl
-        ldl = self.ldl_mg_dl
-        vldl = self.vldl_mg_dl
-        total_chol = self.total_cholesterol_mg_dl
-        hba1c = self.hba1c_percent
-        gluc = self.glucose_mg_dl
-
-        # Rule: LDL > total cholesterol is logically impossible
-        if ldl is not None and total_chol is not None and ldl > total_chol:
-            raise ValueError(
-                f"Coherence error: ldl_mg_dl ({ldl}) cannot exceed total_cholesterol_mg_dl ({total_chol}). "
-                f"LDL is a fraction of total cholesterol."
-            )
-
-        # Rule: TG < VLDL — VLDL = TG/5 by definition, VLDL cannot exceed TG
-        if tg is not None and vldl is not None and tg < vldl:
-            raise ValueError(
-                f"Coherence error: triglycerides_mg_dl ({tg}) cannot be less than vldl_mg_dl ({vldl}). "
-                f"VLDL is estimated as TG/5 (Friedewald). Likely field inversion."
-            )
-
-        # Rule: TG > 400 + HbA1c — assay interference (ion exchange method)
-        # TG > ~400 mg/dL invalidates HbA1c by ion exchange chromatography.
-        if tg is not None and hba1c is not None and tg > 400:
-            raise ValueError(
-                f"Coherence error: triglycerides_mg_dl ({tg}) > 400 invalidates HbA1c by ion exchange assay "
-                f"(most common method in Colombian labs). The HbA1c result of {hba1c}% is analytically unreliable. "
-                f"Reconfirm HbA1c by HPLC or boronate affinity after normalizing TG, or remove HbA1c from this encounter."
-            )
-
-        # Rule: Glucose vs eAG discordance (Wheeler formula)
-        # eAG (mg/dL) = 28.7 × HbA1c(%) − 46.7 [ADAG study, ADA 2008]
-        # Threshold 120 mg/dL allows for postprandial vs fasting variation.
-        if gluc is not None and hba1c is not None:
-            eag = hba1c * 28.7 - 46.7
-            if eag > 0 and abs(gluc - eag) > 120:
-                raise ValueError(
-                    f"Coherence error: glucose_mg_dl ({gluc}) deviates >120 mg/dL from eAG implied by hba1c_percent ({hba1c}%) "
-                    f"[eAG = {eag:.0f} mg/dL, Wheeler formula]. "
-                    f"Possible causes: unit error (mmol/L vs mg/dL), lab from different time period, "
-                    f"or hemolytic anemia affecting HbA1c."
-                )
-
-        return self
 
 
 class ConditionSchema(BaseModel):
@@ -421,9 +254,9 @@ class MedicationSchema(BaseModel):
 class EncounterCreate(BaseModel):
     patient_id: str
     observations: List[ObservationSchema] = Field(default_factory=list)
-    history: Optional[ClinicalHistorySchema] = None
+    history: Optional[ClinicalHistory] = None
     biometrics: Optional[BiometricsSchema] = None
-    metabolic: Optional[MetabolicPanelInput] = None
+    metabolic: Optional[MetabolicPanelSchema] = None
     psychometrics: Optional[PsychometricsSchema] = None
     lifestyle: Optional[LifestyleSchema] = None
 

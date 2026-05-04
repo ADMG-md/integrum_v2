@@ -37,18 +37,18 @@ class CVDReclassifierMotor(BaseClinicalMotor):
     REQUIREMENT_ID = "CVD-RECLASSIFIER"
 
     def validate(self, encounter: Encounter) -> Tuple[bool, str]:
-        ldl = encounter.cardio_panel.ldl_mg_dl
+        ldl = encounter.metabolic_panel.ldl_mg_dl
         if not ldl:
             return False, "CVD Reclassifier requires: LDL cholesterol."
         return True, ""
 
     def compute(self, encounter: Encounter) -> AdjudicationResult:
-        ldl = encounter.cardio_panel.ldl_mg_dl
-        tg = encounter.cardio_panel.triglycerides_mg_dl
-        hdl = encounter.cardio_panel.hdl_mg_dl
+        ldl = encounter.metabolic_panel.ldl_mg_dl
+        tg = encounter.metabolic_panel.triglycerides_mg_dl
+        hdl = encounter.metabolic_panel.hdl_mg_dl
         hs_crp = encounter.metabolic_panel.hs_crp_mg_l
-        lpa = encounter.cardio_panel.lpa_mg_dl
-        apob = encounter.cardio_panel.apob_mg_dl
+        lpa = encounter.metabolic_panel.lpa_mg_dl
+        apob = encounter.metabolic_panel.apob_mg_dl
         egfr = encounter.egfr_ckd_epi
 
         risk_factors = []

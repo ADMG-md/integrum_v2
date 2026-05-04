@@ -7,7 +7,7 @@ Test IDs: T-ACO-01 through T-ACO-04 (Traceability Matrix).
 import pytest
 from src.engines.acosta import AcostaPhenotypeMotor
 from src.engines.domain import Encounter, Observation
-from src.schemas.encounter import DemographicsSchema, MetabolicPanelSchema, CardioPanelSchema
+from src.schemas.encounter import DemographicsSchema, MetabolicPanelSchema, MetabolicPanelSchema
 
 @pytest.fixture
 def motor():
@@ -24,7 +24,6 @@ def _make_encounter(id="test-enc", sex="M", observations=None, metadata=None):
         id=id,
         demographics=DemographicsSchema(age_years=45, gender=gender),
         metabolic_panel=MetabolicPanelSchema(),
-        cardio_panel=CardioPanelSchema(),
         observations=observations or [],
         metadata=meta,
     )

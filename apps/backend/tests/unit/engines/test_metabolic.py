@@ -4,7 +4,6 @@ from src.engines.domain import Encounter, Observation
 from src.schemas.encounter import (
     DemographicsSchema,
     MetabolicPanelSchema,
-    CardioPanelSchema,
 )
 
 
@@ -19,7 +18,6 @@ def test_metabolic_validate_missing(motor):
         id="1",
         demographics=DemographicsSchema(age_years=50, gender="male"),
         metabolic_panel=MetabolicPanelSchema(),
-        cardio_panel=CardioPanelSchema(),
         observations=[],
         metadata={},
     )
@@ -33,7 +31,6 @@ def test_metabolic_validate_success(motor):
         id="2",
         demographics=DemographicsSchema(age_years=50, gender="male"),
         metabolic_panel=MetabolicPanelSchema(),
-        cardio_panel=CardioPanelSchema(),
         observations=[Observation(code="2339-0", value=100)],
         metadata={"sex": "M"},
     )
@@ -47,7 +44,6 @@ def test_metabolic_sick_fat(motor):
         id="3",
         demographics=DemographicsSchema(age_years=50, gender="male"),
         metabolic_panel=MetabolicPanelSchema(glucose_mg_dl=110, insulin_uu_ml=25),
-        cardio_panel=CardioPanelSchema(),
         observations=[
             Observation(code="30522-7", value=1.5),
         ],
@@ -63,7 +59,6 @@ def test_metabolic_sarcopenic_obesity(motor):
         id="4",
         demographics=DemographicsSchema(age_years=50, gender="male"),
         metabolic_panel=MetabolicPanelSchema(glucose_mg_dl=90, insulin_uu_ml=10),
-        cardio_panel=CardioPanelSchema(),
         observations=[
             Observation(code="SMI-001", value=6.0),
         ],
@@ -79,7 +74,6 @@ def test_metabolic_fib4(motor):
         id="5",
         demographics=DemographicsSchema(age_years=50, gender="male"),
         metabolic_panel=MetabolicPanelSchema(),
-        cardio_panel=CardioPanelSchema(),
         observations=[
             Observation(code="AGE-001", value=50),
             Observation(code="29230-0", value=35),
@@ -98,7 +92,6 @@ def test_metabolic_stable(motor):
         id="6",
         demographics=DemographicsSchema(age_years=50, gender="male"),
         metabolic_panel=MetabolicPanelSchema(glucose_mg_dl=90),
-        cardio_panel=CardioPanelSchema(),
         observations=[],
         metadata={"sex": "M", "bmi": 24},
     )

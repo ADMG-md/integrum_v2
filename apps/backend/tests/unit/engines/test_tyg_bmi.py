@@ -12,7 +12,6 @@ from src.engines.domain import Encounter, Observation
 from src.schemas.encounter import (
     DemographicsSchema,
     MetabolicPanelSchema,
-    CardioPanelSchema,
 )
 
 
@@ -27,7 +26,6 @@ def test_tyg_validate_missing_data(motor):
         id="1",
         demographics=DemographicsSchema(age_years=50, gender="male"),
         metabolic_panel=MetabolicPanelSchema(),
-        cardio_panel=CardioPanelSchema(),
         observations=[],
         metadata={"sex": "M"},
     )
@@ -40,8 +38,7 @@ def test_tyg_validate_success(motor):
     enc = Encounter(
         id="2",
         demographics=DemographicsSchema(age_years=50, gender="male"),
-        metabolic_panel=MetabolicPanelSchema(glucose_mg_dl=100),
-        cardio_panel=CardioPanelSchema(triglycerides_mg_dl=150),
+        metabolic_panel=MetabolicPanelSchema(glucose_mg_dl=100, triglycerides_mg_dl=150),
         observations=[
             Observation(code="29463-7", value=80),
             Observation(code="8302-2", value=170),
@@ -57,8 +54,7 @@ def test_tyg_male_low_ir(motor):
     enc = Encounter(
         id="3",
         demographics=DemographicsSchema(age_years=45, gender="male"),
-        metabolic_panel=MetabolicPanelSchema(glucose_mg_dl=90),
-        cardio_panel=CardioPanelSchema(triglycerides_mg_dl=80),
+        metabolic_panel=MetabolicPanelSchema(glucose_mg_dl=90, triglycerides_mg_dl=80),
         observations=[
             Observation(code="29463-7", value=65),
             Observation(code="8302-2", value=170),
@@ -74,8 +70,7 @@ def test_tyg_male_severe_ir(motor):
     enc = Encounter(
         id="4",
         demographics=DemographicsSchema(age_years=50, gender="male"),
-        metabolic_panel=MetabolicPanelSchema(glucose_mg_dl=130),
-        cardio_panel=CardioPanelSchema(triglycerides_mg_dl=200),
+        metabolic_panel=MetabolicPanelSchema(glucose_mg_dl=130, triglycerides_mg_dl=200),
         observations=[
             Observation(code="29463-7", value=95),
             Observation(code="8302-2", value=170),
@@ -91,8 +86,7 @@ def test_tyg_female_thresholds(motor):
     enc = Encounter(
         id="5",
         demographics=DemographicsSchema(age_years=45, gender="female"),
-        metabolic_panel=MetabolicPanelSchema(glucose_mg_dl=100),
-        cardio_panel=CardioPanelSchema(triglycerides_mg_dl=120),
+        metabolic_panel=MetabolicPanelSchema(glucose_mg_dl=100, triglycerides_mg_dl=120),
         observations=[
             Observation(code="29463-7", value=70),
             Observation(code="8302-2", value=165),

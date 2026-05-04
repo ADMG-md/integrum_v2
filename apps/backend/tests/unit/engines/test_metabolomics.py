@@ -4,7 +4,6 @@ from src.engines.domain import Encounter, Observation
 from src.schemas.encounter import (
     DemographicsSchema,
     MetabolicPanelSchema,
-    CardioPanelSchema,
 )
 
 
@@ -19,7 +18,6 @@ def test_metabolomics_validate_missing(motor):
         id="1",
         demographics=DemographicsSchema(age_years=50, gender="male"),
         metabolic_panel=MetabolicPanelSchema(),
-        cardio_panel=CardioPanelSchema(),
         observations=[],
         metadata={},
     )
@@ -33,7 +31,6 @@ def test_metabolomics_validate_success(motor):
         id="2",
         demographics=DemographicsSchema(age_years=50, gender="male"),
         metabolic_panel=MetabolicPanelSchema(),
-        cardio_panel=CardioPanelSchema(),
         observations=[Observation(code="GGT-001", value=30)],
         metadata={},
     )
@@ -47,7 +44,6 @@ def test_metabolomics_ggt_elevated(motor):
         id="3",
         demographics=DemographicsSchema(age_years=50, gender="male"),
         metabolic_panel=MetabolicPanelSchema(),
-        cardio_panel=CardioPanelSchema(),
         observations=[Observation(code="GGT-001", value=50)],
         metadata={},
     )
@@ -61,7 +57,6 @@ def test_metabolomics_ferritin_elevated(motor):
         id="4",
         demographics=DemographicsSchema(age_years=50, gender="male"),
         metabolic_panel=MetabolicPanelSchema(),
-        cardio_panel=CardioPanelSchema(),
         observations=[Observation(code="FER-001", value=350)],
         metadata={},
     )
@@ -75,7 +70,6 @@ def test_metabolomics_uric_acid(motor):
         id="5",
         demographics=DemographicsSchema(age_years=50, gender="male"),
         metabolic_panel=MetabolicPanelSchema(),
-        cardio_panel=CardioPanelSchema(),
         observations=[Observation(code="UA-001", value=7.0)],
         metadata={},
     )
@@ -89,7 +83,6 @@ def test_metabolomics_tg_hdl_ratio(motor):
         id="6",
         demographics=DemographicsSchema(age_years=50, gender="male"),
         metabolic_panel=MetabolicPanelSchema(),
-        cardio_panel=CardioPanelSchema(),
         observations=[
             Observation(code="2571-8", value=150),
             Observation(code="2085-9", value=40),
@@ -109,7 +102,6 @@ def test_metabolomics_bcaa(motor):
         id="7",
         demographics=DemographicsSchema(age_years=50, gender="male"),
         metabolic_panel=MetabolicPanelSchema(),
-        cardio_panel=CardioPanelSchema(),
         observations=[Observation(code="BCAA-ISO-001", value=0.8)],
         metadata={},
     )
@@ -123,7 +115,6 @@ def test_metabolomics_glyca(motor):
         id="8",
         demographics=DemographicsSchema(age_years=50, gender="male"),
         metabolic_panel=MetabolicPanelSchema(),
-        cardio_panel=CardioPanelSchema(),
         observations=[Observation(code="GLYCA-001", value=400)],
         metadata={},
     )
@@ -137,7 +128,6 @@ def test_metabolomics_female_thresholds(motor):
         id="9",
         demographics=DemographicsSchema(age_years=50, gender="female"),
         metabolic_panel=MetabolicPanelSchema(),
-        cardio_panel=CardioPanelSchema(),
         observations=[
             Observation(code="GGT-001", value=30),
             Observation(code="FER-001", value=150),
@@ -154,7 +144,6 @@ def test_metabolomics_no_findings(motor):
         id="10",
         demographics=DemographicsSchema(age_years=50, gender="male"),
         metabolic_panel=MetabolicPanelSchema(),
-        cardio_panel=CardioPanelSchema(),
         observations=[
             Observation(code="GGT-001", value=20),
             Observation(code="FER-001", value=100),

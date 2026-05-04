@@ -9,7 +9,6 @@ from src.engines.domain import (
     Observation,
     DemographicsSchema,
     MetabolicPanelSchema,
-    CardioPanelSchema,
 )
 from src.engines.base_models import AdjudicationResult
 

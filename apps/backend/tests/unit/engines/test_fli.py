@@ -12,7 +12,6 @@ from src.engines.domain import Encounter, Observation
 from src.schemas.encounter import (
     DemographicsSchema,
     MetabolicPanelSchema,
-    CardioPanelSchema,
 )
 
 
@@ -23,14 +22,13 @@ def motor():
 
 def _make_encounter(id="fli-test", observations=None, cardio=None):
     """Helper: creates a valid Encounter for FLI testing."""
-    cp = CardioPanelSchema()
+    cp = MetabolicPanelSchema()
     if cardio:
         cp.triglycerides_mg_dl = cardio.get("triglycerides")
     return Encounter(
         id=id,
         demographics=DemographicsSchema(age_years=50, gender="male"),
-        metabolic_panel=MetabolicPanelSchema(),
-        cardio_panel=cp,
+        metabolic_panel=cp,
         observations=observations or [],
         metadata={},
     )
@@ -64,8 +62,7 @@ def test_fli_validate_success(motor):
     enc = Encounter(
         id="3",
         demographics=DemographicsSchema(age_years=50, gender="male"),
-        metabolic_panel=MetabolicPanelSchema(ggt_u_l=40),
-        cardio_panel=CardioPanelSchema(triglycerides_mg_dl=150),
+        metabolic_panel=MetabolicPanelSchema(ggt_u_l=40, triglycerides_mg_dl=150),
         observations=[
             Observation(code="29463-7", value=85),
             Observation(code="8302-2", value=170),
@@ -81,8 +78,7 @@ def test_fli_low_risk(motor):
     enc = Encounter(
         id="4",
         demographics=DemographicsSchema(age_years=45, gender="male"),
-        metabolic_panel=MetabolicPanelSchema(ggt_u_l=20),
-        cardio_panel=CardioPanelSchema(triglycerides_mg_dl=80),
+        metabolic_panel=MetabolicPanelSchema(ggt_u_l=20, triglycerides_mg_dl=80),
         observations=[
             Observation(code="29463-7", value=65),
             Observation(code="8302-2", value=170),
@@ -100,8 +96,7 @@ def test_fli_equivocal(motor):
     enc = Encounter(
         id="5",
         demographics=DemographicsSchema(age_years=50, gender="male"),
-        metabolic_panel=MetabolicPanelSchema(ggt_u_l=45),
-        cardio_panel=CardioPanelSchema(triglycerides_mg_dl=130),
+        metabolic_panel=MetabolicPanelSchema(ggt_u_l=45, triglycerides_mg_dl=130),
         observations=[
             Observation(code="29463-7", value=80),
             Observation(code="8302-2", value=170),
@@ -118,8 +113,7 @@ def test_fli_high_risk(motor):
     enc = Encounter(
         id="6",
         demographics=DemographicsSchema(age_years=55, gender="male"),
-        metabolic_panel=MetabolicPanelSchema(ggt_u_l=100),
-        cardio_panel=CardioPanelSchema(triglycerides_mg_dl=250),
+        metabolic_panel=MetabolicPanelSchema(ggt_u_l=100, triglycerides_mg_dl=250),
         observations=[
             Observation(code="29463-7", value=110),
             Observation(code="8302-2", value=170),
@@ -137,8 +131,7 @@ def test_fli_boundary_30(motor):
     enc = Encounter(
         id="7",
         demographics=DemographicsSchema(age_years=45, gender="male"),
-        metabolic_panel=MetabolicPanelSchema(ggt_u_l=30),
-        cardio_panel=CardioPanelSchema(triglycerides_mg_dl=100),
+        metabolic_panel=MetabolicPanelSchema(ggt_u_l=30, triglycerides_mg_dl=100),
         observations=[
             Observation(code="29463-7", value=72),
             Observation(code="8302-2", value=170),
@@ -154,8 +147,7 @@ def test_fli_boundary_60(motor):
     enc = Encounter(
         id="8",
         demographics=DemographicsSchema(age_years=55, gender="male"),
-        metabolic_panel=MetabolicPanelSchema(ggt_u_l=60),
-        cardio_panel=CardioPanelSchema(triglycerides_mg_dl=180),
+        metabolic_panel=MetabolicPanelSchema(ggt_u_l=60, triglycerides_mg_dl=180),
         observations=[
             Observation(code="29463-7", value=95),
             Observation(code="8302-2", value=170),

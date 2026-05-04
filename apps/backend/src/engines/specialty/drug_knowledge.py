@@ -2,9 +2,19 @@
 Static Knowledge Base for Drug-Drug and Drug-Condition Interactions.
 Extracted from clinical evidence for SaMD pure engine execution.
 SOURCE: Integrum V1 Database Seed (2026-04-03)
+
+REQUIREMENT_ID: DRUG-KNOWLEDGE-DB-2026
+References:
+  - ADA Standards of Care 2024 (pharmacology section)
+  - GLP-1 contraindications: FDA prescribing information (Ozempic, Wegovy, Mounjaro)
+  - Drug interactions: Lexicomp / Micromedex clinical methodology
 """
 
+# IEC 62304 §5.5 traceability
+REQUIREMENT_ID = "DRUG-KNOWLEDGE-DB-2026"
+
 from typing import Dict, Any, List
+
 
 # Core medication metadata (Obesity/Metabolic focus)
 MEDICATIONS: Dict[str, Dict[str, Any]] = {
