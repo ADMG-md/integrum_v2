@@ -25,7 +25,7 @@ async def init_prod_db():
 
     # NEW-02 fix: NEVER drop_all — it destroys all data in production.
     # For schema migrations, use Alembic. This script is ONLY for initial dev seeding.
-    if os.getenv("ENVIRONMENT") == "production":
+    if os.getenv("ENVIRONMENT", "production").lower() != "development":
         raise RuntimeError(
             "CRITICAL: init_security_db.py must NOT run in production. "
             "Use Alembic migrations for schema changes."
