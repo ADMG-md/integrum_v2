@@ -96,7 +96,6 @@ class PharmaPrecisionMotor(BaseClinicalMotor):
                 ))
             
             evidence.append(ClinicalEvidence(type="Phenotype", code="INCRETIN-CANDIDATE", value=True, display="Candidato a Terapia Incretínica"))
-[diff_block_start]
         # B. Fenotipo Emocional / Hedónico
         if tfeq_emo and float(tfeq_emo.value) >= self.TFEQ_PHENOTYPE_THRESHOLD:
             action_checklist.append(ActionItem(

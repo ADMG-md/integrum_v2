@@ -30,7 +30,6 @@ from src.engines.domain import (
     DrugEntry,
 )
 from src.engines.specialty_runner import create_runner, PRIMARY_MOTORS
-from src.engines.specialty.readiness import readiness_engine
 from src.services.clinical_engine_service import clinical_bridge
 from src.services.observation_mapper import build_flat_observations
 from src.domain.models import DemographicsSchema, MetabolicPanelSchema
@@ -195,11 +194,8 @@ async def run_clinical_pipeline(
         db, patient_id, encounter_id, domain_encounter.observations
     )
 
-    # Data Readiness
-    readiness = readiness_engine.score(
-        domain_encounter, PRIMARY_MOTORS
-    )
-    readiness_report = readiness.to_dict()
+    # Data Readiness (REMOVED: Dead Code)
+    readiness_report = {}
 
     # Run engines (has per-motor try/except internally)
     try:

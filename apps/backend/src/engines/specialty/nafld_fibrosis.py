@@ -76,6 +76,8 @@ class NFSMotor(BaseClinicalMotor):
                 explanation="Datos insuficientes para calcular NFS.",
             )
 
+        has_dm = encounter.history.has_type2_diabetes if encounter.history else False
+
         # NFS Formula Coefficients (Angulo et al., 2007)
         INTERCEPT = -1.675
         COEFF_AGE = 0.037
