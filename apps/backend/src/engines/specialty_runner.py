@@ -163,15 +163,9 @@ class SpecialtyRunner:
     def __new__(cls):
         if cls._instance is None:
             cls._instance = super(SpecialtyRunner, cls).__new__(cls)
-            cls._instance._primary_motors = {
-                name: motor_cls() for name, motor_cls in PRIMARY_MOTORS.items()
-            }
-            cls._instance._aggregator_motors = {
-                name: motor_cls() for name, motor_cls in AGGREGATOR_MOTORS.items()
-            }
-            cls._instance._gated_motors = {
-                name: motor_cls() for name, motor_cls in GATED_MOTORS.items()
-            }
+            cls._instance._primary_motors = {}
+            cls._instance._aggregator_motors = {}
+            cls._instance._gated_motors = {}
         return cls._instance
 
     def run_all(
@@ -181,7 +175,7 @@ class SpecialtyRunner:
         h = encounter.history
 
         # 1. Primary Engines (Independent Phase)
-        for name, motor in self._primary_motors.items():
+        for name, motor_cls in PRIMARY_MOTORS.items():
             # Clinical mode: skip T3/T4 research/experimental motors
             if clinical_mode and name in self._RESEARCH_MOTORS:
                 logger.info(
@@ -190,6 +184,10 @@ class SpecialtyRunner:
                     reason="T3/T4 motor excluded",
                 )
                 continue
+
+            if name not in self._primary_motors:
+                self._primary_motors[name] = motor_cls()
+            motor = self._primary_motors[name]
 
             try:
                 if hasattr(motor, "run"):
@@ -215,7 +213,7 @@ class SpecialtyRunner:
 
         # 2. Risk Engines (Gated / Experimental Phase)
         cvd_risk_category = None
-        for name, motor in self._gated_motors.items():
+        for name, motor_cls in GATED_MOTORS.items():
             try:
                 # Gate: CVDHazardMotor runs only if patient has CVD risk factors
                 if name == "CVDHazardMotor":
@@ -256,6 +254,10 @@ class SpecialtyRunner:
                         )
                         continue
 
+                if name not in self._gated_motors:
+                    self._gated_motors[name] = motor_cls()
+                motor = self._gated_motors[name]
+
                 if hasattr(motor, "run"):
                     res = motor.run(encounter)
                     results[name] = res
@@ -269,6 +271,8 @@ class SpecialtyRunner:
         # 3. Aggregator Engines (Decision Support Phase)
         if "AcostaPhenotypeMotor" in results and "EOSSStagingMotor" in results:
             try:
+                if "ObesityMasterMotor" not in self._aggregator_motors:
+                    self._aggregator_motors["ObesityMasterMotor"] = AGGREGATOR_MOTORS["ObesityMasterMotor"]()
                 ob_motor = self._aggregator_motors["ObesityMasterMotor"]
                 if clinical_mode:
                     logger.info(
@@ -288,8 +292,10 @@ class SpecialtyRunner:
                     error_type=type(e).__name__,
                 )
 
-        if "ClinicalGuidelinesMotor" in self._aggregator_motors:
+        if "ClinicalGuidelinesMotor" in AGGREGATOR_MOTORS:
             try:
+                if "ClinicalGuidelinesMotor" not in self._aggregator_motors:
+                    self._aggregator_motors["ClinicalGuidelinesMotor"] = AGGREGATOR_MOTORS["ClinicalGuidelinesMotor"]()
                 gui_motor = self._aggregator_motors["ClinicalGuidelinesMotor"]
                 context = {"cvd_risk_category": cvd_risk_category}
                 results["ClinicalGuidelinesMotor"] = gui_motor.compute(
@@ -305,6 +311,16 @@ class SpecialtyRunner:
         return results
 
     def get_all_motors(self) -> List[Any]:
+        for name, motor_cls in PRIMARY_MOTORS.items():
+            if name not in self._primary_motors:
+                self._primary_motors[name] = motor_cls()
+        for name, motor_cls in AGGREGATOR_MOTORS.items():
+            if name not in self._aggregator_motors:
+                self._aggregator_motors[name] = motor_cls()
+        for name, motor_cls in GATED_MOTORS.items():
+            if name not in self._gated_motors:
+                self._gated_motors[name] = motor_cls()
+                
         return (
             list(self._primary_motors.values())
             + list(self._aggregator_motors.values())
