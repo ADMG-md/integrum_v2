@@ -4,6 +4,8 @@ from src.engines.base_models import AdjudicationResult
 from typing import Tuple, Dict, Any
 import math
 
+from src.engines.confidence_standards import CONFIDENCE_VALUES, ConfidenceLevel
+
 
 class DeepMetabolicProxyMotor(BaseClinicalMotor):
     """

@@ -2,6 +2,8 @@ from src.engines.base import BaseClinicalMotor
 from src.engines.domain import Encounter, AdjudicationResult, ClinicalEvidence
 from typing import Tuple
 
+from src.engines.confidence_standards import CONFIDENCE_VALUES, ConfidenceLevel
+
 
 class ApoBApoA1Motor(BaseClinicalMotor):
     """
@@ -38,19 +40,19 @@ class ApoBApoA1Motor(BaseClinicalMotor):
         if ratio < 0.6:
             risk_level = "Bajo"
             estado = "INDETERMINATE_LOCKED"
-            confidence = 0.90
+            confidence=CONFIDENCE_VALUES[ConfidenceLevel.VALIDATED_BIOMARKER]
         elif ratio < 0.8:
             risk_level = "Moderado"
             estado = "PROBABLE_WARNING"
-            confidence = 0.85
+            confidence=CONFIDENCE_VALUES[ConfidenceLevel.VALIDATED_BIOMARKER]
         elif ratio < 1.0:
             risk_level = "Alto"
             estado = "CONFIRMED_ACTIVE"
-            confidence = 0.88
+            confidence=CONFIDENCE_VALUES[ConfidenceLevel.VALIDATED_BIOMARKER]
         else:
             risk_level = "Muy Alto"
             estado = "CONFIRMED_ACTIVE"
-            confidence = 0.92
+            confidence=CONFIDENCE_VALUES[ConfidenceLevel.VALIDATED_BIOMARKER]
 
         explanation = (
             f"ApoB/ApoA1: {ratio}. Riesgo lipoproteico: {risk_level}. "

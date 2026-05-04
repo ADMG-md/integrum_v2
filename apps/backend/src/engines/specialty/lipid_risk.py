@@ -3,6 +3,8 @@ from src.engines.domain import Encounter, AdjudicationResult, ClinicalEvidence
 from typing import Tuple, List
 import math
 
+from src.engines.confidence_standards import CONFIDENCE_VALUES, ConfidenceLevel
+
 class LipidRiskPrecisionMotor(BaseClinicalMotor):
     """
     Motor de Riesgo Cardiovascular y Lípidos (Guías ACC/AHA 2026).
@@ -70,7 +72,7 @@ class LipidRiskPrecisionMotor(BaseClinicalMotor):
 
         return AdjudicationResult(
             calculated_value=f"Riesgo {risk_level} | LDL Target: {target}",
-            confidence=0.85,
+            confidence=CONFIDENCE_VALUES[ConfidenceLevel.VALIDATED_BIOMARKER],
             evidence=evidence,
             explanation=" | ".join(findings)
         )

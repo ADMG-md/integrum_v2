@@ -8,6 +8,8 @@ from src.engines.domain import (
 )
 from typing import Tuple
 
+from src.engines.confidence_standards import CONFIDENCE_VALUES, ConfidenceLevel
+
 
 class BodyCompositionTrendMotor(BaseClinicalMotor):
     """
@@ -120,7 +122,7 @@ class BodyCompositionTrendMotor(BaseClinicalMotor):
                     rationale="Pérdida excesiva de masa magra sugiere dosis demasiado agresiva.",
                 )
             )
-            confidence = 0.90
+            confidence=CONFIDENCE_VALUES[ConfidenceLevel.PEER_REVIEWED]
         elif lean_loss_pct > 15:
             estado = "PROBABLE_WARNING"
             verdict = (
@@ -142,7 +144,7 @@ class BodyCompositionTrendMotor(BaseClinicalMotor):
                     rationale=f"{lean_loss_pct}% de pérdida es masa magra.",
                 )
             )
-            confidence = 0.85
+            confidence=CONFIDENCE_VALUES[ConfidenceLevel.PEER_REVIEWED]
         else:
             estado = "INDETERMINATE_LOCKED"
             verdict = f"Composición corporal aceptable ({lean_loss_pct}% masa magra)"
@@ -150,7 +152,7 @@ class BodyCompositionTrendMotor(BaseClinicalMotor):
                 f"Solo {lean_loss_pct}% de la pérdida de peso es masa magra "
                 f"(aceptable: <15%)"
             )
-            confidence = 0.88
+            confidence=CONFIDENCE_VALUES[ConfidenceLevel.PEER_REVIEWED]
 
         explanation = "; ".join(findings)
 

@@ -8,6 +8,8 @@ from src.engines.domain import (
 )
 from typing import Tuple
 
+from src.engines.confidence_standards import CONFIDENCE_VALUES, ConfidenceLevel
+
 
 class CVDReclassifierMotor(BaseClinicalMotor):
     """
@@ -111,7 +113,7 @@ class CVDReclassifierMotor(BaseClinicalMotor):
             explanation = (
                 f"LDL: {ldl} mg/dL. Indicacion clase I para estatina alta intensidad."
             )
-            confidence = 0.95
+            confidence=CONFIDENCE_VALUES[ConfidenceLevel.PROXY_MARKER]
         elif n_factors >= 2:
             estado = "CONFIRMED_ACTIVE"
             verdict = f"Estatina INDICADA ({n_factors} factores de riesgo)"
@@ -120,7 +122,7 @@ class CVDReclassifierMotor(BaseClinicalMotor):
                 f"{'; '.join(risk_factors)}. "
                 f"ACC/AHA 2018: estatina de moderada-alta intensidad indicada."
             )
-            confidence = 0.88
+            confidence=CONFIDENCE_VALUES[ConfidenceLevel.PROXY_MARKER]
         elif n_factors == 1:
             estado = "PROBABLE_WARNING"
             verdict = f"Considerar estatina (1 factor de riesgo)"
@@ -128,12 +130,12 @@ class CVDReclassifierMotor(BaseClinicalMotor):
                 f"LDL: {ldl} mg/dL. 1 factor de riesgo: {risk_factors[0]}. "
                 f"Discutir riesgo/beneficio con paciente."
             )
-            confidence = 0.80
+            confidence=CONFIDENCE_VALUES[ConfidenceLevel.PROXY_MARKER]
         else:
             estado = "INDETERMINATE_LOCKED"
             verdict = "Estatina no indicada actualmente"
             explanation = f"LDL: {ldl} mg/dL. Sin factores de riesgo adicionales."
-            confidence = 0.85
+            confidence=CONFIDENCE_VALUES[ConfidenceLevel.PROXY_MARKER]
 
         actions = []
         if ldl >= 190:

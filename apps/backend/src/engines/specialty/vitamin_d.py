@@ -7,6 +7,8 @@ from src.engines.domain import (
 )
 from typing import Tuple
 
+from src.engines.confidence_standards import CONFIDENCE_VALUES, ConfidenceLevel
+
 
 class VitaminDMotor(BaseClinicalMotor):
     """
@@ -64,7 +66,7 @@ class VitaminDMotor(BaseClinicalMotor):
                 f"25-OH Vit D: {vitd} ng/mL. Deficiencia severa. "
                 f"Indicada suplementacion con 50,000 UI semanal x 8 semanas."
             )
-            confidence = 0.95
+            confidence=CONFIDENCE_VALUES[ConfidenceLevel.ESTABLISHED_GUIDELINE]
         elif vitd < 20:
             estado = "CONFIRMED_ACTIVE"
             verdict = f"Deficiencia de Vitamina D ({vitd} ng/mL)"
@@ -72,7 +74,7 @@ class VitaminDMotor(BaseClinicalMotor):
                 f"25-OH Vit D: {vitd} ng/mL. Deficiencia. "
                 f"Indicada suplementacion con 2000-4000 UI/dia."
             )
-            confidence = 0.92
+            confidence=CONFIDENCE_VALUES[ConfidenceLevel.ESTABLISHED_GUIDELINE]
         elif vitd < 30:
             estado = "PROBABLE_WARNING"
             verdict = f"Insuficiencia de Vitamina D ({vitd} ng/mL)"
@@ -80,12 +82,12 @@ class VitaminDMotor(BaseClinicalMotor):
                 f"25-OH Vit D: {vitd} ng/mL. Insuficiencia. "
                 f"Considerar suplementacion con 1000-2000 UI/dia."
             )
-            confidence = 0.88
+            confidence=CONFIDENCE_VALUES[ConfidenceLevel.ESTABLISHED_GUIDELINE]
         elif vitd <= 100:
             estado = "INDETERMINATE_LOCKED"
             verdict = f"Vitamina D suficiente ({vitd} ng/mL)"
             explanation = f"25-OH Vit D: {vitd} ng/mL. Nivel adecuado."
-            confidence = 0.90
+            confidence=CONFIDENCE_VALUES[ConfidenceLevel.ESTABLISHED_GUIDELINE]
         elif vitd <= 150:
             estado = "PROBABLE_WARNING"
             verdict = f"Vitamina D elevada ({vitd} ng/mL)"
@@ -93,7 +95,7 @@ class VitaminDMotor(BaseClinicalMotor):
                 f"25-OH Vit D: {vitd} ng/mL. Nivel elevado. "
                 f"Reducir o suspender suplementacion."
             )
-            confidence = 0.85
+            confidence=CONFIDENCE_VALUES[ConfidenceLevel.ESTABLISHED_GUIDELINE]
         else:
             estado = "CONFIRMED_ACTIVE"
             verdict = f"Posible toxicidad de Vitamina D ({vitd} ng/mL)"
@@ -101,7 +103,7 @@ class VitaminDMotor(BaseClinicalMotor):
                 f"25-OH Vit D: {vitd} ng/mL. Posible toxicidad. "
                 f"Suspender suplementacion. Solicitar calcio serico y PTH."
             )
-            confidence = 0.90
+            confidence=CONFIDENCE_VALUES[ConfidenceLevel.ESTABLISHED_GUIDELINE]
 
         return AdjudicationResult(
             calculated_value=verdict,

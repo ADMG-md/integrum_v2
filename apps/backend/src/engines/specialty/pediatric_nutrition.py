@@ -7,6 +7,8 @@ from src.engines.domain import (
 )
 from typing import Tuple, List, Optional
 
+from src.engines.confidence_standards import CONFIDENCE_VALUES, ConfidenceLevel
+
 
 class PediatricNutritionMotor(BaseClinicalMotor):
     """
@@ -111,7 +113,7 @@ class PediatricNutritionMotor(BaseClinicalMotor):
         action_checklist = []
         next_lab_check = []
         monitoring_frequency = "trimestral"
-        confidence = 0.85
+        confidence = CONFIDENCE_VALUES[ConfidenceLevel.PEER_REVIEWED]  # Default
 
         has_asd = self._has_diagnosis(encounter, ["f84", "autism", "tea"])
         has_adhd = self._has_diagnosis(encounter, ["f90", "adhd", "tdah"])
@@ -267,7 +269,7 @@ class PediatricNutritionMotor(BaseClinicalMotor):
 
             next_lab_check = ["Ferritina", "Zinc sérico", "Omega-3 índice"]
             monitoring_frequency = "mensual"
-            confidence = 0.80
+            confidence = CONFIDENCE_VALUES[ConfidenceLevel.INDIRECT_EVIDENCE]  # TDAH evidence is less certain
 
         elif has_obesity or (bmi_percentile and bmi_percentile >= 85):
             patient_category = "obesity"
@@ -348,7 +350,7 @@ class PediatricNutritionMotor(BaseClinicalMotor):
                 }
             )
             monitoring_frequency = "semestral"
-            confidence = 0.95
+            confidence = CONFIDENCE_VALUES[ConfidenceLevel.ESTABLISHED_GUIDELINE]  # Typical prevention is well-established
 
         for rec in recommendations:
             action_checklist.append(

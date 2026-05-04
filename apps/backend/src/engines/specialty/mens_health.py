@@ -19,6 +19,8 @@ from src.engines.domain import (
 )
 from typing import Tuple
 
+from src.engines.confidence_standards import CONFIDENCE_VALUES, ConfidenceLevel
+
 
 class MensHealthMotor(BaseClinicalMotor):
     REQUIREMENT_ID = "MENS-HEALTH-V2"
@@ -165,13 +167,13 @@ class MensHealthMotor(BaseClinicalMotor):
         # --- OUTCOME STATUS ---
         if is_hypogonadal or (psa is not None and psa >= 4.0):
             estado = "CONFIRMED_ACTIVE"
-            confidence = 0.95
+            confidence=CONFIDENCE_VALUES[ConfidenceLevel.ESTABLISHED_GUIDELINE]
         elif has_biochemical_hypogonadism or has_symptoms:
             estado = "PROBABLE_WARNING"
-            confidence = 0.85
+            confidence=CONFIDENCE_VALUES[ConfidenceLevel.ESTABLISHED_GUIDELINE]
         else:
             estado = "INDETERMINATE_LOCKED"
-            confidence = 0.80
+            confidence=CONFIDENCE_VALUES[ConfidenceLevel.ESTABLISHED_GUIDELINE]
 
         headline = " | ".join(phenotypes) if phenotypes else "Salud Masculina Basal"
 

@@ -26,6 +26,8 @@ from typing import Tuple, List, Dict, Any, Optional
 
 # ============================================================
 # Fuzzy medication name matching (Spanish/English variants)
+
+from src.engines.confidence_standards import CONFIDENCE_VALUES, ConfidenceLevel
 # ============================================================
 
 _SYNONYM_MAP: Dict[str, str] = {
@@ -388,19 +390,19 @@ class DrugInteractionMotor(BaseClinicalMotor):
         if n_critical > 0:
             estado = "CONFIRMED_ACTIVE"
             verdict = f"{n_critical} alerta(s) CRÍTICA(S) de seguridad farmacológica"
-            confidence = 0.95
+            confidence=CONFIDENCE_VALUES[ConfidenceLevel.PROXY_MARKER]
         elif n_major > 0:
             estado = "CONFIRMED_ACTIVE"
             verdict = f"{n_major} interacción(es) MAYOR(ES) detectada(s)"
-            confidence = 0.90
+            confidence=CONFIDENCE_VALUES[ConfidenceLevel.PROXY_MARKER]
         elif n_moderate > 0:
             estado = "PROBABLE_WARNING"
             verdict = f"{n_moderate} interacción(es) MODERADA(S) detectada(s)"
-            confidence = 0.85
+            confidence=CONFIDENCE_VALUES[ConfidenceLevel.PROXY_MARKER]
         else:
             estado = "INDETERMINATE_LOCKED"
             verdict = "No evaluable — base de datos limitada"
-            confidence = 0.30
+            confidence=CONFIDENCE_VALUES[ConfidenceLevel.PROXY_MARKER]
             explanation = (
                 "La combinación de medicamentos no se encuentra en la base de datos "
                 "embebida. Consultar base de datos completa (Lexicomp/Micromedex) antes "

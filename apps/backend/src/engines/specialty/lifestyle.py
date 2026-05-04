@@ -2,6 +2,8 @@ from src.engines.base import BaseClinicalMotor
 from src.engines.domain import Encounter, AdjudicationResult, ClinicalEvidence
 from typing import Tuple
 
+from src.engines.confidence_standards import CONFIDENCE_VALUES, ConfidenceLevel
+
 
 class Lifestyle360Motor(BaseClinicalMotor):
     """
@@ -64,7 +66,7 @@ class Lifestyle360Motor(BaseClinicalMotor):
         explanation = (
             "Evaluación Integral del Entorno del Paciente (Pilares Estilo de Vida). "
         )
-        confidence = 0.85
+        confidence=CONFIDENCE_VALUES[ConfidenceLevel.PEER_REVIEWED]
 
         # 1. PUNTUACIÓN DE SUEÑO (Calidad vs Cantidad)
         is_insomniac = False

@@ -7,6 +7,8 @@ from src.engines.domain import (
 )
 from typing import Tuple
 
+from src.engines.confidence_standards import CONFIDENCE_VALUES, ConfidenceLevel
+
 
 class MetforminB12Motor(BaseClinicalMotor):
     """
@@ -74,7 +76,7 @@ class MetforminB12Motor(BaseClinicalMotor):
                     )
                 )
                 estado = "CONFIRMED_ACTIVE"
-                confidence = 0.95
+                confidence=CONFIDENCE_VALUES[ConfidenceLevel.ESTABLISHED_GUIDELINE]
             elif b12 < 300:
                 findings.append(f"B12 limtrofe ({b12} pg/mL)")
                 actions.append(
@@ -86,11 +88,11 @@ class MetforminB12Motor(BaseClinicalMotor):
                     )
                 )
                 estado = "PROBABLE_WARNING"
-                confidence = 0.85
+                confidence=CONFIDENCE_VALUES[ConfidenceLevel.ESTABLISHED_GUIDELINE]
             else:
                 findings.append(f"B12 adecuado ({b12} pg/mL)")
                 estado = "INDETERMINATE_LOCKED"
-                confidence = 0.90
+                confidence=CONFIDENCE_VALUES[ConfidenceLevel.ESTABLISHED_GUIDELINE]
         else:
             findings.append("B12 no disponible")
             actions.append(
@@ -102,7 +104,7 @@ class MetforminB12Motor(BaseClinicalMotor):
                 )
             )
             estado = "PROBABLE_WARNING"
-            confidence = 0.95
+            confidence=CONFIDENCE_VALUES[ConfidenceLevel.ESTABLISHED_GUIDELINE]
 
         explanation = (
             f"Monitoreo B12 en metformina: {'; '.join(findings)}. "

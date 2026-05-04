@@ -7,6 +7,8 @@ from src.engines.domain import (
 )
 from typing import Tuple
 
+from src.engines.confidence_standards import CONFIDENCE_VALUES, ConfidenceLevel
+
 
 class CancerScreeningMotor(BaseClinicalMotor):
     """
@@ -160,11 +162,11 @@ class CancerScreeningMotor(BaseClinicalMotor):
         if gaps > 0:
             estado = "CONFIRMED_ACTIVE"
             verdict = f"{gaps} gaps de screening de cancer identificados"
-            confidence = 0.90
+            confidence=CONFIDENCE_VALUES[ConfidenceLevel.ESTABLISHED_GUIDELINE]
         else:
             estado = "INDETERMINATE_LOCKED"
             verdict = "Sin gaps de screening de cancer identificados"
-            confidence = 0.80
+            confidence=CONFIDENCE_VALUES[ConfidenceLevel.ESTABLISHED_GUIDELINE]
 
         explanation = (
             f"Screening de cancer en obesidad (BMI {bmi:.1f}): "

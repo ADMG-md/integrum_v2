@@ -13,6 +13,8 @@ from src.engines.domain import (
 )
 from typing import Tuple
 
+from src.engines.confidence_standards import CONFIDENCE_VALUES, ConfidenceLevel
+
 class PharmacogenomicProxyMotor(BaseClinicalMotor):
     REQUIREMENT_ID = "PHARMACOGENOMICS-PROXY-V1"
 
@@ -24,7 +26,7 @@ class PharmacogenomicProxyMotor(BaseClinicalMotor):
         actions = []
         evidence = []
         findings = []
-        confidence = 0.70 # Inherently proxy-based, lower baseline confidence
+        confidence=CONFIDENCE_VALUES[ConfidenceLevel.PROXY_MARKER] # Inherently proxy-based, lower baseline confidence
 
         h = encounter.history
         mp = encounter.metabolic_panel

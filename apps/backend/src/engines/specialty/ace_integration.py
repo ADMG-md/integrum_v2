@@ -7,6 +7,8 @@ from src.engines.domain import (
 )
 from typing import Tuple
 
+from src.engines.confidence_standards import CONFIDENCE_VALUES, ConfidenceLevel
+
 
 class ACEScoreEngine(BaseClinicalMotor):
     """
@@ -60,7 +62,7 @@ class ACEScoreEngine(BaseClinicalMotor):
                 )
             )
             estado = "CONFIRMED_ACTIVE"
-            confidence = 0.95
+            confidence=CONFIDENCE_VALUES[ConfidenceLevel.INDIRECT_EVIDENCE]
         elif ace >= 6:
             findings.append(f"ACE score ALTO ({ace}/10)")
             findings.append("Reduccion estimada de 20 anos en expectativa de vida")
@@ -73,7 +75,7 @@ class ACEScoreEngine(BaseClinicalMotor):
                 )
             )
             estado = "CONFIRMED_ACTIVE"
-            confidence = 0.92
+            confidence=CONFIDENCE_VALUES[ConfidenceLevel.INDIRECT_EVIDENCE]
         elif ace >= 4:
             findings.append(f"ACE score MODERADO-ALTO ({ace}/10)")
             findings.append("Riesgo 2x de enfermedad metabolica")
@@ -87,16 +89,16 @@ class ACEScoreEngine(BaseClinicalMotor):
                 )
             )
             estado = "PROBABLE_WARNING"
-            confidence = 0.90
+            confidence=CONFIDENCE_VALUES[ConfidenceLevel.INDIRECT_EVIDENCE]
         elif ace >= 2:
             findings.append(f"ACE score MODERADO ({ace}/10)")
             findings.append("Riesgo elevado de enfermedad cronica")
             estado = "PROBABLE_WARNING"
-            confidence = 0.85
+            confidence=CONFIDENCE_VALUES[ConfidenceLevel.INDIRECT_EVIDENCE]
         else:
             findings.append(f"ACE score BAJO ({ace}/10)")
             estado = "INDETERMINATE_LOCKED"
-            confidence = 0.80
+            confidence=CONFIDENCE_VALUES[ConfidenceLevel.INDIRECT_EVIDENCE]
 
         explanation = (
             f"ACE Score: {ace}/10. "

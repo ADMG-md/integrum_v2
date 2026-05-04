@@ -8,6 +8,8 @@ from src.engines.domain import (
 from typing import Tuple
 import math
 
+from src.engines.confidence_standards import CONFIDENCE_VALUES, ConfidenceLevel
+
 
 class FLIMotor(BaseClinicalMotor):
     """
@@ -61,14 +63,14 @@ class FLIMotor(BaseClinicalMotor):
             estado = "INDETERMINATE_LOCKED"
             verdict = "NAFLD descartado (FLI < 30)"
             explanation = f"FLI: {fli}. Riesgo bajo de esteatosis hepatica."
-            confidence = 0.86
+            confidence=CONFIDENCE_VALUES[ConfidenceLevel.VALIDATED_BIOMARKER]
         elif fli <= 60:
             estado = "PROBABLE_WARNING"
             verdict = "NAFLD equivoco (FLI 30-60)"
             explanation = (
                 f"FLI: {fli}. Zona gris. Considerar ecografia hepatica o FibroScan."
             )
-            confidence = 0.65
+            confidence=CONFIDENCE_VALUES[ConfidenceLevel.VALIDATED_BIOMARKER]
         else:
             estado = "CONFIRMED_ACTIVE"
             verdict = "NAFLD probable (FLI > 60)"
@@ -76,7 +78,7 @@ class FLIMotor(BaseClinicalMotor):
                 f"FLI: {fli}. Alta probabilidad de esteatosis hepatica. "
                 f"Indicada evaluacion de fibrosis (FIB-4, NFS)."
             )
-            confidence = 0.84
+            confidence=CONFIDENCE_VALUES[ConfidenceLevel.VALIDATED_BIOMARKER]
 
         return AdjudicationResult(
             calculated_value=verdict,

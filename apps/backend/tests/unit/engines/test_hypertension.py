@@ -81,7 +81,7 @@ def test_hypertension_arr_positive(motor):
         "High risk" in result.calculated_value
         or "Primary Aldosteronism" in result.calculated_value
     )
-    assert result.confidence == 0.9
+    assert result.confidence == 0.95  # ESTABLISHED_GUIDELINE
 
 
 def test_hypertension_arr_negative(motor):
@@ -126,7 +126,7 @@ def test_hypertension_no_arr_data(motor):
     )
     result = motor.compute(enc)
     assert "No secondary HTA screening data" in result.calculated_value
-    assert result.confidence == 0.7
+    assert result.confidence == 0.75  # INDIRECT_EVIDENCE (no ARR data)
 
 
 def test_hypertension_arr_with_low_aldosterone(motor):

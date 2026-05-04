@@ -1,6 +1,7 @@
 from pydantic import BaseModel
 from typing import Literal, Tuple, Optional
 from src.engines.domain import AdjudicationResult, ClinicalEvidence, ActionItem
+from src.engines.confidence_standards import CONFIDENCE_VALUES, ConfidenceLevel
 
 
 class ObesityClinicalStoryInput(BaseModel):
@@ -67,7 +68,7 @@ class ObesityMasterMotor:
             if (discordant or data.eoss_stage >= 3 or data.metabolic_proxies_active)
             else "INDETERMINATE_LOCKED"
         )
-        confidence = 0.95 if not discordant else 0.80
+        confidence = CONFIDENCE_VALUES[ConfidenceLevel.ESTABLISHED_GUIDELINE] if not discordant else CONFIDENCE_VALUES[ConfidenceLevel.PEER_REVIEWED]
 
         return AdjudicationResult(
             calculated_value=headline,

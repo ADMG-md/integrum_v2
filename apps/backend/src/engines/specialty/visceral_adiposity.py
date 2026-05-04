@@ -7,6 +7,8 @@ from src.engines.domain import (
 )
 from typing import Tuple
 
+from src.engines.confidence_standards import CONFIDENCE_VALUES, ConfidenceLevel
+
 
 class VAIMotor(BaseClinicalMotor):
     """
@@ -60,14 +62,14 @@ class VAIMotor(BaseClinicalMotor):
                 f"Indicador de disfuncion del tejido adiposo visceral. "
                 f"Riesgo cardiometabolico independiente del BMI."
             )
-            confidence = 0.88
+            confidence=CONFIDENCE_VALUES[ConfidenceLevel.VALIDATED_BIOMARKER]
         else:
             estado = "INDETERMINATE_LOCKED"
             verdict = "Adiposidad Visceral dentro de rango"
             explanation = (
                 f"VAI: {vai} (umbral: {threshold}). Sin disfuncion visceral detectada."
             )
-            confidence = 0.80
+            confidence=CONFIDENCE_VALUES[ConfidenceLevel.VALIDATED_BIOMARKER]
 
         return AdjudicationResult(
             calculated_value=verdict,

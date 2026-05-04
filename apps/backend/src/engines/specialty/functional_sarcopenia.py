@@ -7,6 +7,8 @@ from src.engines.domain import (
 )
 from typing import Tuple
 
+from src.engines.confidence_standards import CONFIDENCE_VALUES, ConfidenceLevel
+
 
 class FunctionalSarcopeniaMotor(BaseClinicalMotor):
     """
@@ -204,7 +206,7 @@ class FunctionalSarcopeniaMotor(BaseClinicalMotor):
                 f"Multiple indicadores funcionales de sarcopenia ({tests_evaluated} tests evaluados). "
                 f"Hallazgos: {'; '.join(flags)}"
             )
-            confidence = 0.92
+            confidence=CONFIDENCE_VALUES[ConfidenceLevel.VALIDATED_BIOMARKER]
         elif score >= 2:
             estado_ui = "PROBABLE_WARNING"
             verdict = "POSIBLE SARCOPENIA FUNCIONAL"
@@ -213,14 +215,14 @@ class FunctionalSarcopeniaMotor(BaseClinicalMotor):
                 f"Hallazgos: {'; '.join(flags)}. "
                 f"Requiere confirmacion con ASMI/BIA."
             )
-            confidence = 0.75
+            confidence=CONFIDENCE_VALUES[ConfidenceLevel.VALIDATED_BIOMARKER]
         else:
             estado_ui = "INDETERMINATE_LOCKED"
             verdict = "SIN INDICADORES FUNCIONALES DE SARCOPENIA"
             explanation = (
                 f"Funcion fisica conservada en {tests_evaluated} test(s) evaluado(s)."
             )
-            confidence = 0.85
+            confidence=CONFIDENCE_VALUES[ConfidenceLevel.VALIDATED_BIOMARKER]
 
         return AdjudicationResult(
             calculated_value=verdict,

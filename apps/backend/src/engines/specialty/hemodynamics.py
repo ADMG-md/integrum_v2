@@ -2,6 +2,8 @@ from src.engines.base import BaseClinicalMotor
 from src.engines.domain import Encounter, AdjudicationResult, ClinicalEvidence
 from typing import Tuple
 
+from src.engines.confidence_standards import CONFIDENCE_VALUES, ConfidenceLevel
+
 
 class PulsePressureMotor(BaseClinicalMotor):
     """
@@ -62,14 +64,14 @@ class PulsePressureMotor(BaseClinicalMotor):
         if pp > 60:
             findings.append(f"Presion de pulso amplia ({pp} mmHg) = rigidez arterial")
             estado = "CONFIRMED_ACTIVE"
-            confidence = 0.85
+            confidence=CONFIDENCE_VALUES[ConfidenceLevel.PEER_REVIEWED]
         elif pp > 50:
             findings.append(f"Presion de pulso limtrofe ({pp} mmHg)")
             estado = "PROBABLE_WARNING"
-            confidence = 0.75
+            confidence=CONFIDENCE_VALUES[ConfidenceLevel.PEER_REVIEWED]
         else:
             estado = "INDETERMINATE_LOCKED"
-            confidence = 0.80
+            confidence=CONFIDENCE_VALUES[ConfidenceLevel.PEER_REVIEWED]
 
         if map_val is not None:
             evidence.append(

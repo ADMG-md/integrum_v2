@@ -2,6 +2,8 @@ from src.engines.base import BaseClinicalMotor
 from src.engines.domain import Encounter, AdjudicationResult, ClinicalEvidence, ActionItem, MedicationGap
 from typing import Tuple, List, Optional
 
+from src.engines.confidence_standards import CONFIDENCE_VALUES, ConfidenceLevel
+
 class PharmaPrecisionMotor(BaseClinicalMotor):
     """
     Master Pharmacological Prescriber V2.
@@ -119,7 +121,7 @@ class PharmaPrecisionMotor(BaseClinicalMotor):
 
         return AdjudicationResult(
             calculated_value="Perfil de Prescripción de Precisión",
-            confidence=0.88,
+            confidence=CONFIDENCE_VALUES[ConfidenceLevel.PEER_REVIEWED],
             evidence=evidence,
             estado_ui=status,
             requirement_id=self.REQUIREMENT_ID,

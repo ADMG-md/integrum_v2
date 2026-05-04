@@ -38,6 +38,8 @@ from src.engines.domain import (
 )
 from typing import Tuple, List, Optional
 
+from src.engines.confidence_standards import CONFIDENCE_VALUES, ConfidenceLevel
+
 
 class PsychometabolicAxisMotor(BaseClinicalMotor):
     """
@@ -453,7 +455,7 @@ class PsychometabolicAxisMotor(BaseClinicalMotor):
 
         return AdjudicationResult(
             calculated_value=headline,
-            confidence=0.85,
+            confidence=CONFIDENCE_VALUES[ConfidenceLevel.INDIRECT_EVIDENCE],
             evidence=evidence,
             estado_ui=status,
             requirement_id=self.REQUIREMENT_ID,

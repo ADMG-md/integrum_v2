@@ -7,6 +7,8 @@ from src.engines.domain import (
 )
 from typing import Tuple, Dict, List, Any, Set
 
+from src.engines.confidence_standards import CONFIDENCE_VALUES, ConfidenceLevel
+
 
 class LaboratorySuggestionMotor(BaseClinicalMotor):
     """
@@ -572,7 +574,7 @@ class LaboratorySuggestionMotor(BaseClinicalMotor):
 
         return AdjudicationResult(
             calculated_value=calculated,
-            confidence=0.95 if suggestions else 1.0,
+            confidence=CONFIDENCE_VALUES[ConfidenceLevel.PROXY_MARKER] if suggestions else 1.0,
             evidence=evidence,
             explanation=explanation,
             action_checklist=action_checklist,

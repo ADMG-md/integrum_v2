@@ -4,6 +4,8 @@ from src.engines.base_models import AdjudicationResult, ActionItem, MedicationGa
 from typing import Tuple, List, Dict, Any
 import math
 
+from src.engines.confidence_standards import CONFIDENCE_VALUES, ConfidenceLevel
+
 
 class ClinicalGuidelinesMotor(BaseClinicalMotor):
     """
@@ -302,7 +304,7 @@ class ClinicalGuidelinesMotor(BaseClinicalMotor):
 
         return AdjudicationResult(
             calculated_value=summary,
-            confidence=0.95,
+            confidence=CONFIDENCE_VALUES[ConfidenceLevel.PROXY_MARKER],
             evidence=evidence,
             explanation="Checklist de Acción Clínica generado basado en metas internacionales.",
             estado_ui="CONFIRMED_ACTIVE"

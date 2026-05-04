@@ -8,6 +8,8 @@ from src.engines.domain import (
 )
 from typing import Tuple
 
+from src.engines.confidence_standards import CONFIDENCE_VALUES, ConfidenceLevel
+
 
 class KFREMotor(BaseClinicalMotor):
     """
@@ -99,7 +101,7 @@ class KFREMotor(BaseClinicalMotor):
                     rationale="Riesgo >25% a 5 anos requiere planificacion anticipada.",
                 )
             )
-            confidence = 0.88
+            confidence=CONFIDENCE_VALUES[ConfidenceLevel.ESTABLISHED_GUIDELINE]
         elif risk_5y > 5:
             estado = "CONFIRMED_ACTIVE"
             findings.append(f"Riesgo MODERADO de falla renal: {risk_5y}% a 5 anos")
@@ -120,12 +122,12 @@ class KFREMotor(BaseClinicalMotor):
                     rationale="SGLT2i reduce progresion de ERC en 39%.",
                 )
             )
-            confidence = 0.85
+            confidence=CONFIDENCE_VALUES[ConfidenceLevel.ESTABLISHED_GUIDELINE]
         else:
             estado = "INDETERMINATE_LOCKED"
             findings.append(f"Riesgo BAJO de falla renal: {risk_5y}% a 5 anos")
             findings.append(f"Riesgo a 2 anos: {risk_2y}%")
-            confidence = 0.82
+            confidence=CONFIDENCE_VALUES[ConfidenceLevel.ESTABLISHED_GUIDELINE]
 
         explanation = (
             f"KFRE: {risk_5y}% a 5 anos, {risk_2y}% a 2 anos. "

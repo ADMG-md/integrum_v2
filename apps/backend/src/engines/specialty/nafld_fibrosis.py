@@ -8,6 +8,8 @@ from src.engines.domain import (
 from typing import Tuple
 import math
 
+from src.engines.confidence_standards import CONFIDENCE_VALUES, ConfidenceLevel
+
 
 class NFSMotor(BaseClinicalMotor):
     """
@@ -94,7 +96,7 @@ class NFSMotor(BaseClinicalMotor):
             explanation = (
                 f"NFS: {nfs}. Baja probabilidad de fibrosis avanzada (NPV 93%)."
             )
-            confidence = 0.93
+            confidence=CONFIDENCE_VALUES[ConfidenceLevel.VALIDATED_BIOMARKER]
         elif nfs <= 0.676:
             estado = "PROBABLE_WARNING"
             verdict = "Fibrosis hepatica indeterminada (NFS zona gris)"
@@ -102,7 +104,7 @@ class NFSMotor(BaseClinicalMotor):
                 f"NFS: {nfs}. Zona indeterminada. "
                 f"Considerar elastografia hepatica (FibroScan) o biopsia."
             )
-            confidence = 0.60
+            confidence=CONFIDENCE_VALUES[ConfidenceLevel.VALIDATED_BIOMARKER]
         else:
             estado = "CONFIRMED_ACTIVE"
             verdict = "Fibrosis hepatica avanzada probable (NFS alto)"
@@ -110,7 +112,7 @@ class NFSMotor(BaseClinicalMotor):
                 f"NFS: {nfs}. Alta probabilidad de fibrosis avanzada (F3-F4). "
                 f"Indicada referencia a hepatologia y elastografia."
             )
-            confidence = 0.82
+            confidence=CONFIDENCE_VALUES[ConfidenceLevel.VALIDATED_BIOMARKER]
 
         return AdjudicationResult(
             calculated_value=verdict,

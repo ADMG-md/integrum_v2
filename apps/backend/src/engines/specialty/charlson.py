@@ -7,6 +7,8 @@ from src.engines.domain import (
 )
 from typing import Tuple
 
+from src.engines.confidence_standards import CONFIDENCE_VALUES, ConfidenceLevel
+
 
 class CharlsonMotor(BaseClinicalMotor):
     """
@@ -82,7 +84,7 @@ class CharlsonMotor(BaseClinicalMotor):
             estado = "INDETERMINATE_LOCKED"
             verdict = "Charlson CCI: 0 (sin comorbilidades significativas)"
             explanation = "CCI=0. Supervivencia estimada a 10 anos: ~98%."
-            confidence = 0.90
+            confidence=CONFIDENCE_VALUES[ConfidenceLevel.ESTABLISHED_GUIDELINE]
         elif score <= 2:
             estado = "PROBABLE_WARNING"
             verdict = f"Charlson CCI: {score} (comorbilidad leve-moderada)"
@@ -90,7 +92,7 @@ class CharlsonMotor(BaseClinicalMotor):
                 f"CCI={score}. Supervivencia estimada a 10 anos: ~86%. "
                 f"Condiciones: {', '.join(conditions_found)}"
             )
-            confidence = 0.85
+            confidence=CONFIDENCE_VALUES[ConfidenceLevel.ESTABLISHED_GUIDELINE]
         elif score <= 4:
             estado = "CONFIRMED_ACTIVE"
             verdict = f"Charlson CCI: {score} (comorbilidad moderada-alta)"
@@ -98,7 +100,7 @@ class CharlsonMotor(BaseClinicalMotor):
                 f"CCI={score}. Supervivencia estimada a 10 anos: ~77%. "
                 f"Condiciones: {', '.join(conditions_found)}"
             )
-            confidence = 0.88
+            confidence=CONFIDENCE_VALUES[ConfidenceLevel.ESTABLISHED_GUIDELINE]
         elif score <= 6:
             estado = "CONFIRMED_ACTIVE"
             verdict = f"Charlson CCI: {score} (comorbilidad alta)"
@@ -106,7 +108,7 @@ class CharlsonMotor(BaseClinicalMotor):
                 f"CCI={score}. Supervivencia estimada a 10 anos: ~53%. "
                 f"Condiciones: {', '.join(conditions_found)}"
             )
-            confidence = 0.90
+            confidence=CONFIDENCE_VALUES[ConfidenceLevel.ESTABLISHED_GUIDELINE]
         else:
             estado = "CONFIRMED_ACTIVE"
             verdict = f"Charlson CCI: {score} (comorbilidad muy alta)"
@@ -114,7 +116,7 @@ class CharlsonMotor(BaseClinicalMotor):
                 f"CCI={score}. Supervivencia estimada a 10 anos: ~21%. "
                 f"Condiciones: {', '.join(conditions_found)}"
             )
-            confidence = 0.92
+            confidence=CONFIDENCE_VALUES[ConfidenceLevel.ESTABLISHED_GUIDELINE]
 
         return AdjudicationResult(
             calculated_value=verdict,

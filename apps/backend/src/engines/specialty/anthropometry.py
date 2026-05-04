@@ -2,6 +2,8 @@ from src.engines.base import BaseClinicalMotor
 from src.engines.domain import Encounter, AdjudicationResult, ClinicalEvidence
 from typing import List
 
+from src.engines.confidence_standards import CONFIDENCE_VALUES, ConfidenceLevel
+
 
 class AnthropometryPrecisionMotor(BaseClinicalMotor):
     """
@@ -95,7 +97,7 @@ class AnthropometryPrecisionMotor(BaseClinicalMotor):
 
         return AdjudicationResult(
             calculated_value=status,
-            confidence=0.95 if whtr and whr else 0.7,
+            confidence=CONFIDENCE_VALUES[ConfidenceLevel.VALIDATED_BIOMARKER] if whtr and whr else 0.7,
             evidence=evidence,
             explanation=explanation,
         )

@@ -5,6 +5,8 @@ from src.engines.base_models import AdjudicationResult, ClinicalEvidence
 if TYPE_CHECKING:
     from src.engines.domain import Encounter
 
+from src.engines.confidence_standards import CONFIDENCE_VALUES, ConfidenceLevel
+
 class PhenoAgeLevineInput(BaseModel):
     chronological_age_years: float
     albumin_g_dl: float
@@ -126,7 +128,7 @@ class BiologicalAgeMotor:
             biological_age_years=round(bioage, 1),
             age_delta_years=round(delta, 1),
             mortality_score_10y=round(mort_score, 3),
-            confidence=0.5,
+            confidence=CONFIDENCE_VALUES[ConfidenceLevel.INDIRECT_EVIDENCE],
             calculated_value=f"PhenoAge: {round(bioage,1)}y",
             explanation=explanation,
             optimal_recommendations=recs,

@@ -8,6 +8,8 @@ from src.engines.domain import (
 )
 from typing import Tuple
 
+from src.engines.confidence_standards import CONFIDENCE_VALUES, ConfidenceLevel
+
 
 class GLP1TitrationMotor(BaseClinicalMotor):
     """
@@ -166,7 +168,7 @@ class GLP1TitrationMotor(BaseClinicalMotor):
             if any("subóptima" in f or "máxima" in f for f in findings)
             else "INDETERMINATE_LOCKED"
         )
-        confidence = 0.88
+        confidence=CONFIDENCE_VALUES[ConfidenceLevel.PEER_REVIEWED]
 
         return AdjudicationResult(
             calculated_value=f"Titulación de {drug_label}: {'; '.join(findings[:2])}",

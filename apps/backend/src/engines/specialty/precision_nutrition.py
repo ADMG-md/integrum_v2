@@ -2,6 +2,8 @@ from src.engines.base import BaseClinicalMotor
 from src.engines.domain import Encounter, AdjudicationResult, ClinicalEvidence, ActionItem
 from typing import Tuple, List, Dict
 
+from src.engines.confidence_standards import CONFIDENCE_VALUES, ConfidenceLevel
+
 class PrecisionNutritionMotor(BaseClinicalMotor):
     """
     Abordaje Nutricional de Precisión basado en Fenotipos (Acosta + Metabólico).
@@ -159,7 +161,7 @@ class PrecisionNutritionMotor(BaseClinicalMotor):
             )
 
         status = "CONFIRMED_ACTIVE"
-        confidence = 0.85
+        confidence=CONFIDENCE_VALUES[ConfidenceLevel.PEER_REVIEWED]
         headline = " + ".join(phenotypes_detected)
         
         return AdjudicationResult(

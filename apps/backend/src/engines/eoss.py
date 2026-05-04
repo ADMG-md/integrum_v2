@@ -1,5 +1,6 @@
 from src.engines.base import BaseClinicalMotor
 from src.engines.domain import Encounter, AdjudicationResult, ClinicalEvidence
+from src.engines.confidence_standards import CONFIDENCE_VALUES, ConfidenceLevel
 from typing import Tuple
 
 class EOSSStagingMotor(BaseClinicalMotor):
@@ -28,7 +29,7 @@ class EOSSStagingMotor(BaseClinicalMotor):
     def compute(self, encounter: Encounter) -> AdjudicationResult:
         stage = 0
         evidence = []
-        confidence = 0.95 # EOSS is highly deterministic based on conditions
+        confidence = CONFIDENCE_VALUES[ConfidenceLevel.ESTABLISHED_GUIDELINE]  # EOSS is highly deterministic
         
         # Stage 2: Established Chronic Disease
         active_conditions = [

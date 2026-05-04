@@ -5,6 +5,7 @@ from src.engines.domain import (
     ClinicalEvidence,
     ActionItem,
 )
+from src.engines.confidence_standards import CONFIDENCE_VALUES, ConfidenceLevel
 from typing import Tuple
 
 
@@ -79,7 +80,7 @@ class ObesityPharmaEligibilityMotor(BaseClinicalMotor):
                 f"BMI: {bmi:.1f}. Criterio FDA: BMI >= 30 o >= 27 + comorbilidad. "
                 f"Comorbilidades: {len(comorbidities)}."
             )
-            confidence = 0.90
+            confidence = CONFIDENCE_VALUES[ConfidenceLevel.ESTABLISHED_GUIDELINE]  # FDA criteria
         else:
             estado = "CONFIRMED_ACTIVE"
             verdict = f"Elegible para farmacoterapia anti-obesidad (BMI {bmi:.1f})"
@@ -181,7 +182,7 @@ class ObesityPharmaEligibilityMotor(BaseClinicalMotor):
                         )
                     )
 
-            confidence = 0.92
+            confidence = CONFIDENCE_VALUES[ConfidenceLevel.ESTABLISHED_GUIDELINE]  # FDA + clinical guidelines
 
         explanation = (
             "; ".join(findings) if findings else explanation if not eligible else ""

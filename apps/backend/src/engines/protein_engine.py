@@ -1,5 +1,6 @@
 from src.engines.base import BaseClinicalMotor
 from src.engines.domain import Encounter, AdjudicationResult, ClinicalEvidence
+from src.engines.confidence_standards import CONFIDENCE_VALUES, ConfidenceLevel
 from typing import Tuple
 
 class ProteinEngineMotor(BaseClinicalMotor):
@@ -82,7 +83,7 @@ class ProteinEngineMotor(BaseClinicalMotor):
 
         return AdjudicationResult(
             calculated_value=f"{round(total_protein, 1)}g Prot/Día",
-            confidence=0.98,
+            confidence=CONFIDENCE_VALUES[ConfidenceLevel.ESTABLISHED_GUIDELINE],  # KDIGO guidelines
             evidence=evidence,
             requirement_id=self.REQUIREMENT_ID,
             estado_ui="CONFIRMED_ACTIVE" if not renal_risk else "PROBABLE_WARNING",

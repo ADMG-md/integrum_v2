@@ -2,6 +2,8 @@ from src.engines.base import BaseClinicalMotor
 from src.engines.domain import Encounter, AdjudicationResult, ClinicalEvidence
 from typing import Tuple
 
+from src.engines.confidence_standards import CONFIDENCE_VALUES, ConfidenceLevel
+
 
 class EndocrinePrecisionMotor(BaseClinicalMotor):
     """
@@ -105,6 +107,6 @@ class EndocrinePrecisionMotor(BaseClinicalMotor):
             calculated_value=" | ".join(findings)
             if findings
             else "Balance Endocrino Normal",
-            confidence=0.9,
+            confidence=CONFIDENCE_VALUES[ConfidenceLevel.VALIDATED_BIOMARKER],
             evidence=evidence,
         )

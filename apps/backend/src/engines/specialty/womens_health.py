@@ -19,6 +19,8 @@ from src.engines.domain import (
 )
 from typing import Tuple
 
+from src.engines.confidence_standards import CONFIDENCE_VALUES, ConfidenceLevel
+
 
 class WomensHealthMotor(BaseClinicalMotor):
     REQUIREMENT_ID = "WOMENS-HEALTH-V2"
@@ -194,7 +196,7 @@ class WomensHealthMotor(BaseClinicalMotor):
 
         return AdjudicationResult(
             calculated_value=headline,
-            confidence=0.90 if sop_confirmed else 0.80,
+            confidence=CONFIDENCE_VALUES[ConfidenceLevel.ESTABLISHED_GUIDELINE] if sop_confirmed else 0.80,
             evidence=evidence,
             requirement_id=self.REQUIREMENT_ID,
             estado_ui=status,

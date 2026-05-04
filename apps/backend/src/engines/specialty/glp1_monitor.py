@@ -7,6 +7,8 @@ from src.engines.domain import (
 )
 from typing import Tuple
 
+from src.engines.confidence_standards import CONFIDENCE_VALUES, ConfidenceLevel
+
 
 class GLP1MonitoringMotor(BaseClinicalMotor):
     """
@@ -174,11 +176,11 @@ class GLP1MonitoringMotor(BaseClinicalMotor):
         if alerts:
             estado = "CONFIRMED_ACTIVE"
             explanation = "Alertas de monitoreo GLP-1: " + " | ".join(alerts)
-            confidence = 0.90
+            confidence=CONFIDENCE_VALUES[ConfidenceLevel.ESTABLISHED_GUIDELINE]
         else:
             estado = "INDETERMINATE_LOCKED"
             explanation = "Monitoreo GLP-1: Sin hallazgos de preocupacion."
-            confidence = 0.85
+            confidence=CONFIDENCE_VALUES[ConfidenceLevel.ESTABLISHED_GUIDELINE]
 
         return AdjudicationResult(
             calculated_value=" | ".join(findings),

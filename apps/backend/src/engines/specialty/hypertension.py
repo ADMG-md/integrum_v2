@@ -2,6 +2,8 @@ from src.engines.base import BaseClinicalMotor
 from src.engines.domain import Encounter, AdjudicationResult, ClinicalEvidence
 from typing import Tuple
 
+from src.engines.confidence_standards import CONFIDENCE_VALUES, ConfidenceLevel
+
 
 class HypertensionSecondaryMotor(BaseClinicalMotor):
     """
@@ -40,7 +42,7 @@ class HypertensionSecondaryMotor(BaseClinicalMotor):
         aldo = encounter.get_observation(self.CODES["ALDOSTERONE"])
         renin = encounter.get_observation(self.CODES["RENIN"])
 
-        confidence = 0.7
+        confidence = CONFIDENCE_VALUES[ConfidenceLevel.INDIRECT_EVIDENCE]  # No ARR data
         evidence = []
         status = "No secondary HTA screening data"
 
@@ -48,7 +50,7 @@ class HypertensionSecondaryMotor(BaseClinicalMotor):
             arr = aldo.value / renin.value
             if arr > 30 and aldo.value > 15:
                 status = "High risk of Primary Aldosteronism (ARR > 30)"
-                confidence = 0.9
+                confidence = CONFIDENCE_VALUES[ConfidenceLevel.ESTABLISHED_GUIDELINE]  # Funder et al., 2016
                 evidence.append(
                     ClinicalEvidence(
                         type="Observation",

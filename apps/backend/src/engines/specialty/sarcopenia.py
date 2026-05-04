@@ -7,6 +7,8 @@ from src.engines.domain import (
 )
 from typing import List, Optional
 
+from src.engines.confidence_standards import CONFIDENCE_VALUES, ConfidenceLevel
+
 
 class SarcopeniaPrecisionMotor(BaseClinicalMotor):
     """
@@ -76,6 +78,6 @@ class SarcopeniaPrecisionMotor(BaseClinicalMotor):
         return AdjudicationResult(
             calculated_value=status,
             explanation=explanation,
-            confidence=0.90,
+            confidence=CONFIDENCE_VALUES[ConfidenceLevel.VALIDATED_BIOMARKER],
             evidence=evidence,
         )

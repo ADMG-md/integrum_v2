@@ -8,6 +8,8 @@ from src.engines.domain import (
 from typing import Tuple
 import math
 
+from src.engines.confidence_standards import CONFIDENCE_VALUES, ConfidenceLevel
+
 
 class TyGBMIMotor(BaseClinicalMotor):
     """
@@ -79,14 +81,14 @@ class TyGBMIMotor(BaseClinicalMotor):
             estado = "INDETERMINATE_LOCKED"
             verdict = "Resistencia a insulina BAJA"
             explanation = f"TyG-BMI: {tyg_bmi} (umbral bajo: <{thresholds[0]})."
-            confidence = 0.85
+            confidence=CONFIDENCE_VALUES[ConfidenceLevel.PEER_REVIEWED]
         elif tyg_bmi <= thresholds[1]:
             estado = "PROBABLE_WARNING"
             verdict = "Resistencia a insulina MODERADA"
             explanation = (
                 f"TyG-BMI: {tyg_bmi} (rango: {thresholds[0]}-{thresholds[1]})."
             )
-            confidence = 0.82
+            confidence=CONFIDENCE_VALUES[ConfidenceLevel.PEER_REVIEWED]
         else:
             estado = "CONFIRMED_ACTIVE"
             verdict = "Resistencia a insulina SEVERA"
@@ -95,7 +97,7 @@ class TyGBMIMotor(BaseClinicalMotor):
                 f"Alta probabilidad de IR significativa. "
                 f"Considerar metformina si no contraindicada."
             )
-            confidence = 0.88
+            confidence=CONFIDENCE_VALUES[ConfidenceLevel.PEER_REVIEWED]
 
         return AdjudicationResult(
             calculated_value=verdict,

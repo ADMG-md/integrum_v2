@@ -6,6 +6,7 @@ from src.engines.domain import (
     ClinicalEvidence,
     safe_float,
 )
+from src.engines.confidence_standards import CONFIDENCE_VALUES, ConfidenceLevel
 import math
 
 
@@ -111,7 +112,7 @@ class CVDHazardMotor:
             risk_pct_10y=risk,
             risk_category=cat,
             calculated_value=f"ASCVD 10y: {risk}% ({cat})",
-            confidence=0.88,
+            confidence=CONFIDENCE_VALUES[ConfidenceLevel.ESTABLISHED_GUIDELINE],  # ACC/AHA PCE
             explanation=f"Riesgo ASCVD a 10 años (ACC/AHA PCE): {risk}%. Categoría: {cat}.",
             estado_ui="CONFIRMED_ACTIVE"
             if cat in ("intermediate", "high")
@@ -483,7 +484,7 @@ class MarkovProgressionMotor:
             state_probabilities_5y=probs_5y,
             state_probabilities_10y=probs_10y,
             calculated_value=verdict,
-            confidence=0.78,
+            confidence=CONFIDENCE_VALUES[ConfidenceLevel.INDIRECT_EVIDENCE],  # Markov simulation
             explanation=explanation,
             estado_ui=estado,
             evidence=[

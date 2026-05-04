@@ -4,6 +4,7 @@ from src.engines.domain import (
     AdjudicationResult,
     ClinicalEvidence,
 )
+from src.engines.confidence_standards import CONFIDENCE_VALUES, ConfidenceLevel
 from typing import Tuple
 
 
@@ -131,7 +132,7 @@ class SarcopeniaMonitorMotor(BaseClinicalMotor):
             calculated_value="Sarcopenia Screen"
             if not alerta_roja
             else "ALERTA CATABÓLICA",
-            confidence=0.95,
+            confidence=CONFIDENCE_VALUES[ConfidenceLevel.ESTABLISHED_GUIDELINE],  # EWGSOP2 criteria
             evidence=evidence,
             requirement_id=self.REQUIREMENT_ID,
             estado_ui=status if not alerta_roja else "PROBABLE_WARNING",

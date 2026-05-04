@@ -7,6 +7,8 @@ from src.engines.domain import (
 )
 from typing import Tuple
 
+from src.engines.confidence_standards import CONFIDENCE_VALUES, ConfidenceLevel
+
 
 class FriedFrailtyMotor(BaseClinicalMotor):
     """
@@ -128,7 +130,7 @@ class FriedFrailtyMotor(BaseClinicalMotor):
                 f"Riesgo 2x de hospitalizacion, 3x de caidas. "
                 f"Hallazgos: {'; '.join(findings)}"
             )
-            confidence = 0.90
+            confidence=CONFIDENCE_VALUES[ConfidenceLevel.ESTABLISHED_GUIDELINE]
         elif criteria >= 1:
             estado = "PROBABLE_WARNING"
             verdict = f"Pre-fragilidad ({criteria}/5 criterios)"
@@ -137,12 +139,12 @@ class FriedFrailtyMotor(BaseClinicalMotor):
                 f"Ventana de oportunidad para intervencion. "
                 f"Hallazgos: {'; '.join(findings)}"
             )
-            confidence = 0.85
+            confidence=CONFIDENCE_VALUES[ConfidenceLevel.ESTABLISHED_GUIDELINE]
         else:
             estado = "INDETERMINATE_LOCKED"
             verdict = "Robusto (0/5 criterios)"
             explanation = "Sin criterios de fragilidad de Fried."
-            confidence = 0.88
+            confidence=CONFIDENCE_VALUES[ConfidenceLevel.ESTABLISHED_GUIDELINE]
 
         return AdjudicationResult(
             calculated_value=verdict,

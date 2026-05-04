@@ -2,6 +2,8 @@ from src.engines.base import BaseClinicalMotor
 from src.engines.domain import Encounter, AdjudicationResult, ClinicalEvidence
 from typing import Tuple, List
 
+from src.engines.confidence_standards import CONFIDENCE_VALUES, ConfidenceLevel
+
 
 class SleepApneaPrecisionMotor(BaseClinicalMotor):
     """
@@ -171,7 +173,7 @@ class SleepApneaPrecisionMotor(BaseClinicalMotor):
 
         return AdjudicationResult(
             calculated_value=f"{risk} (Score: {score}/8)",
-            confidence=0.9,
+            confidence=CONFIDENCE_VALUES[ConfidenceLevel.VALIDATED_BIOMARKER],
             evidence=evidence,
             explanation=f"Tamizaje STOP-Bang completado. "
             + (

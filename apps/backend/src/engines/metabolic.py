@@ -1,6 +1,7 @@
 from pydantic import BaseModel
 from typing import List
 from src.engines.base_models import AdjudicationResult, ClinicalEvidence
+from src.engines.confidence_standards import CONFIDENCE_VALUES, ConfidenceLevel
 
 
 class KleiberBMRInput(BaseModel):
@@ -62,7 +63,7 @@ class KleiberBMRMotor:
         return KleiberBMROutput(
             bmr_kcal_day=round(bmr),
             calculated_value=f"{round(bmr)} kcal/día",
-            confidence=0.85,
+            confidence=CONFIDENCE_VALUES[ConfidenceLevel.PEER_REVIEWED],  # Kleiber's law approximation
             explanation=explanation,
             estado_ui="CONFIRMED_ACTIVE",
             evidence=[

@@ -7,6 +7,8 @@ from src.engines.domain import (
 )
 from typing import Tuple
 
+from src.engines.confidence_standards import CONFIDENCE_VALUES, ConfidenceLevel
+
 
 class SGLT2iBenefitMotor(BaseClinicalMotor):
     """
@@ -125,12 +127,12 @@ class SGLT2iBenefitMotor(BaseClinicalMotor):
                 f"Beneficio cardio-renal de SGLT2i: {'; '.join(benefits)}. "
                 f"{'; '.join(findings)}"
             )
-            confidence = 0.92
+            confidence=CONFIDENCE_VALUES[ConfidenceLevel.PEER_REVIEWED]
         else:
             estado = "INDETERMINATE_LOCKED"
             verdict = "SGLT2i: Beneficio no claramente establecido"
             explanation = "No se identificaron beneficios cardio-renales claros."
-            confidence = 0.70
+            confidence=CONFIDENCE_VALUES[ConfidenceLevel.PEER_REVIEWED]
 
         return AdjudicationResult(
             calculated_value=verdict,

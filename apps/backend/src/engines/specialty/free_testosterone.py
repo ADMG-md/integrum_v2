@@ -5,6 +5,7 @@ from src.engines.domain import (
     ClinicalEvidence,
     safe_float,
 )
+from src.engines.confidence_standards import CONFIDENCE_VALUES, ConfidenceLevel
 from typing import Tuple
 import math
 
@@ -100,7 +101,7 @@ class FreeTestosteroneMotor(BaseClinicalMotor):
                 f"Bioavailable T: {round(bioavailable_t_ng_dl, 1)} ng/dL. "
                 f"Total T: {total_t_ng_dl} ng/dL, SHBG: {shbg} nmol/L."
             )
-            confidence = 0.90
+            confidence = CONFIDENCE_VALUES[ConfidenceLevel.VALIDATED_BIOMARKER]  # Vermeulen method
         else:
             estado = "INDETERMINATE_LOCKED"
             verdict = f"Testosterona libre dentro de rango ({free_t_rounded} pg/mL)"
@@ -108,7 +109,7 @@ class FreeTestosteroneMotor(BaseClinicalMotor):
                 f"Free T: {free_t_rounded} pg/mL (ref: {ref_range}). "
                 f"Bioavailable T: {round(bioavailable_t_ng_dl, 1)} ng/dL."
             )
-            confidence = 0.85
+            confidence = CONFIDENCE_VALUES[ConfidenceLevel.PEER_REVIEWED]
 
         return AdjudicationResult(
             calculated_value=verdict,

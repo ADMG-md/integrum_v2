@@ -7,6 +7,8 @@ from src.engines.domain import (
 )
 from typing import Tuple
 
+from src.engines.confidence_standards import CONFIDENCE_VALUES, ConfidenceLevel
+
 
 class CMIMotor(BaseClinicalMotor):
     """
@@ -69,12 +71,12 @@ class CMIMotor(BaseClinicalMotor):
                 f"CMI: {cmi} (umbral: {threshold}). "
                 f"Riesgo cardiometabolico por adiposidad central + dislipidemia."
             )
-            confidence = 0.85
+            confidence=CONFIDENCE_VALUES[ConfidenceLevel.PEER_REVIEWED]
         else:
             estado = "INDETERMINATE_LOCKED"
             verdict = f"Indice Cardiometabolico dentro de rango"
             explanation = f"CMI: {cmi} (umbral: {threshold})."
-            confidence = 0.78
+            confidence=CONFIDENCE_VALUES[ConfidenceLevel.PEER_REVIEWED]
 
         return AdjudicationResult(
             calculated_value=verdict,
