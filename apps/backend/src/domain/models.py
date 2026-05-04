@@ -10,9 +10,6 @@ from pydantic import BaseModel, Field, ConfigDict
 from typing import List, Optional, Any, Dict, Literal
 from datetime import datetime, date
 from enum import Enum
-import structlog
-
-logger = structlog.get_logger()
 
 
 # --- Utility ---
