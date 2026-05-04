@@ -357,6 +357,8 @@ class Encounter(BaseModel):
     _context: Optional[Any] = None
     _proxies: Optional[Any] = None
 
+    _hepatic: Optional[Any] = None
+
     def _get_renal(self):
         if self._renal is None:
             from src.domain.calculators import RenalFunction
@@ -406,6 +408,13 @@ class Encounter(BaseModel):
             self._proxies = ProxyValues.from_encounter(self)
         return self._proxies
 
+    def _get_hepatic(self):
+        if self._hepatic is None:
+            from src.domain.calculators import HepaticIndices
+
+            self._hepatic = HepaticIndices.from_encounter(self)
+        return self._hepatic
+
     # --- Simple pass-through properties ---
 
     @property
@@ -419,6 +428,18 @@ class Encounter(BaseModel):
     @property
     def lpa_mg_dl_value(self) -> Optional[float]:
         return self.metabolic_panel.lpa_mg_dl
+
+    @property
+    def bmi(self) -> Optional[float]:
+        return self._get_anthro().bmi
+
+    @property
+    def visceral_adiposity_index(self) -> Optional[float]:
+        return self._get_metabolic().visceral_adiposity_index
+
+    @property
+    def fib4(self) -> Optional[float]:
+        return self._get_hepatic().fib4
 
     # --- Delegated computed properties (backward compatible) ---
 

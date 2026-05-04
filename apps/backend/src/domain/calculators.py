@@ -126,6 +126,7 @@ class MetabolicIndices:
     tyg_index: Optional[float]
     tyg_bmi: Optional[float]
     mets_ir: Optional[float]
+    visceral_adiposity_index: Optional[float]
 
     @classmethod
     def from_encounter(cls, enc: Encounter) -> MetabolicIndices:
@@ -144,13 +145,57 @@ class MetabolicIndices:
         if all([glu, tg, hdl, bmi]) and glu > 0 and tg > 0 and hdl > 0:
             mets_ir = (math.log((2 * glu) + tg) * bmi) / math.log(hdl)
 
+        vai = None
+        w_obs = enc.get_observation("WAIST-001")
+        wc = safe_float(w_obs.value) if w_obs else None
+        gender = enc.metadata.get("sex", "")
+        if all([wc, bmi, tg, hdl]) and hdl > 0:
+            tg_mmol = tg / 88.57
+            hdl_mmol = hdl / 38.67
+            if gender.lower() in ("male", "m"):
+                vai = (wc / (39.68 + 1.88 * bmi)) * (tg_mmol / 1.03) * (1.31 / hdl_mmol)
+            else:
+                vai = (wc / (36.58 + 1.89 * bmi)) * (tg_mmol / 0.81) * (1.52 / hdl_mmol)
+            vai = round(vai, 2)
+
         return cls(
             homa_ir=homa_ir,
             homa_b=homa_b,
             tyg_index=tyg,
             tyg_bmi=tyg_bmi,
             mets_ir=mets_ir,
+            visceral_adiposity_index=vai,
         )
+
+
+# ============================================================
+# Hepatic Indices
+# ============================================================
+
+@dataclass(frozen=True)
+class HepaticIndices:
+    """Liver fibrosis and steatosis proxies."""
+    
+    fib4: Optional[float]
+    
+    @classmethod
+    def from_encounter(cls, enc: Encounter) -> 'HepaticIndices':
+        ast_obs = enc.get_observation("29230-0")
+        alt_obs = enc.get_observation("22538-3")
+        plt_obs = enc.get_observation("PLT-001")
+        age = enc.demographics.age_years
+        
+        ast = safe_float(ast_obs.value) if ast_obs else None
+        alt = safe_float(alt_obs.value) if alt_obs else None
+        plt = safe_float(plt_obs.value) if plt_obs else None
+        
+        fib4 = None
+        if all([ast, alt, plt, age]) and alt > 0 and plt > 0:
+            fib4 = round((age * ast) / (plt * math.sqrt(alt)), 2)
+            
+        return cls(fib4=fib4)
+
+
 
 
 # ============================================================
