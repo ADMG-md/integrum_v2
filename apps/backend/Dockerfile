@@ -12,13 +12,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     tini \
     && rm -rf /var/lib/apt/lists/*
 
-# Install dependencies from pyproject.toml (SSOT)
+# Install dependencies from pyproject.toml (SSOT — PEP 517)
 COPY pyproject.toml .
-RUN python3 -c "import tomllib; \
-    with open('pyproject.toml', 'rb') as f: \
-        data = tomllib.load(f); \
-    print('\n'.join(data['project']['dependencies']))" > requirements.txt \
-    && pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir .
 
 # Copy application source
 COPY . .
