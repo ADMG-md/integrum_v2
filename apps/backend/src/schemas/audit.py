@@ -1,5 +1,6 @@
-from pydantic import BaseModel
-from typing import Optional
+from pydantic import BaseModel, ConfigDict
+from typing import Optional, Dict, Any
+from datetime import datetime
 from enum import Enum
 
 
@@ -50,3 +51,22 @@ class AdjudicationOverride(BaseModel):
     override_reason_code: ReasonCode                        # Structured — primary field for analysis
     override_reason_text: Optional[str] = None             # Free text — supplementary only
     physician_id: str = "DR-001"
+
+
+class AdjudicationLogRead(BaseModel):
+    id: str
+    encounter_id: str
+    engine_name: str
+    engine_version_hash: str
+    calculated_value: str
+    confidence: float
+    evidence: Dict[str, Any]
+    requirement_id: Optional[str] = None
+    created_at: datetime
+    is_overridden: bool
+    physician_value: Optional[str] = None
+    override_reason: Optional[str] = None
+    physician_id: Optional[str] = None
+    integrity_hash: Optional[str] = None
+
+    model_config = ConfigDict(from_attributes=True)

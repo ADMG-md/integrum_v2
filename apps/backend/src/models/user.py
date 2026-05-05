@@ -42,6 +42,9 @@ class UserModel(Base):
 
     last_login = Column(DateTime, nullable=True)
 
+    # Link to patient record (for PATIENT role users)
+    patient_id = Column(String(255), nullable=True, index=True)
+
     @property
     def full_name(self):
         return _get_vault().decrypt(self._full_name_encrypted)

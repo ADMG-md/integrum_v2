@@ -425,3 +425,107 @@ async def export_single_patient(
         )
 
     return export_data
+
+
+@router.get("/csv/{encounter_id}")
+async def export_single_encounter_csv(
+    encounter_id: str,
+    db: AsyncSession = Depends(get_db),
+    current_user: UserModel = Depends(
+        check_role([UserRole.SUPERADMIN, UserRole.MEDICAL_DIRECTOR, UserRole.PHYSICIAN])
+    ),
+):
+    """Export a single encounter as CSV for research analysis."""
+    check_export_rate_limit(current_user.id)
+    
+    enc_stmt = select(EncounterModel).where(EncounterModel.id == encounter_id)
+    enc_result = await db.execute(enc_stmt)
+    enc = enc_result.scalar_one_or_none()
+    if not enc:
+        raise HTTPException(status_code=404, detail="Encounter not found")
+        
+    pat_stmt = select(Patient).where(Patient.id == enc.patient_id)
+    pat_result = await db.execute(pat_stmt)
+    patient = pat_result.scalar_one_or_none()
+    if not patient:
+        raise HTTPException(status_code=404, detail="Patient not found")
+        
+    from src.models.audit import DecisionAuditLog
+    audit_stmt = select(DecisionAuditLog).where(DecisionAuditLog.encounter_id == enc.id)
+    audit_result = await db.execute(audit_stmt)
+    decision_map = {
+        log.engine_name: {
+            "decision_type": log.decision_type.value if log.decision_type else None,
+            "reason_code": log.reason_code.value if log.reason_code else None,
+        }
+        for log in audit_result.scalars().all()
+    }
+    
+    row = _build_flat_row(patient, enc, decision_map)
+    
+    import csv
+    import io
+    from fastapi.responses import StreamingResponse
+
+    output = io.StringIO()
+    writer = csv.DictWriter(
+        output,
+        fieldnames=list(row.keys()),
+        extrasaction="ignore",
+        lineterminator="\n",
+    )
+    writer.writeheader()
+    writer.writerow(row)
+    output.seek(0)
+
+    filename = f"integrum_encounter_{encounter_id}.csv"
+    return StreamingResponse(
+        iter([output.getvalue()]),
+        media_type="text/csv",
+        headers={"Content-Disposition": f"attachment; filename={filename}"},
+    )
+
+
+@router.get("/anonymized/{encounter_id}")
+async def export_single_encounter_anonymized(
+    encounter_id: str,
+    db: AsyncSession = Depends(get_db),
+    current_user: UserModel = Depends(
+        check_role([UserRole.SUPERADMIN, UserRole.MEDICAL_DIRECTOR, UserRole.PHYSICIAN])
+    ),
+):
+    """Export a single encounter as anonymized JSON."""
+    check_export_rate_limit(current_user.id)
+    
+    enc_stmt = select(EncounterModel).where(EncounterModel.id == encounter_id)
+    enc_result = await db.execute(enc_stmt)
+    enc = enc_result.scalar_one_or_none()
+    if not enc:
+        raise HTTPException(status_code=404, detail="Encounter not found")
+        
+    log_stmt = select(AdjudicationLog).where(AdjudicationLog.encounter_id == enc.id)
+    log_result = await db.execute(log_stmt)
+    
+    export_data = {
+        "encounter_id": _anonymize_id(enc.id),
+        "patient_id": _anonymize_id(enc.patient_id),
+        "status": enc.status,
+        "phenotype_result": enc.phenotype_result,
+        "agreement_rate": enc.agreement_rate,
+        "outcome_status": enc.outcome_status,
+        "outcome_weight_current_kg": enc.weight_current_kg,
+        "outcome_adherence_reported": enc.adherence_reported,
+        "created_at": enc.created_at.isoformat() if enc.created_at else None,
+        "adjudication_logs": [
+            {
+                "engine_name": log.engine_name,
+                "calculated_value": log.calculated_value,
+                "confidence": log.confidence,
+                "is_overridden": log.is_overridden,
+                "override_reason": log.override_reason,
+            }
+            for log in log_result.scalars().all()
+        ]
+    }
+    
+    return export_data

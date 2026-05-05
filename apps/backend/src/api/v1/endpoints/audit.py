@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from src.database import get_db
 from src.models.audit import AdjudicationLog
-from src.schemas.audit import AdjudicationOverride
+from src.schemas.audit import AdjudicationOverride, AdjudicationLogRead
 from sqlalchemy import select
 import uuid
 
@@ -10,6 +10,24 @@ from src.services.auth_service import check_role
 from src.models.user import UserRole, UserModel
 
 router = APIRouter()
+
+@router.get("/logs/{encounter_id}")
+async def get_adjudication_logs(
+    encounter_id: str,
+    db: AsyncSession = Depends(get_db),
+    current_user: UserModel = Depends(check_role([UserRole.PHYSICIAN, UserRole.SUPERADMIN]))
+):
+    """
+    List all adjudication logs for a given encounter.
+    Used by the frontend to display override options for physician review.
+    """
+    stmt = select(AdjudicationLog).where(
+        AdjudicationLog.encounter_id == encounter_id
+    ).order_by(AdjudicationLog.created_at.asc())
+    result = await db.execute(stmt)
+    logs = result.scalars().all()
+    return [AdjudicationLogRead.model_validate(log) for log in logs]
+
 
 @router.post("/override")
 async def override_adjudication(

@@ -13,6 +13,7 @@ from src.services.redis_service import (
     is_token_revoked,
 )
 from pydantic import BaseModel, EmailStr, field_validator
+from typing import Optional
 from slowapi import Limiter
 from slowapi.util import get_remote_address
 from jose import jwt, JWTError
@@ -51,6 +52,7 @@ class Token(BaseModel):
     expires_in: int
     refresh_token: str
     full_name: str
+    patient_id: Optional[str] = None
 
 
 class TokenRefresh(BaseModel):
@@ -142,6 +144,7 @@ async def login(
         "expires_in": ACCESS_TOKEN_EXPIRE_MINUTES * 60,
         "refresh_token": refresh_token,
         "full_name": user_name,
+        "patient_id": user.patient_id,
     }
 
 
@@ -224,3 +227,30 @@ async def logout(
             )
 
     logger.info("user_logged_out")
+
+
+class UserProfileResponse(BaseModel):
+    id: str
+    email: str
+    full_name: str
+    role: str
+    tenant_id: str
+    patient_id: Optional[str] = None
+
+
+@router.get("/me", response_model=UserProfileResponse)
+async def get_current_user_profile(
+    current_user: UserModel = Depends(AuthService.get_current_user)
+):
+    """
+    Returns current user profile including linked patient_id.
+    Used by frontend to get patient_id for portal and other features.
+    """
+    return {
+        "id": current_user.id,
+        "email": current_user.email,
+        "full_name": current_user.full_name,
+        "role": current_user.role,
+        "tenant_id": current_user.tenant_id,
+        "patient_id": current_user.patient_id,
+    }
