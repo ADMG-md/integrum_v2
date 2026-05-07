@@ -44,6 +44,9 @@ down:
 	@bash scripts/cleanup.sh
 
 dev: down
+	@echo "Starting Docker services..."
+	@docker-compose up -d
+	@sleep 5
 	@echo "Starting backend..."
 	@cd $(BACKEND_DIR) && nohup $(PYTHON) -m uvicorn src.main:app --host 127.0.0.1 --port 8000 --no-access-log > /tmp/uvicorn.log 2>&1 & echo "Backend PID: $$!"
 	@sleep 3
