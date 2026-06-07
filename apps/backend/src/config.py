@@ -39,7 +39,11 @@ class Settings(BaseSettings):
     REDIS_URL: str = Field(default="redis://localhost:6379/0")
     
     # CORS
-    CORS_ORIGINS: str = Field(default="http://localhost:3000,http://127.0.0.1:3000")
+    CORS_ORIGINS: str = Field(
+        default="http://localhost:3000,http://127.0.0.1:3000,http://localhost:4000,http://127.0.0.1:4000",
+        validation_alias="ALLOWED_ORIGINS",
+        description="Allowed CORS origins"
+    )
 
     @property
     def cors_origins_list(self) -> List[str]:

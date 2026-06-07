@@ -152,6 +152,70 @@ class AcostaPhenotypeMotor(BaseClinicalMotor):
                 )
             )
 
+        # 5. Quema Lenta (Gasto Limitado)
+        quema_lenta_conf = 0.0
+        
+        # Safe extractor
+        def get_float(code):
+            obs = encounter.get_observation(code)
+            if obs:
+                try:
+                    return float(obs.value)
+                except (ValueError, TypeError):
+                    pass
+            return None
+
+        bia_bmr = get_float("BIA-BMR")
+        bia_ffm = get_float("BIA-FFM-KG") or get_float("BIA-LEAN-KG")
+        bia_muscle = get_float("BIA-MUSCLE-KG")
+        
+        weight = get_float("29463-7") or get_float("W-001")
+        height = get_float("8302-2") or get_float("H-001")
+        age = encounter.demographics.age_years
+        
+        smi_bajo = False
+        if bia_muscle and height and height > 0:
+            height_m = height / 100.0
+            smi = bia_muscle / (height_m ** 2)
+            if is_male and smi < 7.0:
+                smi_bajo = True
+            elif not is_male and smi < 5.7:
+                smi_bajo = True
+                
+        if bia_bmr and weight and height and age and bia_ffm:
+            # Mifflin
+            if is_male:
+                mifflin = (10 * weight) + (6.25 * height) - (5 * age) + 5
+            else:
+                mifflin = (10 * weight) + (6.25 * height) - (5 * age) - 161
+                
+            # Cunningham
+            cunningham = 500 + (22 * bia_ffm)
+            
+            ratio_mifflin = bia_bmr / mifflin if mifflin > 0 else 1.0
+            ratio_cunningham = bia_bmr / cunningham if cunningham > 0 else 1.0
+            
+            if ratio_mifflin < 0.85 and ratio_cunningham < 0.90:
+                quema_lenta_conf = 0.85
+            elif ratio_mifflin < 0.85 or ratio_cunningham < 0.90:
+                quema_lenta_conf = 0.72
+        elif smi_bajo:
+            quema_lenta_conf = 0.60
+            
+        if quema_lenta_conf > 0.0:
+            confidence_map["Quema Lenta"] = quema_lenta_conf
+            phenotypes_active.append("Quema Lenta")
+            evidence.append(
+                ClinicalEvidence(
+                    type="Observation",
+                    code="BIA-BMR" if bia_bmr else "BIA-MUSCLE-KG",
+                    value=bia_bmr if bia_bmr else bia_muscle,
+                    display="Metabolismo basal o masa muscular reducida",
+                )
+            )
+        elif not bia_bmr:
+            missing = "BIA-BMR requerido"
+
         # Final Adjudication Orquestration
         if not phenotypes_active:
             return AdjudicationResult(
@@ -159,6 +223,12 @@ class AcostaPhenotypeMotor(BaseClinicalMotor):
                 confidence=1.0,
                 estado_ui="CONFIRMED_ACTIVE",
                 explanation="No se detectaron desviaciones fenotípicas significativas.",
+                metadata={"phenotype_scores": {
+                    "cerebro_hambriento": 0.0,
+                    "intestino_hambriento": 0.0,
+                    "hambre_emocional": 0.0,
+                    "quema_lenta": 0.0
+                }}
             )
 
         # We take the max confidence for the primary status
@@ -190,8 +260,16 @@ class AcostaPhenotypeMotor(BaseClinicalMotor):
                     "Indicar MCG de 14 días (requerido para elevar confianza > 0.65)"
                 )
 
+        # Add phenotype scores
+        phenotype_scores = {
+            "cerebro_hambriento": confidence_map.get("Cerebro Hambriento", 0.0),
+            "intestino_hambriento": confidence_map.get("Intestino Hambriento", 0.0),
+            "hambre_emocional": confidence_map.get("Hambre Emocional", 0.0),
+            "quema_lenta": confidence_map.get("Quema Lenta", 0.0) # Not fully implemented yet
+        }
+
         return AdjudicationResult(
-            calculated_value=" | ".join(phenotypes_active),
+            calculated_value=" | ".join(phenotypes_active) if phenotypes_active else "Fenotipo Metabólico Basal",
             confidence=primary_conf,
             evidence=evidence,
             requirement_id="DOI:10.1002/oby.23120",
@@ -199,4 +277,5 @@ class AcostaPhenotypeMotor(BaseClinicalMotor):
             dato_faltante=missing,
             recomendacion_farmacologica=recs,
             explanation=f"Determinación basada en Acosta 2021. Estado: {estado}.",
+            metadata={"phenotype_scores": phenotype_scores}
         )

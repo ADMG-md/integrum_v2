@@ -1,4 +1,4 @@
-from .encounter import Patient, EncounterModel, ObservationModel, EncounterConditionModel
+from .encounter import Patient, EncounterModel, ObservationModel, EncounterConditionModel, DerivedClassification, AxisType, CompletenessStatus
 from .audit import AdjudicationLog, ClinicalRequirement
 from .consent import PatientConsent
 from .user import UserModel
@@ -10,6 +10,9 @@ __all__ = [
     "EncounterModel",
     "ObservationModel",
     "EncounterConditionModel",
+    "DerivedClassification",
+    "AxisType",
+    "CompletenessStatus",
     "AdjudicationLog",
     "ClinicalRequirement",
     "PatientConsent",
@@ -17,3 +20,4 @@ __all__ = [
     "Tenant",
     "Condition"
 ]
+

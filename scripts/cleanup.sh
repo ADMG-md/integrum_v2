@@ -13,13 +13,13 @@ else
   echo "No backend process on port 8000"
 fi
 
-# Kill frontend on port 3000
-FRONTEND_PID=$(lsof -ti:3000 2>/dev/null || true)
+# Kill frontend on port 4000
+FRONTEND_PID=$(lsof -ti:4000 2>/dev/null || true)
 if [ -n "$FRONTEND_PID" ]; then
   echo "Killing frontend processes: $FRONTEND_PID"
   kill -9 $FRONTEND_PID 2>/dev/null || true
 else
-  echo "No frontend process on port 3000"
+  echo "No frontend process on port 4000"
 fi
 
 # Kill any stray uvicorn or next processes
@@ -42,6 +42,6 @@ if [ -f "docker-compose.yml" ] && docker compose ps 2>/dev/null | grep -q "Up" 2
 fi
 
 echo "=== Cleanup complete ==="
-echo "Ports 8000, 3000, 5432, 6379 status:"
+echo "Ports 8000, 4000, 5432, 6379 status:"
 lsof -ti:8000 2>/dev/null && echo "  8000: OCCUPIED" || echo "  8000: FREE"
-lsof -ti:3000 2>/dev/null && echo "  3000: OCCUPIED" || echo "  3000: FREE"
+lsof -ti:4000 2>/dev/null && echo "  4000: OCCUPIED" || echo "  4000: FREE"

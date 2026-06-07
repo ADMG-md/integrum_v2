@@ -100,3 +100,60 @@ def test_acosta_invalid_data_handling(motor):
     result = motor.compute(enc)
     assert "Cerebro Hambriento" not in result.calculated_value
     assert result.confidence == 1.0
+
+def test_acosta_quema_lenta_no_bia_bmr(motor):
+    # Sin BIA-BMR, pero con SMI bajo -> conf 0.60
+    enc = _make_encounter(observations=[
+        Observation(code="W-001", value="100"),
+        Observation(code="H-001", value="170"),
+        Observation(code="BIA-MUSCLE-KG", value="15"), # SMI = 15 / (1.7^2) = 5.19 (<7.0 male)
+    ])
+    result = motor.compute(enc)
+    assert "Quema Lenta" in result.calculated_value
+    assert result.metadata["phenotype_scores"]["quema_lenta"] == 0.60
+
+def test_acosta_quema_lenta_no_bia_missing_flag(motor):
+    # Sin BIA-BMR y SMI normal -> conf 0.0 y dato_faltante
+    enc = _make_encounter(observations=[
+        Observation(code="W-001", value="100"),
+        Observation(code="H-001", value="170"),
+        Observation(code="BIA-MUSCLE-KG", value="30"), # SMI = 10.3 (>7.0)
+    ])
+    result = motor.compute(enc)
+    assert "Quema Lenta" not in result.calculated_value
+    assert result.metadata["phenotype_scores"]["quema_lenta"] == 0.0
+    assert "BIA-BMR requerido" in result.dato_faltante
+
+def test_acosta_quema_lenta_ratio_0_85(motor):
+    # Ratio < 0.85 Mifflin y < 0.90 Cunningham
+    enc = _make_encounter(observations=[
+        Observation(code="W-001", value="100"),
+        Observation(code="H-001", value="170"),
+        Observation(code="BIA-FFM-KG", value="60"),
+        # Mifflin male (10*100) + (6.25*170) - (5*45) + 5 = 1000 + 1062.5 - 225 + 5 = 1842.5
+        # Cunningham 500 + (22*60) = 1820
+        # For 0.85: Mifflin < 0.85 -> < 1566
+        # For 0.90: Cunningham < 0.90 -> < 1638
+        # We set BMR to 1400 (which is < 1566 and < 1638)
+        Observation(code="BIA-BMR", value="1400"),
+    ])
+    result = motor.compute(enc)
+    assert "Quema Lenta" in result.calculated_value
+    assert result.metadata["phenotype_scores"]["quema_lenta"] == 0.85
+
+def test_acosta_quema_lenta_ratio_0_72(motor):
+    # Solo un ratio cumple
+    enc = _make_encounter(observations=[
+        Observation(code="W-001", value="100"),
+        Observation(code="H-001", value="170"),
+        Observation(code="BIA-FFM-KG", value="60"),
+        # Mifflin = 1842.5. 85% = 1566.
+        # Cunningham = 1820. 90% = 1638.
+        # BMR = 1600. ratio_mifflin = 1600/1842.5 = 0.86 (>0.85).
+        # ratio_cunningham = 1600/1820 = 0.879 (<0.90).
+        # So one fulfills, the other does not -> 0.72
+        Observation(code="BIA-BMR", value="1600"),
+    ])
+    result = motor.compute(enc)
+    assert "Quema Lenta" in result.calculated_value
+    assert result.metadata["phenotype_scores"]["quema_lenta"] == 0.72

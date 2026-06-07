@@ -1,5 +1,6 @@
 from src.engines.acosta import AcostaPhenotypeMotor
 from src.engines.eoss import EOSSStagingMotor
+from src.engines.specialty.cmds import CMDSStagingMotor
 from src.engines.sarcopenia import SarcopeniaMonitorMotor
 from src.engines.metabolic import KleiberBMRMotor
 from src.engines.specialty.bio_age import BiologicalAgeMotor
@@ -51,6 +52,8 @@ from src.engines.specialty.precision_nutrition import PrecisionNutritionMotor
 from src.engines.specialty.pharma_precision import PharmaPrecisionMotor
 from src.engines.specialty.psychometabolic_axis import PsychometabolicAxisMotor
 from src.engines.specialty.pharmacogenomics import PharmacogenomicProxyMotor
+from src.engines.specialty.a_taxonomy import ATaxonomyMotor
+from src.engines.specialty.b_domains import BDomainScoresMotor
 from src.engines.domain import Encounter, AdjudicationResult
 from typing import Dict, Any, List, Optional, Literal
 import structlog
@@ -63,12 +66,14 @@ PRIMARY_MOTORS = {
     # Core clinical engines
     "AcostaPhenotypeMotor": AcostaPhenotypeMotor,
     "EOSSStagingMotor": EOSSStagingMotor,
+    "CMDSStagingMotor": CMDSStagingMotor,
     "SarcopeniaMotor": SarcopeniaMonitorMotor,
     "BiologicalAgeMotor": BiologicalAgeMotor,
     "MetabolicPrecisionMotor": MetabolicPrecisionMotor,
     "DeepMetabolicProxyMotor": DeepMetabolicProxyMotor,
     "Lifestyle360Motor": Lifestyle360Motor,
     "KleiberBMRMotor": KleiberBMRMotor,
+    "BDomainScoresMotor": BDomainScoresMotor,
     # Specialty engines
     "AnthropometryMotor": AnthropometryPrecisionMotor,
     "EndocrineMotor": EndocrinePrecisionMotor,
@@ -131,6 +136,7 @@ GATED_MOTORS = {
 AGGREGATOR_MOTORS = {
     "ObesityMasterMotor": ObesityMasterMotor,
     "ClinicalGuidelinesMotor": ClinicalGuidelinesMotor,
+    "ATaxonomyMotor": ATaxonomyMotor,
 }
 
 
@@ -308,6 +314,22 @@ class SpecialtyRunner:
                     error_type=type(e).__name__,
                 )
                 results["ClinicalGuidelinesMotor"] = AdjudicationResult(
+                    calculated_value=f"System Error: {str(e)}",
+                    confidence=0.0,
+                    estado_ui="INDETERMINATE_LOCKED"
+                )
+
+        if "ATaxonomyMotor" in AGGREGATOR_MOTORS:
+            try:
+                atax_motor = AGGREGATOR_MOTORS["ATaxonomyMotor"]()
+                results["ATaxonomyMotor"] = atax_motor.compute(encounter, results)
+            except Exception as e:
+                logger.error(
+                    "aggregator_error",
+                    motor="ATaxonomyMotor",
+                    error_type=type(e).__name__,
+                )
+                results["ATaxonomyMotor"] = AdjudicationResult(
                     calculated_value=f"System Error: {str(e)}",
                     confidence=0.0,
                     estado_ui="INDETERMINATE_LOCKED"

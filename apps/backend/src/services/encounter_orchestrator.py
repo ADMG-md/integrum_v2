@@ -189,6 +189,30 @@ async def run_clinical_pipeline(
     # Clinical Intelligence Pulse
     domain_encounter = clinical_bridge.enrich(domain_encounter)
 
+    # Extracción y persistencia de índices cardiometabólicos calculados
+    from src.engines.domain import Observation
+    index_mappings = {
+        "CALC-TYG": domain_encounter.tyg_index,
+        "CALC-TYG-BMI": domain_encounter.tyg_bmi,
+        "CALC-HOMA-IR": domain_encounter.homa_ir,
+        "CALC-METS-IR": domain_encounter.mets_ir,
+        "CALC-VAI": domain_encounter.visceral_adiposity_index,
+        "CALC-FIB4": domain_encounter.fib4,
+        "CALC-AIP": domain_encounter.aip,
+        "CALC-BRI": domain_encounter.body_roundness_index,
+    }
+
+    for code, value in index_mappings.items():
+        if value is not None:
+            domain_encounter.observations.append(
+                Observation(
+                    code=code,
+                    value=str(value),
+                    unit="Index",
+                    category="Calculated"
+                )
+            )
+
     # Record timeline
     await timeline_service.record_encounter(
         db, patient_id, encounter_id, domain_encounter.observations
@@ -258,6 +282,24 @@ async def process_encounter(
     age = calculate_age(patient)
     domain_encounter = build_domain_encounter(encounter_id, payload, patient, age)
 
+    # 3.5 Inject active chronic conditions
+    from src.models.encounter import PatientConditionModel, ConditionStatus
+    from src.engines.domain import Condition
+    
+    cond_stmt = select(PatientConditionModel).where(
+        PatientConditionModel.patient_id == patient.id,
+        PatientConditionModel.status == ConditionStatus.ACTIVE
+    )
+    cond_res = await db.execute(cond_stmt)
+    active_conditions = cond_res.scalars().all()
+    
+    for ac in active_conditions:
+        # Avoid duplicates if the payload also sent it
+        if not domain_encounter.has_condition(ac.code):
+            domain_encounter.conditions.append(
+                Condition(code=ac.code, title=ac.title, system=ac.system)
+            )
+
     # 4. Run clinical pipeline
     results, persistent_results, readiness_report = await run_clinical_pipeline(
         db, domain_encounter, encounter_id, patient.id
@@ -266,6 +308,110 @@ async def process_encounter(
     # 5. Persist results
     new_encounter.phenotype_result = persistent_results
     new_encounter.status = "ANALYZED"
+
+    # 5.1 Populate derived classifications (A-B-C-E)
+    from src.models.encounter import DerivedClassification, AxisType, CompletenessStatus
+    import re
+
+    axis_mappings = {
+        "ATaxonomyMotor": AxisType.A,
+        "PsychometabolicAxisMotor": AxisType.B,
+        "BDomainScoresMotor": AxisType.B,
+        "CMDSStagingMotor": AxisType.E,
+    }
+
+    for engine_name, axis in axis_mappings.items():
+        if engine_name in persistent_results:
+            res_dict = persistent_results[engine_name]
+            
+            if engine_name == "BDomainScoresMotor":
+                domain_scores = res_dict.get("metadata", {}).get("domain_scores", [])
+                for ds in domain_scores:
+                    db.add(DerivedClassification(
+                        patient_id=patient.id,
+                        encounter_id=encounter_id,
+                        axis=AxisType.B,
+                        code=ds["code"],
+                        label=ds["label"],
+                        source_engine=engine_name,
+                        rule_version_semantic="B_domains_v0.1",
+                        engine_hash=res_dict.get("integrity_hash") or "UNKNOWN",
+                        completeness_status=CompletenessStatus(ds["completeness_status"])
+                    ))
+                continue
+
+            label = res_dict.get("calculated_value") or "Unknown"
+
+            # Map completeness status
+            estado_ui = res_dict.get("estado_ui")
+            metadata = res_dict.get("metadata", {})
+            completeness_meta = metadata.get("completeness_status")
+            
+            if completeness_meta == "complete":
+                completeness = CompletenessStatus.COMPLETE
+            elif completeness_meta == "partial":
+                completeness = CompletenessStatus.PARTIAL
+            elif completeness_meta == "indeterminate":
+                completeness = CompletenessStatus.INDETERMINATE
+            else:
+                if estado_ui == "CONFIRMED_ACTIVE":
+                    completeness = CompletenessStatus.COMPLETE
+                elif estado_ui == "PROBABLE_WARNING":
+                    completeness = CompletenessStatus.PARTIAL
+                else:
+                    completeness = CompletenessStatus.INDETERMINATE
+
+            # Map axis code (string like A1, E3, etc.)
+            code = str(axis.value)  # Fallback to "A", "B", etc.
+            if axis == AxisType.E:
+                match = re.search(r"Stage\s+(\d+)", label)
+                if match:
+                    code = f"E{match.group(1)}"
+            elif axis == AxisType.A:
+                code = metadata.get("code", "A0")
+            elif axis == AxisType.B:
+                # B phenotypes: Depresión Inflamatoria -> B1, Hiperfagia Ansiogénica -> B2, etc.
+                if "Depresión Inflamatoria" in label:
+                    code = "B1"
+                elif "Hiperfagia Ansiogénica" in label:
+                    code = "B2"
+                elif "Déficit Hedónico" in label:
+                    code = "B3"
+
+            rule_version = "ABCE_v0.1"
+            if axis == AxisType.E:
+                rule_version = "EOSS_legacy_placeholder"
+            elif axis == AxisType.A:
+                rule_version = "A_taxonomy_v0.1"
+
+            derived_clf = DerivedClassification(
+                patient_id=patient.id,
+                encounter_id=encounter_id,
+                axis=axis,
+                code=code,
+                label=label[:255] if label else "Unknown",
+                source_engine=engine_name,
+                rule_version_semantic=rule_version,
+                engine_hash=res_dict.get("integrity_hash") or "UNKNOWN",
+                completeness_status=completeness,
+            )
+            db.add(derived_clf)
+
+    # Insert pending state for Axis C
+    db.add(
+        DerivedClassification(
+            patient_id=patient.id,
+            encounter_id=encounter_id,
+            axis=AxisType.C,
+            code="C",
+            label="Pending C_state",
+            source_engine="pending_C_state_motor",
+            rule_version_semantic="ABCE_v0.1",
+            engine_hash="PENDING",
+            completeness_status=CompletenessStatus.INDETERMINATE,
+        )
+    )
+
     await db.commit()
 
     # 6. Return

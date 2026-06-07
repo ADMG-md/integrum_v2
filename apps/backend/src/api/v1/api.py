@@ -15,12 +15,16 @@ from src.api.v1.endpoints import (
     omop,
     metadata,
     ai_analysis,
+    patient_conditions,
 )
 
 api_router = APIRouter()
 api_router.include_router(auth.router, prefix="/auth", tags=["auth"])
 api_router.include_router(metadata.router, prefix="/metadata", tags=["metadata"])
 api_router.include_router(patient.router, prefix="/patients", tags=["patients"])
+api_router.include_router(
+    patient_conditions.router, prefix="/patient-conditions", tags=["patient_conditions"]
+)
 api_router.include_router(conditions.router, prefix="/conditions", tags=["conditions"])
 api_router.include_router(encounter.router, prefix="/encounters", tags=["encounters"])
 api_router.include_router(extraction.router, prefix="/extraction", tags=["extraction"])

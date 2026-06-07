@@ -1,4 +1,5 @@
-from sqlalchemy import String, ForeignKey, JSON, Float, DateTime
+import enum
+from sqlalchemy import String, ForeignKey, JSON, Float, DateTime, Enum as SQLEnum
 from sqlalchemy.orm import relationship, Mapped, mapped_column
 from src.database import Base
 import uuid
@@ -53,6 +54,9 @@ class Patient(Base):
 
     encounters: Mapped[List["EncounterModel"]] = relationship(
         "EncounterModel", back_populates="patient"
+    )
+    conditions: Mapped[List["PatientConditionModel"]] = relationship(
+        "PatientConditionModel", back_populates="patient", cascade="all, delete-orphan"
     )
 
     @property
@@ -174,6 +178,9 @@ class EncounterModel(Base):
     adjudication_logs: Mapped[List["AdjudicationLog"]] = relationship(
         "AdjudicationLog", back_populates="encounter", cascade="all, delete-orphan"
     )
+    derived_classifications: Mapped[List["DerivedClassification"]] = relationship(
+        "DerivedClassification", back_populates="encounter", cascade="all, delete-orphan"
+    )
 
 
 class ObservationModel(Base):
@@ -214,3 +221,84 @@ class EncounterConditionModel(Base):
     encounter: Mapped["EncounterModel"] = relationship(
         "EncounterModel", back_populates="conditions"
     )
+
+
+class AxisType(str, enum.Enum):
+    A = "A"
+    B = "B"
+    C = "C"
+    E = "E"
+
+
+class CompletenessStatus(str, enum.Enum):
+    COMPLETE = "complete"
+    PARTIAL = "partial"
+    INDETERMINATE = "indeterminate"
+
+
+class ConditionStatus(str, enum.Enum):
+    ACTIVE = "active"
+    RESOLVED = "resolved"
+    IN_REMISSION = "in_remission"
+
+
+class PatientConditionModel(Base):
+    """Long-term or chronic condition associated with a patient."""
+
+    __tablename__ = "patient_conditions"
+
+    id: Mapped[str] = mapped_column(
+        String(255), primary_key=True, default=lambda: str(uuid.uuid4())
+    )
+    patient_id: Mapped[str] = mapped_column(
+        String(255), ForeignKey("patients.id"), nullable=False, index=True
+    )
+    onset_encounter_id: Mapped[Optional[str]] = mapped_column(
+        String(255), ForeignKey("encounters.id"), nullable=True, index=True
+    )
+    code: Mapped[str] = mapped_column(String(100), index=True)
+    title: Mapped[str] = mapped_column(String(255))
+    system: Mapped[str] = mapped_column(String(50), default="CIE-10")
+    status: Mapped[ConditionStatus] = mapped_column(
+        SQLEnum(ConditionStatus), default=ConditionStatus.ACTIVE
+    )
+    
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now, onupdate=datetime.now)
+
+    patient: Mapped["Patient"] = relationship("Patient", back_populates="conditions")
+    onset_encounter: Mapped[Optional["EncounterModel"]] = relationship(
+        "EncounterModel", foreign_keys=[onset_encounter_id]
+    )
+
+
+class DerivedClassification(Base):
+    """
+    Persists clinical classification outputs per axis (A, B, C, E) for direct querying.
+    """
+
+    __tablename__ = "derived_classifications"
+
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
+    patient_id: Mapped[str] = mapped_column(
+        String(255), ForeignKey("patients.id"), nullable=False, index=True
+    )
+    encounter_id: Mapped[str] = mapped_column(
+        String(255), ForeignKey("encounters.id"), nullable=False, index=True
+    )
+    axis: Mapped[AxisType] = mapped_column(SQLEnum(AxisType), nullable=False, index=True)
+    code: Mapped[str] = mapped_column(String(50), nullable=False)
+    label: Mapped[str] = mapped_column(String(255), nullable=False)
+    source_engine: Mapped[str] = mapped_column(String(100), nullable=False)
+    rule_version_semantic: Mapped[str] = mapped_column(String(50), nullable=False)
+    engine_hash: Mapped[str] = mapped_column(String(128), nullable=False)
+    completeness_status: Mapped[CompletenessStatus] = mapped_column(
+        SQLEnum(CompletenessStatus), nullable=False
+    )
+    computed_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now)
+
+    encounter: Mapped["EncounterModel"] = relationship(
+        "EncounterModel", back_populates="derived_classifications"
+    )
+    patient: Mapped["Patient"] = relationship("Patient")
+

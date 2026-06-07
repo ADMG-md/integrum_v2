@@ -51,11 +51,11 @@ dev: down
 	@cd $(BACKEND_DIR) && nohup $(PYTHON) -m uvicorn src.main:app --host 127.0.0.1 --port 8000 --no-access-log > /tmp/uvicorn.log 2>&1 & echo "Backend PID: $$!"
 	@sleep 3
 	@echo "Starting frontend..."
-	@cd $(FRONTEND_DIR) && nohup npm run dev -- -p 3000 > /tmp/frontend.log 2>&1 & echo "Frontend PID: $$!"
+	@cd $(FRONTEND_DIR) && nohup npm run dev -- -p 4000 > /tmp/frontend.log 2>&1 & echo "Frontend PID: $$!"
 	@sleep 5
 	@echo "=== Services started ==="
 	@curl -s --connect-timeout 5 http://127.0.0.1:8000/health && echo "" || echo "Backend: not ready yet"
-	@curl -s --connect-timeout 3 -o /dev/null -w "Frontend: HTTP %{http_code}\n" http://127.0.0.1:3000 2>/dev/null || echo "Frontend: still starting..."
+	@curl -s --connect-timeout 3 -o /dev/null -w "Frontend: HTTP %{http_code}\n" http://127.0.0.1:4000 2>/dev/null || echo "Frontend: still starting..."
 
 backend:
 	@lsof -ti:8000 2>/dev/null | xargs kill -9 2>/dev/null || true
@@ -64,10 +64,10 @@ backend:
 	@curl -s --connect-timeout 5 http://127.0.0.1:8000/health && echo "" || echo "Backend: not ready yet"
 
 frontend:
-	@lsof -ti:3000 2>/dev/null | xargs kill -9 2>/dev/null || true
-	@cd $(FRONTEND_DIR) && nohup npm run dev -- -p 3000 > /tmp/frontend.log 2>&1 & echo "Frontend PID: $$!"
+	@lsof -ti:4000 2>/dev/null | xargs kill -9 2>/dev/null || true
+	@cd $(FRONTEND_DIR) && nohup npm run dev -- -p 4000 > /tmp/frontend.log 2>&1 & echo "Frontend PID: $$!"
 	@sleep 5
-	@curl -s --connect-timeout 3 -o /dev/null -w "Frontend: HTTP %{http_code}\n" http://127.0.0.1:3000
+	@curl -s --connect-timeout 3 -o /dev/null -w "Frontend: HTTP %{http_code}\n" http://127.0.0.1:4000
 
 test:
 	@cd $(BACKEND_DIR) && $(PYTHON) -m pytest tests/unit/engines/ -v --tb=short
