@@ -51,3 +51,9 @@ apps/frontend/node_modules/
 
 # Node
 node_modules/
+
+# StrictDoc HTML export
+docs/qms/html_export/
+
+# Repomix
+repomix-output.xml

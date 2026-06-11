@@ -1,0 +1,53 @@
+[DOCUMENT]
+TITLE: Integrum V2 — Requisitos Clínicos y de Trazabilidad (SaMD Clase B)
+VERSION: 0.1.0
+
+[[SECTION]]
+TITLE: Requisitos de Motores de Precisión (Ejes Clínicos)
+
+[REQUIREMENT]
+UID: REQ-NUTRITION-PRECISION
+TITLE: Algoritmo de Nutrición de Precisión
+STATEMENT: El sistema deberá adjudicar un perfil de nutrición de precisión basado en la combinación de fenotipos conductuales de Acosta (Hungry Brain, Hungry Gut, Hedónico) y triadas de insulino-resistencia metabólica.
+RELATIONS:
+- TYPE: File
+  VALUE: apps/backend/src/engines/specialty/precision_nutrition.py
+
+[REQUIREMENT]
+UID: REQ-PHARMA-PRECISION
+TITLE: Algoritmo de Farmacoterapia de Precisión
+STATEMENT: El sistema deberá prescribir recomendaciones farmacológicas balanceadas para obesidad y riesgo cardiometabólico, aplicando gates de seguridad obligatorios (contraindicación absoluta de GLP-1 ante historia de MTC o MEN2) y vigilancia de masa magra (sarcopenia/fragilidad).
+RELATIONS:
+- TYPE: File
+  VALUE: apps/backend/src/engines/specialty/pharma_precision.py
+
+[REQUIREMENT]
+UID: REQ-C-STATE
+TITLE: Evaluador de Trayectoria Longitudinal (C-State)
+STATEMENT: El sistema deberá clasificar la respuesta al tratamiento del paciente en estados C1 (respondedor), C2 (subóptimo), C3 (no respondedor) o C4 (posible abandono) a partir de los datos longitudinales de peso de los últimos 90 días, alertando de pérdida de masa magra (riesgo sarcopénico).
+RELATIONS:
+- TYPE: File
+  VALUE: apps/backend/src/engines/c_state.py
+
+[[/SECTION]]
+
+[[SECTION]]
+TITLE: Requisitos de Decisiones Clínicas Centrales (Core Decisions)
+
+[REQUIREMENT]
+UID: REQ-CD-CAL-01
+TITLE: Adjudicación de Déficit Calórico
+STATEMENT: El sistema deberá calcular el target de déficit calórico recomendando déficit moderado (300-500 kcal) si existe quema lenta (slow burn) o riesgo de sarcopenia, y déficit agresivo (800-1000 kcal) en ausencia de estos modificadores de riesgo.
+RELATIONS:
+- TYPE: File
+  VALUE: apps/backend/src/engines/core_decisions.py
+
+[REQUIREMENT]
+UID: REQ-CD-PRO-01
+TITLE: Target de Proteínas y Restricción Renal
+STATEMENT: El sistema deberá prescribir el target de proteínas diario del paciente (estándar 1.2 g/kg o alto 1.5 g/kg si hay pérdida acelerada de masa magra), forzando una restricción renal (proteína moderada/baja) si se detecta Enfermedad Renal Crónica Avanzada (eGFR < 30).
+RELATIONS:
+- TYPE: File
+  VALUE: apps/backend/src/engines/core_decisions.py
+
+[[/SECTION]]
