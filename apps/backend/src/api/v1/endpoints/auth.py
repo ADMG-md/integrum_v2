@@ -16,7 +16,8 @@ from pydantic import BaseModel, EmailStr, field_validator
 from typing import Optional
 from slowapi import Limiter
 from slowapi.util import get_remote_address
-from jose import jwt, JWTError
+import jwt
+from jwt import PyJWTError as JWTError
 import structlog
 
 logger = structlog.get_logger()

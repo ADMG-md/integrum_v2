@@ -1,0 +1,36 @@
+{
+  "contract_id": "core-decisions",
+  "version": "1.0.0",
+  "models": {
+    "ClinicalRecommendation": {
+      "type": "object",
+      "properties": {
+        "recommendation_code": { "type": "string" },
+        "domain": { "type": "string", "enum": ["nutrition", "protein", "behavioral", "pharmacotherapy", "sleep", "risk"] },
+        "recommendation_type": { "type": "string", "enum": ["treatment", "referral", "sequencing", "alert"] },
+        "requirement_id": { "type": "string" },
+        "priority": { "type": "string", "enum": ["standard", "high", "critical"] },
+        "status": { "type": "string", "enum": ["active", "suppressed", "modified", "informational"] },
+        "depends_on": { "type": "array", "items": { "type": "string" } },
+        "trigger_summary": { "type": "array", "items": { "type": "string" } },
+        "human_readable_basis": { "type": "string" },
+        "evidence_note": { "type": "string", "nullable": true },
+        "superseded_by": { "type": "string", "nullable": true },
+        "suppression_reason": { "type": "string", "nullable": true },
+        "audit_payload": { "type": "object" }
+      },
+      "required": [
+        "recommendation_code",
+        "domain",
+        "recommendation_type",
+        "requirement_id",
+        "priority",
+        "status",
+        "depends_on",
+        "trigger_summary",
+        "human_readable_basis",
+        "audit_payload"
+      ]
+    }
+  }
+}

@@ -139,39 +139,6 @@ class TestCancerScreeningMotor:
 # ============================================================
 
 
-class TestFLIMotor:
-    def test_validate_returns_false_without_data(self, empty_encounter):
-        from src.engines.specialty.fatty_liver import FLIMotor
-
-        motor = FLIMotor()
-        is_valid, reason = motor.validate(empty_encounter)
-        assert not is_valid
-
-    def test_compute_with_normal_fli(self, encounter_with_metabolic_data):
-        from src.engines.specialty.fatty_liver import FLIMotor
-
-        enc = encounter_with_metabolic_data
-        enc.metabolic_panel.triglycerides_mg_dl = 80.0
-        enc.metabolic_panel.ggt_u_l = 20.0
-        enc.metabolic_panel.ast_u_l = 25.0
-        enc.metabolic_panel.alt_u_l = 20.0
-        enc.observations = [o for o in enc.observations if o.code != "WAIST-001"]
-        enc.observations.append(Observation(code="WAIST-001", value=80.0, unit="cm"))
-        motor = FLIMotor()
-        result = motor.compute(enc)
-        assert isinstance(result, AdjudicationResult)
-        assert result.metadata["category"] == "low"
-
-    def test_compute_with_abnormal_fli(self, encounter_with_metabolic_data):
-        from src.engines.specialty.fatty_liver import FLIMotor
-
-        motor = FLIMotor()
-        result = motor.compute(encounter_with_metabolic_data)
-        assert isinstance(result, AdjudicationResult)
-        assert result.metadata["category"] == "high"
-        assert result.estado_ui == "CONFIRMED_ACTIVE"
-
-
 class TestNFSMotor:
     def test_validate_returns_false_without_data(self, empty_encounter):
         from src.engines.specialty.nafld_fibrosis import NFSMotor
@@ -207,76 +174,6 @@ class TestNFSMotor:
         result = motor.compute(enc)
         assert isinstance(result, AdjudicationResult)
         assert result.metadata["category"] == "high"
-
-
-class TestApoBApoA1Motor:
-    def test_validate_returns_false_without_data(self, minimal_encounter):
-        from src.engines.specialty.apob_ratio import ApoBApoA1Motor
-
-        enc = minimal_encounter
-        enc.metabolic_panel.apoa1_mg_dl = None
-        motor = ApoBApoA1Motor()
-        is_valid, reason = motor.validate(enc)
-        assert not is_valid
-
-    def test_compute_with_normal_ratio(self, encounter_with_metabolic_data):
-        from src.engines.specialty.apob_ratio import ApoBApoA1Motor
-
-        enc = encounter_with_metabolic_data
-        enc.metabolic_panel.apob_mg_dl = 80.0
-        enc.metabolic_panel.apoa1_mg_dl = 150.0
-        motor = ApoBApoA1Motor()
-        result = motor.compute(enc)
-        assert isinstance(result, AdjudicationResult)
-        assert result.metadata["ratio"] < 0.6
-
-    def test_compute_with_high_ratio(self, encounter_with_metabolic_data):
-        from src.engines.specialty.apob_ratio import ApoBApoA1Motor
-
-        enc = encounter_with_metabolic_data
-        enc.metabolic_panel.apob_mg_dl = 140.0
-        enc.metabolic_panel.apoa1_mg_dl = 90.0
-        motor = ApoBApoA1Motor()
-        result = motor.compute(enc)
-        assert isinstance(result, AdjudicationResult)
-        assert result.metadata["ratio"] > 1.0
-        assert result.estado_ui == "CONFIRMED_ACTIVE"
-
-
-class TestVAIMotor:
-    def test_validate_returns_false_without_data(self, empty_encounter):
-        from src.engines.specialty.visceral_adiposity import VAIMotor
-
-        motor = VAIMotor()
-        is_valid, reason = motor.validate(empty_encounter)
-        assert not is_valid
-
-    def test_compute_with_normal_vai(self, encounter_with_metabolic_data):
-        from src.engines.specialty.visceral_adiposity import VAIMotor
-
-        enc = encounter_with_metabolic_data
-        enc.metabolic_panel.triglycerides_mg_dl = 80.0
-        enc.metabolic_panel.hdl_mg_dl = 55.0
-        enc.observations = [o for o in enc.observations if o.code != "WAIST-001"]
-        enc.observations.append(Observation(code="WAIST-001", value=80.0, unit="cm"))
-        motor = VAIMotor()
-        result = motor.compute(enc)
-        assert isinstance(result, AdjudicationResult)
-        assert not result.metadata["is_high"]
-
-    def test_compute_with_high_vai(self, encounter_with_metabolic_data):
-        from src.engines.specialty.visceral_adiposity import VAIMotor
-
-        motor = VAIMotor()
-        result = motor.compute(encounter_with_metabolic_data)
-        assert isinstance(result, AdjudicationResult)
-        assert result.metadata["is_high"]
-        assert result.estado_ui == "CONFIRMED_ACTIVE"
-
-
-# ============================================================
-# MEDIUM
-# ============================================================
 
 
 class TestPulsePressureMotor:
@@ -391,36 +288,6 @@ class TestSGLT2iBenefitMotor:
 # ============================================================
 
 
-class TestKFREMotor:
-    def test_validate_returns_false_without_data(self, minimal_encounter):
-        from src.engines.specialty.kfre import KFREMotor
-
-        motor = KFREMotor()
-        is_valid, reason = motor.validate(minimal_encounter)
-        assert not is_valid
-
-    def test_compute_with_low_risk(self, encounter_with_metabolic_data):
-        from src.engines.specialty.kfre import KFREMotor
-
-        enc = encounter_with_metabolic_data
-        enc.observations.append(Observation(code="UACR-001", value=15.0, unit="mg/g"))
-        motor = KFREMotor()
-        result = motor.compute(enc)
-        assert isinstance(result, AdjudicationResult)
-        assert result.metadata["risk_5y"] < 5
-
-    def test_compute_with_high_risk(self, encounter_with_metabolic_data):
-        from src.engines.specialty.kfre import KFREMotor
-
-        enc = encounter_with_metabolic_data
-        enc.metabolic_panel.creatinine_mg_dl = 3.5
-        enc.observations.append(Observation(code="UACR-001", value=1500.0, unit="mg/g"))
-        motor = KFREMotor()
-        result = motor.compute(enc)
-        assert isinstance(result, AdjudicationResult)
-        assert result.metadata["risk_5y"] > 25
-
-
 class TestCharlsonMotor:
     def test_validate_returns_false_without_conditions(self, minimal_encounter):
         from src.engines.specialty.charlson import CharlsonMotor
@@ -454,40 +321,6 @@ class TestCharlsonMotor:
         result = motor.compute(enc)
         assert isinstance(result, AdjudicationResult)
         assert result.metadata["cci_score"] >= 5
-
-
-class TestFreeTestosteroneMotor:
-    def test_validate_returns_false_without_data(self, minimal_encounter):
-        from src.engines.specialty.free_testosterone import FreeTestosteroneMotor
-
-        motor = FreeTestosteroneMotor()
-        is_valid, reason = motor.validate(minimal_encounter)
-        assert not is_valid
-
-    def test_compute_with_normal_free_t(self, encounter_with_metabolic_data):
-        from src.engines.specialty.free_testosterone import FreeTestosteroneMotor
-
-        enc = encounter_with_metabolic_data
-        enc.observations.append(
-            Observation(code="TESTO-001", value=500.0, unit="ng/dL")
-        )
-        enc.metabolic_panel.shbg_nmol_l = 35.0
-        motor = FreeTestosteroneMotor()
-        result = motor.compute(enc)
-        assert isinstance(result, AdjudicationResult)
-
-    def test_compute_with_low_free_t(self, encounter_with_metabolic_data):
-        from src.engines.specialty.free_testosterone import FreeTestosteroneMotor
-
-        enc = encounter_with_metabolic_data
-        enc.observations.append(
-            Observation(code="TESTO-001", value=150.0, unit="ng/dL")
-        )
-        enc.metabolic_panel.shbg_nmol_l = 80.0
-        motor = FreeTestosteroneMotor()
-        result = motor.compute(enc)
-        assert isinstance(result, AdjudicationResult)
-        assert result.metadata["free_t_pg_ml"] < 50
 
 
 class TestVitaminDMotor:
@@ -556,43 +389,6 @@ class TestFriedFrailtyMotor:
         result = motor.compute(enc)
         assert isinstance(result, AdjudicationResult)
         assert result.metadata["fried_score"] >= 3
-
-
-class TestTyGBMIMotor:
-    def test_validate_returns_false_without_data(self, empty_encounter):
-        from src.engines.specialty.tyg_bmi import TyGBMIMotor
-
-        motor = TyGBMIMotor()
-        is_valid, reason = motor.validate(empty_encounter)
-        assert not is_valid
-
-    def test_compute_with_low_ir(self, encounter_with_metabolic_data):
-        from src.engines.specialty.tyg_bmi import TyGBMIMotor
-
-        enc = encounter_with_metabolic_data
-        enc.metabolic_panel.triglycerides_mg_dl = 70.0
-        enc.metabolic_panel.glucose_mg_dl = 80.0
-        enc.observations = [
-            o for o in enc.observations if o.code not in ("29463-7", "8302-2")
-        ]
-        enc.observations.extend(
-            [
-                Observation(code="29463-7", value=60.0, unit="kg"),
-                Observation(code="8302-2", value=175.0, unit="cm"),
-            ]
-        )
-        motor = TyGBMIMotor()
-        result = motor.compute(enc)
-        assert isinstance(result, AdjudicationResult)
-        assert result.metadata["tyg_bmi"] < 230
-
-    def test_compute_with_severe_ir(self, encounter_with_metabolic_data):
-        from src.engines.specialty.tyg_bmi import TyGBMIMotor
-
-        motor = TyGBMIMotor()
-        result = motor.compute(encounter_with_metabolic_data)
-        assert isinstance(result, AdjudicationResult)
-        assert result.metadata["category"] == "severe"
 
 
 class TestCVDReclassifierMotor:

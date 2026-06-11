@@ -21,6 +21,8 @@ from src.domain.models import (
     DemographicsSchema,
     MetabolicPanelSchema,
     Encounter,
+    DecisionContext,
+    ClinicalRecommendation,
 )
 
 __all__ = [
@@ -40,4 +42,6 @@ __all__ = [
     "MetabolicPanelSchema",
     "MetabolicPanelSchema",
     "Encounter",
+    "DecisionContext",
+    "ClinicalRecommendation",
 ]

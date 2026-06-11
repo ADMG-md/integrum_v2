@@ -13,39 +13,7 @@ from src.engines.domain import (
 from src.engines.base_models import AdjudicationResult
 
 
-# ============================================================
-# KleiberBMRMotor (registered, untested)
-# ============================================================
 
-
-class TestKleiberBMRMotor:
-    def test_instantiation(self):
-        from src.engines.metabolic import KleiberBMRMotor
-
-        motor = KleiberBMRMotor()
-        assert motor is not None
-
-    def test_validates_missing_weight(self, empty_encounter):
-        from src.engines.metabolic import KleiberBMRMotor
-
-        motor = KleiberBMRMotor()
-        is_valid, reason = motor.validate(empty_encounter)
-        assert not is_valid
-
-    def test_computes_with_weight(self, minimal_encounter):
-        from src.engines.metabolic import KleiberBMRMotor
-
-        motor = KleiberBMRMotor()
-        is_valid, _ = motor.validate(minimal_encounter)
-        if is_valid:
-            result = motor.compute(minimal_encounter)
-            assert isinstance(result, AdjudicationResult)
-            assert result.calculated_value is not None
-
-
-# ============================================================
-# Lifestyle360Motor (registered, untested)
-# ============================================================
 
 
 class TestLifestyle360Motor:

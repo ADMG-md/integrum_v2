@@ -1,0 +1,138 @@
+import pytest
+from src.engines.domain import Encounter, DemographicsSchema, MetabolicPanelSchema, AdjudicationResult, DecisionContext
+from src.services.encounter_orchestrator import run_clinical_pipeline
+
+@pytest.fixture
+def base_encounter():
+    return Encounter(
+        id="test_int",
+        demographics=DemographicsSchema(age_years=40.0, gender="female"),
+        metabolic_panel=MetabolicPanelSchema(),
+        observations=[]
+    )
+
+def test_pipeline_happy_path(base_encounter):
+    """
+    Test: Happy path completo. A/B/C presentes -> recomendaciones serializadas correctamente.
+    """
+    # Simulate full A, B, C results returning from primary engines
+    # In a real environment, run_clinical_pipeline would call the engines.
+    # To properly unit test integration without full engine state, we mock the engine runner or 
+    # we just run the orchestrator with mocked upstream results.
+    # However, run_clinical_pipeline expects to instantiate and run motors.
+    # We will mock the `run_motors_for_encounter` function to return our dict.
+    
+    from unittest.mock import patch
+    
+    mock_results = {
+        "ATaxonomyMotor": AdjudicationResult(calculated_value="Quema Lenta (A3)", evidence=[], requirement_id="A", metadata={"code": "A3"}),
+        "BDomainScoresMotor": AdjudicationResult(calculated_value="", evidence=[], requirement_id="B", metadata={"domain_scores": [{"code": "B_UNCONTROLLED", "completeness_status": "complete"}]}),
+        "CTrajectoryMotor": AdjudicationResult(calculated_value="C2 Suboptimal", evidence=[], requirement_id="C", metadata={})
+    }
+    
+    with patch('src.services.encounter_orchestrator.run_motors_for_encounter', return_value=mock_results):
+        encounter_out = run_clinical_pipeline(base_encounter)
+        
+        # Verify persistence format
+        assert "persistent_results" in encounter_out.metadata
+        results = encounter_out.metadata["persistent_results"]
+        
+        # Ensure core decisions are built
+        assert "CoreClinicalDecisions" in results
+        core_decisions = results["CoreClinicalDecisions"]
+        
+        # Verify all domains are computable
+        recommendation_codes = [r["recommendation_code"] for r in core_decisions]
+        assert "DEFICIT_MODERADO" in recommendation_codes # Nutrition
+        assert "DERIVACION_CBT" in recommendation_codes # Behavioral
+        assert "PHARM_CLASS_GLP1" in recommendation_codes # Pharma
+        assert "ALERTA_FRACASO_TEMPRANO_ALTO" in recommendation_codes # Risk
+
+def test_pipeline_missing_axis_a(base_encounter):
+    """
+    Test: Missing Axis A. Se suprime nutrición, se mantienen otras decisiones computables.
+    """
+    from unittest.mock import patch
+    
+    mock_results = {
+        # Axis A missing
+        "BDomainScoresMotor": AdjudicationResult(calculated_value="", evidence=[], requirement_id="B", metadata={"domain_scores": [{"code": "B_UNCONTROLLED", "completeness_status": "complete"}]}),
+        "CTrajectoryMotor": AdjudicationResult(calculated_value="C2 Suboptimal", evidence=[], requirement_id="C", metadata={})
+    }
+    
+    with patch('src.services.encounter_orchestrator.run_motors_for_encounter', return_value=mock_results):
+        encounter_out = run_clinical_pipeline(base_encounter)
+        results = encounter_out.metadata["persistent_results"]
+        core_decisions = results["CoreClinicalDecisions"]
+        
+        recommendation_codes = [r["recommendation_code"] for r in core_decisions]
+        
+        # Nutrition is suppressed
+        assert "DEFICIT_INDETERMINADO" in recommendation_codes
+        nut_rec = next(r for r in core_decisions if r["recommendation_code"] == "DEFICIT_INDETERMINADO")
+        assert nut_rec["status"] == "suppressed"
+        
+        # Behavioral is still active
+        assert "DERIVACION_CBT" in recommendation_codes
+        
+        # Risk is suppressed due to missing A
+        assert "ALERTA_FRACASO_INDETERMINADA" in recommendation_codes
+
+def test_pipeline_missing_axis_b(base_encounter):
+    """
+    Test: Missing Axis B. No hay behavioral/sleep/pharma, pero sí nutrición si A existe.
+    """
+    from unittest.mock import patch
+    
+    mock_results = {
+        "ATaxonomyMotor": AdjudicationResult(calculated_value="Normal (A0)", evidence=[], requirement_id="A", metadata={"code": "A0"}),
+        # Axis B missing
+        "CTrajectoryMotor": AdjudicationResult(calculated_value="C0 Responder", evidence=[], requirement_id="C", metadata={})
+    }
+    
+    with patch('src.services.encounter_orchestrator.run_motors_for_encounter', return_value=mock_results):
+        encounter_out = run_clinical_pipeline(base_encounter)
+        results = encounter_out.metadata["persistent_results"]
+        core_decisions = results["CoreClinicalDecisions"]
+        
+        recommendation_codes = [r["recommendation_code"] for r in core_decisions]
+        
+        # Nutrition is active
+        assert "DEFICIT_AGRESIVO" in recommendation_codes
+        
+        # Behavioral should not be emitted at all (not even suppressed, per rule)
+        beh_codes = [r for r in core_decisions if r["domain"] == "behavioral"]
+        assert len(beh_codes) == 0
+        
+        # Risk is suppressed due to missing B
+        assert "ALERTA_FRACASO_INDETERMINADA" in recommendation_codes
+
+def test_pipeline_missing_axis_c(base_encounter):
+    """
+    Test: Missing Axis C. No hay CD-RSK-01, pero resto sigue.
+    """
+    from unittest.mock import patch
+    
+    mock_results = {
+        "ATaxonomyMotor": AdjudicationResult(calculated_value="Quema Lenta (A3)", evidence=[], requirement_id="A", metadata={"code": "A3"}),
+        "BDomainScoresMotor": AdjudicationResult(calculated_value="", evidence=[], requirement_id="B", metadata={"domain_scores": [{"code": "B_UNCONTROLLED", "completeness_status": "complete"}]}),
+        # Axis C missing
+    }
+    
+    with patch('src.services.encounter_orchestrator.run_motors_for_encounter', return_value=mock_results):
+        encounter_out = run_clinical_pipeline(base_encounter)
+        results = encounter_out.metadata["persistent_results"]
+        core_decisions = results["CoreClinicalDecisions"]
+        
+        recommendation_codes = [r["recommendation_code"] for r in core_decisions]
+        
+        # Nutrition is active
+        assert "DEFICIT_MODERADO" in recommendation_codes
+        
+        # Behavioral is active
+        assert "DERIVACION_CBT" in recommendation_codes
+        
+        # Risk is suppressed due to missing C
+        assert "ALERTA_FRACASO_INDETERMINADA" in recommendation_codes
+        risk_rec = next(r for r in core_decisions if r["recommendation_code"] == "ALERTA_FRACASO_INDETERMINADA")
+        assert risk_rec["status"] == "suppressed"

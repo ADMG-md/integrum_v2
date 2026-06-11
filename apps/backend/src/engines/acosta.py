@@ -154,6 +154,7 @@ class AcostaPhenotypeMotor(BaseClinicalMotor):
 
         # 5. Quema Lenta (Gasto Limitado)
         quema_lenta_conf = 0.0
+        missing = None
         
         # Safe extractor
         def get_float(code):
@@ -222,6 +223,7 @@ class AcostaPhenotypeMotor(BaseClinicalMotor):
                 calculated_value="Fenotipo Metabólico Basal",
                 confidence=1.0,
                 estado_ui="CONFIRMED_ACTIVE",
+                dato_faltante=missing,
                 explanation="No se detectaron desviaciones fenotípicas significativas.",
                 metadata={"phenotype_scores": {
                     "cerebro_hambriento": 0.0,
@@ -237,7 +239,7 @@ class AcostaPhenotypeMotor(BaseClinicalMotor):
 
         estado = "INDETERMINATE_LOCKED"
         recs = []
-        missing = None
+        # missing is already defined
 
         if primary_conf >= 0.80:
             estado = "CONFIRMED_ACTIVE"

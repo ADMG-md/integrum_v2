@@ -8,6 +8,7 @@ from src.domain.models to maintain a single source of truth.
 
 from typing import List, Optional, Any, Dict, Literal, Union
 from datetime import datetime
+from enum import Enum
 from pydantic import BaseModel, Field, field_validator, model_validator
 
 # --- Re-export domain types (single source of truth) ---
@@ -22,6 +23,13 @@ from src.domain.models import (
 
 
 # --- API-specific schemas ---
+
+
+class AdherenceEnum(str, Enum):
+    GOOD = "good"
+    PARTIAL = "partial"
+    POOR = "poor"
+    NOT_APPLICABLE = "not_applicable"
 
 
 class PatientCreate(BaseModel):
@@ -265,6 +273,7 @@ class EncounterCreate(BaseModel):
     family_history: Optional[str] = ""
     conditions: List[ConditionSchema] = Field(default_factory=list)
     medications: List[MedicationSchema] = Field(default_factory=list)
+    adherence_self_report: Optional[AdherenceEnum] = None
     status: str = "DRAFT"
 
 
@@ -326,4 +335,7 @@ class EncounterFinalizeSchema(BaseModel):
     )
     adherence_reported: Optional[str] = Field(
         None, description="Patient-reported adherence: ALTA | MEDIA | BAJA"
+    )
+    adherence_self_report: Optional[AdherenceEnum] = Field(
+        None, description="Patient-reported adherence standardized: good | partial | poor | not_applicable"
     )

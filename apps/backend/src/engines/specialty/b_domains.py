@@ -1,6 +1,6 @@
 from src.engines.base import BaseClinicalMotor
 from src.engines.domain import Encounter, AdjudicationResult, ClinicalEvidence
-from typing import Tuple, List, Dict, Any
+from typing import Tuple, List, Dict, Any, Optional
 from src.models.encounter import CompletenessStatus
 
 class BDomainScoresMotor(BaseClinicalMotor):
@@ -29,7 +29,7 @@ class BDomainScoresMotor(BaseClinicalMotor):
         # Always runs, missing data results in indeterminate status.
         return True, ""
 
-    def _get_float(self, encounter: Encounter, code: str) -> float | None:
+    def _get_float(self, encounter: Encounter, code: str) -> Optional[float]:
         obs = encounter.get_observation(code)
         if obs:
             try:

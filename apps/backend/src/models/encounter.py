@@ -165,6 +165,7 @@ class EncounterModel(Base):
     adverse_event: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
     medication_changed: Mapped[Optional[bool]] = mapped_column(nullable=True, default=None)
     adherence_reported: Mapped[Optional[str]] = mapped_column(String(10), nullable=True)  # ALTA / MEDIA / BAJA
+    adherence_self_report: Mapped[Optional[str]] = mapped_column(String(20), nullable=True)
 
     patient: Mapped["Patient"] = relationship("Patient", back_populates="encounters")
     observations: Mapped[List["ObservationModel"]] = relationship(

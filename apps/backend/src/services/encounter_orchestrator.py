@@ -224,6 +224,59 @@ async def run_clinical_pipeline(
     # Run engines (has per-motor try/except internally)
     try:
         results = create_runner().run_all(domain_encounter)
+
+        # 4.1 Build Typed Decision Context
+        from src.engines.domain import DecisionContext
+        
+        ctx = DecisionContext()
+        
+        # Source: ClinicalPhenotypeEngine (Axis A)
+        if "ATaxonomyMotor" in results:
+            a_res = results["ATaxonomyMotor"]
+            ctx.axis_a_code = a_res.metadata.get("code")
+            a_label = str(a_res.calculated_value)
+            # Derivation: 'A3' or explicit 'Lenta' keyword marks slow burn
+            ctx.is_slow_burn = ctx.axis_a_code == "A3" or "Lenta" in a_label
+            # Derivation: explicit 'Sarcopenia' keyword marks sarcopenic risk
+            ctx.has_sarcopenic_risk = "Sarcopenia" in a_label
+            
+        # Source: BehavioralDomainEngine (Axis B)
+        if "BDomainScoresMotor" in results:
+            b_res = results["BDomainScoresMotor"]
+            b_domains = b_res.metadata.get("domain_scores", [])
+            for ds in b_domains:
+                code = ds.get("code")
+                comp = ds.get("completeness_status")
+                # Derivation: 'complete' state means threshold crossed and confirmed
+                if code == "B_UNCONTROLLED" and comp == "complete":
+                    ctx.has_uncontrolled_eating = True
+                elif code == "B_EMOTIONAL" and comp == "complete":
+                    ctx.has_emotional_eating = True
+                elif code == "B_AFFECT" and comp == "partial":
+                    ctx.has_affective_traits = True
+                elif code == "B_SLEEP" and comp == "complete":
+                    ctx.has_clinical_insomnia = True
+
+        # Source: LongitudinalTrajectoryEngine (Axis C)
+        if "CStateMachineMotor" in results:
+            c_res = results["CStateMachineMotor"]
+            ctx.axis_c_code = "C2" if "C2" in str(c_res.calculated_value) else "C0"
+            c_label = str(c_res.calculated_value)
+            ctx.has_suboptimal_c = "C2" in c_label or "NON_RESPONDER" in c_label or "SUBOPTIMAL" in c_label
+
+        # External Constraints & Context (Mocked placeholders for now)
+        # Source: Medical History / Labs (Not yet implemented, default to False)
+        ctx.has_advanced_ckd = False
+        ctx.has_malnutrition_risk = False
+        ctx.has_active_behavioral_referral = False
+
+        # 4.2 Run Core Decisions
+        from src.engines.core_decisions import CoreClinicalDecisionEngine
+        core_engine = CoreClinicalDecisionEngine()
+        core_result = core_engine.compute_from_context(domain_encounter, ctx)
+        results[core_engine.__class__.__name__] = core_result
+
+
     except Exception as e:
         import logging
 
@@ -242,6 +295,10 @@ async def run_clinical_pipeline(
 
     # Audit Trail
     engines_map = {m.__class__.__name__: m for m in create_runner().get_all_motors()}
+    # Add Core Engine manually to the map since it's not in the primary runner
+    from src.engines.core_decisions import CoreClinicalDecisionEngine
+    engines_map["CoreClinicalDecisionEngine"] = CoreClinicalDecisionEngine()
+
     audit_results = await audit_service.log_adjudications(
         db, encounter_id, results, engines_map
     )
@@ -300,6 +357,66 @@ async def process_encounter(
                 Condition(code=ac.code, title=ac.title, system=ac.system)
             )
 
+    # 3.6 Extract longitudinal history (last 90 days) for Axis C (C_state)
+    from src.models.encounter import EncounterModel, ObservationModel
+    from src.domain.models import LongitudinalEncounterEntry
+    from datetime import timedelta
+    from sqlalchemy.orm import selectinload
+    
+    ninety_days_ago = new_encounter.created_at - timedelta(days=90)
+    
+    stmt_history = (
+        select(EncounterModel)
+        .options(selectinload(EncounterModel.observations))
+        .where(EncounterModel.patient_id == patient.id)
+        .order_by(EncounterModel.created_at.desc())
+        .limit(20)
+    )
+    res_hist = await db.execute(stmt_history)
+    past_encounters = res_hist.scalars().all()
+    
+    valid_encounters = []
+    found_older = False
+    for enc in past_encounters:
+        if enc.id == encounter_id:
+            continue
+        if enc.created_at >= ninety_days_ago:
+            valid_encounters.append(enc)
+        elif not found_older:
+            valid_encounters.append(enc)
+            found_older = True
+            
+    # Add current encounter
+    valid_encounters.insert(0, new_encounter)
+    
+    history_entries = []
+    for enc in valid_encounters:
+        weight = enc.weight_current_kg
+        ffm = None
+        for obs in getattr(enc, 'observations', []):
+            if obs.code in ["W-001", "29463-7"] and weight is None:
+                try: weight = float(obs.value)
+                except: pass
+            elif obs.code in ["BIA-FFM-KG", "BIA-LEAN-KG"]:
+                try: ffm = float(obs.value)
+                except: pass
+        
+        # Pull from payload for current encounter
+        if enc.id == encounter_id and payload.biometrics:
+            weight = weight or payload.biometrics.weight_kg
+            ffm = ffm or payload.biometrics.lean_mass_kg
+            
+        history_entries.append(LongitudinalEncounterEntry(
+            encounter_id=enc.id,
+            encounter_date=enc.created_at,
+            weight_kg=weight,
+            ffm_kg=ffm,
+            adherence_self_report=enc.adherence_self_report if hasattr(enc, 'adherence_self_report') else None
+        ))
+        
+    domain_encounter.longitudinal_encounters = history_entries
+
+
     # 4. Run clinical pipeline
     results, persistent_results, readiness_report = await run_clinical_pipeline(
         db, domain_encounter, encounter_id, patient.id
@@ -318,6 +435,7 @@ async def process_encounter(
         "PsychometabolicAxisMotor": AxisType.B,
         "BDomainScoresMotor": AxisType.B,
         "CMDSStagingMotor": AxisType.E,
+        "CStateMachineMotor": AxisType.C,
     }
 
     for engine_name, axis in axis_mappings.items():
@@ -377,12 +495,24 @@ async def process_encounter(
                     code = "B2"
                 elif "Déficit Hedónico" in label:
                     code = "B3"
+            elif axis == AxisType.C:
+                if "C1_RESPONDER_SAFE" in label:
+                    code = "C1"
+                elif "C2_NON_RESPONDER" in label:
+                    code = "C2"
+                elif "C3_RESPONDER_SARKOPENIC_RISK" in label:
+                    code = "C3"
+                else:
+                    code = "C0"
 
             rule_version = "ABCE_v0.1"
             if axis == AxisType.E:
                 rule_version = "EOSS_legacy_placeholder"
             elif axis == AxisType.A:
                 rule_version = "A_taxonomy_v0.1"
+            elif axis == AxisType.C:
+                rule_version = "C_trajectory_v0.2"
+
 
             derived_clf = DerivedClassification(
                 patient_id=patient.id,
@@ -397,22 +527,9 @@ async def process_encounter(
             )
             db.add(derived_clf)
 
-    # Insert pending state for Axis C
-    db.add(
-        DerivedClassification(
-            patient_id=patient.id,
-            encounter_id=encounter_id,
-            axis=AxisType.C,
-            code="C",
-            label="Pending C_state",
-            source_engine="pending_C_state_motor",
-            rule_version_semantic="ABCE_v0.1",
-            engine_hash="PENDING",
-            completeness_status=CompletenessStatus.INDETERMINATE,
-        )
-    )
-
     await db.commit()
+
+
 
     # 6. Return
     if generate_report:

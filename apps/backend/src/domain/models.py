@@ -6,7 +6,7 @@ These are pure Pydantic models with no API/HTTP concerns — they belong to the
 domain layer of Clean Architecture.
 """
 
-from pydantic import BaseModel, Field, ConfigDict
+from pydantic import BaseModel, Field, ConfigDict, field_validator
 from typing import List, Optional, Any, Dict, Literal
 from datetime import datetime, date
 from enum import Enum
@@ -317,6 +317,14 @@ class MetabolicPanelSchema(BaseModel):
 # --- Aggregate Root: Encounter ---
 
 
+class LongitudinalEncounterEntry(BaseModel):
+    encounter_id: str
+    encounter_date: datetime
+    weight_kg: Optional[float] = None
+    ffm_kg: Optional[float] = None
+    adherence_self_report: Optional[str] = None
+
+
 class Encounter(BaseModel):
     id: str
     demographics: DemographicsSchema
@@ -324,6 +332,7 @@ class Encounter(BaseModel):
     conditions: List[Condition] = []
     observations: List[Observation] = []
     medications: List[MedicationStatement] = []
+    longitudinal_encounters: List[LongitudinalEncounterEntry] = []
     history: Optional[ClinicalHistory] = None
     metadata: Dict[str, Any] = Field(default_factory=dict)
 
@@ -593,3 +602,70 @@ class Encounter(BaseModel):
     @property
     def ace_score(self) -> Optional[int]:
         return self._get_context().ace_score
+
+# --- IEC 62304 Decision Context Models ---
+from typing import Literal
+
+class ClinicalRecommendation(BaseModel):
+    recommendation_code: str
+    domain: Literal["nutrition", "protein", "behavioral", "pharmacotherapy", "sleep", "risk"]
+    recommendation_type: Literal["treatment", "referral", "sequencing", "alert"]
+    requirement_id: str
+    priority: Literal["standard", "high", "critical"]
+    status: Literal["active", "suppressed", "modified", "informational"] = "active"
+    depends_on: List[str]
+    trigger_summary: List[str]
+    human_readable_basis: str
+    evidence_note: Optional[str] = None
+    superseded_by: Optional[str] = None
+    suppression_reason: Optional[str] = None
+    audit_payload: Dict[str, Any]
+
+class DecisionContext(BaseModel):
+    """
+    Strongly typed context passed from primary clinical engines
+    to downstream Core Clinical Decision engines.
+    """
+    axis_a_code: Optional[str] = None
+    axis_b_code: Optional[str] = None
+    axis_c_code: Optional[str] = None
+    
+    is_slow_burn: bool = False
+    has_sarcopenic_risk: bool = False
+    has_uncontrolled_eating: bool = False
+    has_clinical_insomnia: bool = False
+    has_emotional_eating: bool = False
+    has_affective_traits: bool = False
+    has_suboptimal_c: bool = False
+    
+    has_advanced_ckd: bool = False
+    has_malnutrition_risk: bool = False
+    has_active_behavioral_referral: bool = False
+
+    @property
+    def can_compute_nutrition(self) -> bool:
+        """Requires Axis A classification to safely prescribe deficit/protein targets."""
+        return self.axis_a_code is not None
+
+    @property
+    def can_compute_behavioral(self) -> bool:
+        """Requires Axis B classification to prescribe behavioral interventions."""
+        return self.axis_b_code is not None
+
+    @property
+    def can_compute_risk_rule(self) -> bool:
+        """Requires full A, B, and C axes to accurately calculate early failure risk."""
+        return (self.axis_a_code is not None and 
+                self.axis_b_code is not None and 
+                self.axis_c_code is not None)
+
+    @field_validator("axis_a_code", "axis_b_code", "axis_c_code", mode="before")
+    def validate_axis_codes(cls, v):
+        if v is None:
+            return v
+        if not isinstance(v, str):
+            raise ValueError("Axis code must be a string")
+        if v.strip() == "":
+            return None
+        return v
+

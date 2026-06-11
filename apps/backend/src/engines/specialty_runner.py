@@ -2,7 +2,6 @@ from src.engines.acosta import AcostaPhenotypeMotor
 from src.engines.eoss import EOSSStagingMotor
 from src.engines.specialty.cmds import CMDSStagingMotor
 from src.engines.sarcopenia import SarcopeniaMonitorMotor
-from src.engines.metabolic import KleiberBMRMotor
 from src.engines.specialty.bio_age import BiologicalAgeMotor
 from src.engines.specialty.lifestyle import Lifestyle360Motor
 from src.engines.specialty.metabolic import MetabolicPrecisionMotor
@@ -21,10 +20,7 @@ from src.engines.specialty.sleep_apnea import SleepApneaPrecisionMotor
 from src.engines.specialty.stewardship import LaboratoryStewardshipMotor
 from src.engines.specialty.lab_suggestion import LaboratorySuggestionMotor
 from src.engines.specialty.functional_sarcopenia import FunctionalSarcopeniaMotor
-from src.engines.specialty.fatty_liver import FLIMotor
-from src.engines.specialty.visceral_adiposity import VAIMotor
 from src.engines.specialty.cardiometabolic import CMIMotor
-from src.engines.specialty.apob_ratio import ApoBApoA1Motor
 from src.engines.specialty.lipid_risk import LipidRiskPrecisionMotor
 from src.engines.specialty.hemodynamics import PulsePressureMotor
 from src.engines.specialty.nafld_fibrosis import NFSMotor
@@ -33,12 +29,9 @@ from src.engines.specialty.ace_integration import ACEScoreEngine
 from src.engines.specialty.metformin_b12 import MetforminB12Motor
 from src.engines.specialty.cancer_screening import CancerScreeningMotor
 from src.engines.specialty.sglt2i_benefit import SGLT2iBenefitMotor
-from src.engines.specialty.kfre import KFREMotor
 from src.engines.specialty.charlson import CharlsonMotor
-from src.engines.specialty.free_testosterone import FreeTestosteroneMotor
 from src.engines.specialty.vitamin_d import VitaminDMotor
 from src.engines.specialty.fried_frailty import FriedFrailtyMotor
-from src.engines.specialty.tyg_bmi import TyGBMIMotor
 from src.engines.specialty.cvd_reclassifier import CVDReclassifierMotor
 from src.engines.specialty.womens_health import WomensHealthMotor
 from src.engines.specialty.mens_health import MensHealthMotor
@@ -54,12 +47,46 @@ from src.engines.specialty.psychometabolic_axis import PsychometabolicAxisMotor
 from src.engines.specialty.pharmacogenomics import PharmacogenomicProxyMotor
 from src.engines.specialty.a_taxonomy import ATaxonomyMotor
 from src.engines.specialty.b_domains import BDomainScoresMotor
+from src.engines.c_state import CStateMachineMotor
 from src.engines.domain import Encounter, AdjudicationResult
 from typing import Dict, Any, List, Optional, Literal
 import structlog
 import re
 
 logger = structlog.get_logger()
+
+# --- ProcessPoolExecutor Parallelization Config ---
+from concurrent.futures import ProcessPoolExecutor
+import multiprocessing
+from typing import Tuple
+
+_executor = None
+
+def _get_executor() -> Optional[ProcessPoolExecutor]:
+    global _executor
+    if _executor is None:
+        try:
+            if multiprocessing.current_process().name == 'MainProcess':
+                max_workers = min(multiprocessing.cpu_count(), 4)
+                _executor = ProcessPoolExecutor(max_workers=max_workers)
+        except Exception as e:
+            logger.warning("executor_init_failed", error=str(e))
+    return _executor
+
+def _run_single_motor(name: str, motor_cls: type, encounter: Encounter) -> Tuple[str, Any]:
+    """Helper function to execute a single clinical motor in a separate process."""
+    try:
+        motor = motor_cls()
+        res = None
+        if hasattr(motor, "run"):
+            res = motor.run(encounter)
+        elif hasattr(motor, "compute"):
+            is_valid, reason = motor.validate(encounter)
+            if is_valid:
+                res = motor.compute(encounter)
+        return name, res
+    except Exception as e:
+        return name, e
 
 # --- Registered Motor Categories ---
 PRIMARY_MOTORS = {
@@ -72,8 +99,9 @@ PRIMARY_MOTORS = {
     "MetabolicPrecisionMotor": MetabolicPrecisionMotor,
     "DeepMetabolicProxyMotor": DeepMetabolicProxyMotor,
     "Lifestyle360Motor": Lifestyle360Motor,
-    "KleiberBMRMotor": KleiberBMRMotor,
+    "ATaxonomyMotor": ATaxonomyMotor,
     "BDomainScoresMotor": BDomainScoresMotor,
+    "CStateMachineMotor": CStateMachineMotor,
     # Specialty engines
     "AnthropometryMotor": AnthropometryPrecisionMotor,
     "EndocrineMotor": EndocrinePrecisionMotor,
@@ -84,10 +112,7 @@ PRIMARY_MOTORS = {
     "LaboratorySuggestionMotor": LaboratorySuggestionMotor,
     "FunctionalSarcopeniaMotor": FunctionalSarcopeniaMotor,
     # NAFLD screening + staging
-    "FLIMotor": FLIMotor,
-    "VAIMotor": VAIMotor,
     "CMIMotor": CMIMotor,
-    "ApoBApoA1Motor": ApoBApoA1Motor,
     "PulsePressureMotor": PulsePressureMotor,
     "NFSMotor": NFSMotor,
     # Lipid risk (ACC/AHA 2026)
@@ -99,13 +124,10 @@ PRIMARY_MOTORS = {
     "CancerScreeningMotor": CancerScreeningMotor,
     "SGLT2iBenefitMotor": SGLT2iBenefitMotor,
     # Risk stratification + endocrine
-    "KFREMotor": KFREMotor,
     "CharlsonMotor": CharlsonMotor,
-    "FreeTestosteroneMotor": FreeTestosteroneMotor,
     "VitaminDMotor": VitaminDMotor,
     # Sprint 5: Clinical utility (data we already have)
     "FriedFrailtyMotor": FriedFrailtyMotor,
-    "TyGBMIMotor": TyGBMIMotor,
     "CVDReclassifierMotor": CVDReclassifierMotor,
     # Sprint 6: Gender-specific health
     "WomensHealthMotor": WomensHealthMotor,
@@ -170,6 +192,7 @@ class SpecialtyRunner:
         h = encounter.history
 
         # 1. Primary Engines (Independent Phase)
+        motors_to_run = []
         for name, motor_cls in PRIMARY_MOTORS.items():
             # Clinical mode: skip T3/T4 research/experimental motors
             if clinical_mode and name in self._RESEARCH_MOTORS:
@@ -179,37 +202,70 @@ class SpecialtyRunner:
                     reason="T3/T4 motor excluded",
                 )
                 continue
+            motors_to_run.append((name, motor_cls))
 
-            # Instantiate per-request to avoid state leakage (C-02)
-            motor = motor_cls()
-
-            try:
-                if hasattr(motor, "run"):
-                    results[name] = motor.run(encounter)
-                elif hasattr(motor, "compute"):
-                    is_valid, reason = motor.validate(encounter)
-                    if is_valid:
-                        results[name] = motor.compute(encounter)
-
-                # Contract validation: all motors must return AdjudicationResult
-                if name in results and results[name] is not None:
-                    if not isinstance(results[name], AdjudicationResult):
-                        logger.error(
-                            "motor_contract_violation",
-                            motor=name,
-                            expected="AdjudicationResult",
-                            actual=type(results[name]).__name__,
-                        )
-            except Exception as e:
-                logger.error(
-                    "motor_execution_error", motor=name, error_type=type(e).__name__
-                )
-                # C-03: Do not silence clinical errors
-                results[name] = AdjudicationResult(
-                    calculated_value=f"System Error: {str(e)}",
-                    confidence=0.0,
-                    estado_ui="INDETERMINATE_LOCKED"
-                )
+        executor = _get_executor()
+        if executor is not None:
+            # Parallel execution via ProcessPoolExecutor
+            futures = [
+                executor.submit(_run_single_motor, name, motor_cls, encounter)
+                for name, motor_cls in motors_to_run
+            ]
+            for future in futures:
+                name = "Unknown"
+                try:
+                    name, res = future.result()
+                    if isinstance(res, Exception):
+                        raise res
+                    if res is not None:
+                        results[name] = res
+                        # Contract validation: all motors must return AdjudicationResult
+                        if not isinstance(res, AdjudicationResult):
+                            logger.error(
+                                "motor_contract_violation",
+                                motor=name,
+                                expected="AdjudicationResult",
+                                actual=type(res).__name__,
+                            )
+                except Exception as e:
+                    logger.error(
+                        "motor_execution_error", motor=name, error_type=type(e).__name__
+                    )
+                    results[name] = AdjudicationResult(
+                        calculated_value=f"System Error: {str(e)}",
+                        confidence=0.0,
+                        estado_ui="INDETERMINATE_LOCKED"
+                    )
+        else:
+            # Fallback to Sequential execution (e.g. if running in child process)
+            for name, motor_cls in motors_to_run:
+                try:
+                    motor = motor_cls()
+                    res = None
+                    if hasattr(motor, "run"):
+                        res = motor.run(encounter)
+                    elif hasattr(motor, "compute"):
+                        is_valid, reason = motor.validate(encounter)
+                        if is_valid:
+                            res = motor.compute(encounter)
+                    if res is not None:
+                        results[name] = res
+                        if not isinstance(res, AdjudicationResult):
+                            logger.error(
+                                "motor_contract_violation",
+                                motor=name,
+                                expected="AdjudicationResult",
+                                actual=type(res).__name__,
+                            )
+                except Exception as e:
+                    logger.error(
+                        "motor_execution_error", motor=name, error_type=type(e).__name__
+                    )
+                    results[name] = AdjudicationResult(
+                        calculated_value=f"System Error: {str(e)}",
+                        confidence=0.0,
+                        estado_ui="INDETERMINATE_LOCKED"
+                    )
 
         # 2. Risk Engines (Gated / Experimental Phase)
         cvd_risk_category = None
