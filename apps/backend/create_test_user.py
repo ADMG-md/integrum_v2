@@ -18,7 +18,7 @@ async def create_test_user():
                 email=email,
                 hashed_password=hashed_password,
                 full_name="Hardening Tester",
-                role=UserRole.INTERNAL_MEDICINE.value
+                role=UserRole.PHYSICIAN.value
             )
             db.add(user)
             await db.commit()

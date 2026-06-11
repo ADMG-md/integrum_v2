@@ -1,5 +1,6 @@
 import enum
-from sqlalchemy import String, ForeignKey, JSON, Float, DateTime, Enum as SQLEnum
+from sqlalchemy import String, ForeignKey, JSON, Float, DateTime, Enum as SQLEnum, Index
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import relationship, Mapped, mapped_column
 from src.database import Base
 import uuid
@@ -130,6 +131,13 @@ class Patient(Base):
 
 class EncounterModel(Base):
     __tablename__ = "encounters"
+    __table_args__ = (
+        Index(
+            "ix_encounters_metabolic_panel_payload_gin",
+            "metabolic_panel_payload",
+            postgresql_using="gin",
+        ),
+    )
 
     id: Mapped[str] = mapped_column(
         String(255), primary_key=True, default=lambda: str(uuid.uuid4())
@@ -150,6 +158,12 @@ class EncounterModel(Base):
     clinical_notes: Mapped[Optional[str]] = mapped_column(String(5000), nullable=True)
     plan_of_action: Mapped[Optional[Dict[str, Any]]] = mapped_column(
         JSON, nullable=True
+    )
+    metabolic_panel_payload: Mapped[Optional[Dict[str, Any]]] = mapped_column(
+        JSONB, nullable=True
+    )
+    clinical_history_payload: Mapped[Optional[Dict[str, Any]]] = mapped_column(
+        JSONB, nullable=True
     )
     physician_id: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
 
