@@ -32,10 +32,10 @@ class EncryptedString(TypeDecorator):
     @classmethod
     def _get_cipher(cls) -> Fernet:
         if cls._cipher is None:
-            key = settings.VAULT_MASTER_KEY.encode()
-            if not key:
-                raise RuntimeError("VAULT_MASTER_KEY environment variable is not set")
-            cls._cipher = Fernet(key)
+            from src.services.vault_service import vault_service
+            if not vault_service.key:
+                raise RuntimeError("VAULT_MASTER_KEY / VaultService not initialized")
+            cls._cipher = Fernet(vault_service.key)
         return cls._cipher
 
     def process_bind_param(self, value, dialect):

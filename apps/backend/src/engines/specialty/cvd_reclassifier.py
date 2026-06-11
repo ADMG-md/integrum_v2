@@ -39,6 +39,15 @@ class CVDReclassifierMotor(BaseClinicalMotor):
     REQUIREMENT_ID = "CVD-RECLASSIFIER"
 
     def validate(self, encounter: Encounter) -> Tuple[bool, str]:
+        # Pregnancy Safety Gate (Statins are teratogenic Category X)
+        is_pregnant = False
+        if encounter.history and encounter.history.pregnancy_status in ("pregnant", "positive"):
+            is_pregnant = True
+        elif encounter.metadata and encounter.metadata.get("pregnancy_status") in ("positive", "pregnant"):
+            is_pregnant = True
+        if is_pregnant:
+            return False, "Estatinas contraindicadas en gestación activa."
+
         ldl = encounter.metabolic_panel.ldl_mg_dl
         if not ldl:
             return False, "CVD Reclassifier requires: LDL cholesterol."

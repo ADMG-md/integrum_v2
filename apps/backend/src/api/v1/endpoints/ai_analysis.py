@@ -14,6 +14,7 @@ from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
 from pydantic import BaseModel, Field
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
+from sqlalchemy.orm import selectinload
 from typing import Dict, Any, List, Optional, Literal
 from datetime import datetime
 import hashlib
@@ -204,7 +205,14 @@ async def export_for_ai_analysis(
         )
 
     if encounter_id:
-        enc_stmt = select(EncounterModel).where(EncounterModel.id == encounter_id)
+        enc_stmt = (
+            select(EncounterModel)
+            .options(
+                selectinload(EncounterModel.observations),
+                selectinload(EncounterModel.conditions),
+            )
+            .where(EncounterModel.id == encounter_id)
+        )
         enc_result = await db.execute(enc_stmt)
         encounter = enc_result.scalar_one_or_none()
 
@@ -240,6 +248,10 @@ async def export_for_ai_analysis(
 
         enc_stmt = (
             select(EncounterModel)
+            .options(
+                selectinload(EncounterModel.observations),
+                selectinload(EncounterModel.conditions),
+            )
             .where(
                 EncounterModel.patient_id == patient_id,
                 EncounterModel.status == status_filter,
@@ -350,7 +362,14 @@ async def batch_analyze(
 
     for enc_id in request.encounter_ids:
         try:
-            enc_stmt = select(EncounterModel).where(EncounterModel.id == enc_id)
+            enc_stmt = (
+                select(EncounterModel)
+                .options(
+                    selectinload(EncounterModel.observations),
+                    selectinload(EncounterModel.conditions),
+                )
+                .where(EncounterModel.id == enc_id)
+            )
             enc_result = await db.execute(enc_stmt)
             encounter = enc_result.scalar_one_or_none()
 

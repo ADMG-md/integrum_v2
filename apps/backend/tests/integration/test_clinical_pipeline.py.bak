@@ -25,9 +25,9 @@ def test_pipeline_happy_path(base_encounter):
     from unittest.mock import patch
     
     mock_results = {
-        "ATaxonomyMotor": AdjudicationResult(calculated_value="Quema Lenta (A3)", evidence=[], requirement_id="A", metadata={"code": "A3"}),
-        "BDomainScoresMotor": AdjudicationResult(calculated_value="", evidence=[], requirement_id="B", metadata={"domain_scores": [{"code": "B_UNCONTROLLED", "completeness_status": "complete"}]}),
-        "CTrajectoryMotor": AdjudicationResult(calculated_value="C2 Suboptimal", evidence=[], requirement_id="C", metadata={})
+        "ATaxonomyMotor": AdjudicationResult(calculated_value="Quema Lenta (A3)", confidence=1.0, evidence=[], requirement_id="A", metadata={"code": "A3"}),
+        "BDomainScoresMotor": AdjudicationResult(calculated_value="", confidence=1.0, evidence=[], requirement_id="B", metadata={"domain_scores": [{"code": "B_UNCONTROLLED", "completeness_status": "complete"}]}),
+        "CTrajectoryMotor": AdjudicationResult(calculated_value="C2 Suboptimal", confidence=1.0, evidence=[], requirement_id="C", metadata={})
     }
     
     with patch('src.services.encounter_orchestrator.run_motors_for_encounter', return_value=mock_results):
@@ -56,8 +56,8 @@ def test_pipeline_missing_axis_a(base_encounter):
     
     mock_results = {
         # Axis A missing
-        "BDomainScoresMotor": AdjudicationResult(calculated_value="", evidence=[], requirement_id="B", metadata={"domain_scores": [{"code": "B_UNCONTROLLED", "completeness_status": "complete"}]}),
-        "CTrajectoryMotor": AdjudicationResult(calculated_value="C2 Suboptimal", evidence=[], requirement_id="C", metadata={})
+        "BDomainScoresMotor": AdjudicationResult(calculated_value="", confidence=1.0, evidence=[], requirement_id="B", metadata={"domain_scores": [{"code": "B_UNCONTROLLED", "completeness_status": "complete"}]}),
+        "CTrajectoryMotor": AdjudicationResult(calculated_value="C2 Suboptimal", confidence=1.0, evidence=[], requirement_id="C", metadata={})
     }
     
     with patch('src.services.encounter_orchestrator.run_motors_for_encounter', return_value=mock_results):
@@ -85,9 +85,9 @@ def test_pipeline_missing_axis_b(base_encounter):
     from unittest.mock import patch
     
     mock_results = {
-        "ATaxonomyMotor": AdjudicationResult(calculated_value="Normal (A0)", evidence=[], requirement_id="A", metadata={"code": "A0"}),
+        "ATaxonomyMotor": AdjudicationResult(calculated_value="Normal (A0)", confidence=1.0, evidence=[], requirement_id="A", metadata={"code": "A0"}),
         # Axis B missing
-        "CTrajectoryMotor": AdjudicationResult(calculated_value="C0 Responder", evidence=[], requirement_id="C", metadata={})
+        "CTrajectoryMotor": AdjudicationResult(calculated_value="C0 Responder", confidence=1.0, evidence=[], requirement_id="C", metadata={})
     }
     
     with patch('src.services.encounter_orchestrator.run_motors_for_encounter', return_value=mock_results):
@@ -114,8 +114,8 @@ def test_pipeline_missing_axis_c(base_encounter):
     from unittest.mock import patch
     
     mock_results = {
-        "ATaxonomyMotor": AdjudicationResult(calculated_value="Quema Lenta (A3)", evidence=[], requirement_id="A", metadata={"code": "A3"}),
-        "BDomainScoresMotor": AdjudicationResult(calculated_value="", evidence=[], requirement_id="B", metadata={"domain_scores": [{"code": "B_UNCONTROLLED", "completeness_status": "complete"}]}),
+        "ATaxonomyMotor": AdjudicationResult(calculated_value="Quema Lenta (A3)", confidence=1.0, evidence=[], requirement_id="A", metadata={"code": "A3"}),
+        "BDomainScoresMotor": AdjudicationResult(calculated_value="", confidence=1.0, evidence=[], requirement_id="B", metadata={"domain_scores": [{"code": "B_UNCONTROLLED", "completeness_status": "complete"}]}),
         # Axis C missing
     }
     

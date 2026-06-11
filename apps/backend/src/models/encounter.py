@@ -3,6 +3,8 @@ from sqlalchemy import String, ForeignKey, JSON, Float, DateTime, Enum as SQLEnu
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import relationship, Mapped, mapped_column
 from src.database import Base
+from src.domain.models import CompletenessStatus
+
 import uuid
 from datetime import datetime
 from typing import List, Optional, Dict, Any, TYPE_CHECKING
@@ -197,6 +199,59 @@ class EncounterModel(Base):
         "DerivedClassification", back_populates="encounter", cascade="all, delete-orphan"
     )
 
+    @property
+    def medications(self) -> List[Any]:
+        """Bridge property to return a list of Medication-like objects from clinical_history_payload."""
+        from datetime import date
+        from typing import Any
+        class TempMed:
+            def __init__(self, name: str, code: str = "CUSTOM", is_active: bool = True, dose_amount: Any = None, frequency: Any = None, start_date: Any = None, end_date: Any = None):
+                self.name = name
+                self.code = code
+                self.is_active = is_active
+                self.dose_amount = dose_amount
+                self.frequency = frequency
+                self.start_date = start_date
+                self.end_date = end_date
+
+        meds = []
+        if self.clinical_history_payload:
+            curr = self.clinical_history_payload.get("current_medications") or []
+            for m in curr:
+                if isinstance(m, dict):
+                    s_date = None
+                    if m.get("start_date"):
+                        try:
+                            s_date = date.fromisoformat(str(m["start_date"])[:10])
+                        except Exception:
+                            pass
+                    meds.append(TempMed(
+                        name=m.get("drug_name", "Unknown"),
+                        code="CUSTOM",
+                        is_active=True,
+                        dose_amount=m.get("dose"),
+                        frequency=m.get("frequency"),
+                        start_date=s_date
+                    ))
+            prev = self.clinical_history_payload.get("previous_medications") or []
+            for m in prev:
+                if isinstance(m, dict):
+                    s_date = None
+                    if m.get("start_date"):
+                        try:
+                            s_date = date.fromisoformat(str(m["start_date"])[:10])
+                        except Exception:
+                            pass
+                    meds.append(TempMed(
+                        name=m.get("drug_name", "Unknown"),
+                        code="CUSTOM",
+                        is_active=False,
+                        dose_amount=m.get("dose"),
+                        frequency=m.get("frequency"),
+                        start_date=s_date
+                    ))
+        return meds
+
 
 class ObservationModel(Base):
     __tablename__ = "observations"
@@ -245,10 +300,6 @@ class AxisType(str, enum.Enum):
     E = "E"
 
 
-class CompletenessStatus(str, enum.Enum):
-    COMPLETE = "complete"
-    PARTIAL = "partial"
-    INDETERMINATE = "indeterminate"
 
 
 class ConditionStatus(str, enum.Enum):

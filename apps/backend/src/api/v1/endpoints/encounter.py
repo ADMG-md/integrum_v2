@@ -86,6 +86,8 @@ async def get_encounter(
         "clinical_notes": encounter.clinical_notes,
         "plan_of_action": encounter.plan_of_action,
         "agreement_rate": encounter.agreement_rate,
+        "metabolic_panel_payload": encounter.metabolic_panel_payload,
+        "clinical_history_payload": encounter.clinical_history_payload,
         "created_at": encounter.created_at.isoformat()
         if encounter.created_at
         else None,
@@ -129,6 +131,8 @@ async def get_latest_encounter(
         "personal_history": encounter.personal_history,
         "family_history": encounter.family_history,
         "psychometrics": encounter.psychometrics,
+        "metabolic_panel_payload": encounter.metabolic_panel_payload,
+        "clinical_history_payload": encounter.clinical_history_payload,
         "created_at": encounter.created_at.isoformat()
         if encounter.created_at
         else None,
@@ -150,7 +154,6 @@ async def get_patient_encounters(
         select(EncounterModel)
         .where(EncounterModel.patient_id == patient_id)
         .options(
-            selectinload(EncounterModel.observations),
             selectinload(EncounterModel.conditions),
         )
         .order_by(EncounterModel.created_at.desc())

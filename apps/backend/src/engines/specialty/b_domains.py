@@ -1,7 +1,7 @@
 from src.engines.base import BaseClinicalMotor
 from src.engines.domain import Encounter, AdjudicationResult, ClinicalEvidence
 from typing import Tuple, List, Dict, Any, Optional
-from src.models.encounter import CompletenessStatus
+from src.domain.models import CompletenessStatus
 
 class BDomainScoresMotor(BaseClinicalMotor):
     """

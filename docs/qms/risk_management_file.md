@@ -98,6 +98,7 @@
 | **H-050** | **FHIR Bundle Validation Gap** | Bundle FHIR exportado sin observaciones requeridas | Interoperabilidad incompleta con sistemas externos | P2 | S2 | ALARP | validate_fhir_bundle verifica 12 observaciones requeridas + 15 recomendadas. | **Unit Test**: `test_fhir_validator.py` (37 tests, Verified) | P1 (ACC) |
 | **H-051** | **SOAP Text Generation Liability** | Nota SOAP autogenerada (ResultsViewer.tsx:120-173) copiada directamente al expediente médico legal con errores u omisiones | Responsabilidad médica directa por texto clínico generado algorítmicamente | P3 | S4 | UNA | 1) Disclaimer obligatorio "Nota preliminar — requiere revisión y firma del médico tratante". 2) Médico debe editar/confirmar antes de guardar. 3) TODO: auditoría de versionado de notas SOAP. | Sin test unitario — riesgo de proceso, no de cálculo. Requiere validación clínica. | P1 (ACC) |
 | **H-052** | **Decision Bus Corruption** | Lógica clínica nuclear anidada en orquestador o pasada en diccionarios sin tipar (Acoplamiento implícito) | Pérdida de trazabilidad de decisiones médicas, colisión de reglas, falla de compliance SaMD IEC 62304 | P2 | S4 | ALARP | Extracción de reglas a `CoreClinicalDecisionEngine` aislado. Interfaz estricta mediante Pydantic `DecisionContext` y `ClinicalRecommendation`. | **Unit Test**: `test_core_decisions.py` (Validación de contrato formal y precedencia) | P1 (ACC) |
+| **H-053** | **EAV-to-JSONB Migration Loss** | Pérdida o corrupción de datos clínicos históricos durante la migración de EAV a JSONB | Oclusión de laboratorios o antecedentes que provoquen recomendaciones erróneas u omisiones de seguridad (ej. teratogénicos) | P2 | S4 | ALARP | 1) Script de migración seguro para memoria con procesamiento por lotes `yield_per(100)`. 2) Validación de coherencia de esquemas Pydantic. 3) Integración robusta verificada por tests. | **Integration Test**: `test_jsonb_pipeline.py` (Verified) | P1 (ACC) |
 
 
 ---
@@ -107,9 +108,10 @@
 - **Implemented:** H-001, H-002, H-007, H-014, H-015 (Golden Motors + V2.6 Remediation).
 - **Implemented:** H-016, H-017 (VETO-SAFETY-01/02 remediation, 2026-04-05).
 - **Implemented:** H-018 through H-051 (Full motor hazard coverage, 2026-04-07).
+- **Implemented:** H-053 (EAV-to-JSONB database schema migration and backfill, 2026-06-11).
 - **SOUP:** H-043 — Drug interaction DB classified as SOUP (SQLite + clinical data).
-- **Test Coverage:** 526 unit tests covering all 48 motors.
+- **Test Coverage:** 661 unit & integration tests covering all motors and persistence layers.
 
 ---
 
-**Revision:** 2026.04.07.A | **Status:** ACTIVE — FULL COVERAGE — 48 MOTORS | 526 TESTS
+**Revision:** 2026.06.11.A | **Status:** ACTIVE — FULL COVERAGE — 48 MOTORS | 661 TESTS

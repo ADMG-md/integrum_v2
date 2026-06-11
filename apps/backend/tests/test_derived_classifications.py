@@ -8,6 +8,9 @@ from src.models.user import UserModel, UserRole
 
 @pytest.mark.anyio
 async def test_derived_classifications_population():
+    # Dispose pool to prevent loop mismatch
+    await engine.dispose()
+    
     # 1. Setup DB tables
     import sqlalchemy as sa
     async with engine.begin() as conn:

@@ -12,6 +12,13 @@ from datetime import datetime, date
 from enum import Enum
 
 
+class CompletenessStatus(str, Enum):
+    COMPLETE = "complete"
+    PARTIAL = "partial"
+    INDETERMINATE = "indeterminate"
+
+
+
 # --- Utility ---
 
 

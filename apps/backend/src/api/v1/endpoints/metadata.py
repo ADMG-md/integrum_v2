@@ -2,6 +2,7 @@ from fastapi import APIRouter
 from src.schemas.encounter import ObservationSchema
 from typing import Dict, Tuple, List, Any
 from src.engines.specialty_runner import PRIMARY_MOTORS, GATED_MOTORS, AGGREGATOR_MOTORS
+from src.services.redis_service import cache_get, cache_set
 import importlib
 
 router = APIRouter()
@@ -12,6 +13,11 @@ async def get_biological_limits() -> Dict[str, Tuple[float, float]]:
     Expose physiological limits defined in the backend to the frontend.
     This ensures synchronous validation without code duplication.
     """
+    cache_key = "metadata:limits"
+    cached = await cache_get(cache_key)
+    if cached:
+        return cached
+
     LIMITS = {
         "2339-0": (20, 600), # Glucose
         "8480-6": (60, 250), # SBP
@@ -36,6 +42,7 @@ async def get_biological_limits() -> Dict[str, Tuple[float, float]]:
         "GRIP-STR-R": (5.0, 80.0),
         "GAIT-SPEED": (0.1, 3.0),
     }
+    await cache_set(cache_key, LIMITS, ttl_seconds=86400)
     return LIMITS
 
 
@@ -68,6 +75,11 @@ async def get_motor_metadata() -> List[Dict[str, Any]]:
     Returns metadata for all registered motors.
     Used by frontend to dynamically render motor groups and panels.
     """
+    cache_key = "metadata:motors"
+    cached = await cache_get(cache_key)
+    if cached:
+        return cached
+
     all_motors = []
     
     # Process PRIMARY_MOTORS (dict of motor_name -> instance)
@@ -101,6 +113,7 @@ async def get_motor_metadata() -> List[Dict[str, Any]]:
         }
         all_motors.append(meta)
     
+    await cache_set(cache_key, all_motors, ttl_seconds=86400)
     return all_motors
 
 
@@ -110,6 +123,11 @@ async def get_questionnaires() -> List[Dict[str, Any]]:
     Returns questionnaire definitions (PHQ-9, GAD-7, TFEQ, Atenas, FNQ).
     Used by frontend to dynamically render questionnaire forms.
     """
+    cache_key = "metadata:questionnaires"
+    cached = await cache_get(cache_key)
+    if cached:
+        return cached
+
     questionnaires = [
         {
             "id": "phq9",
@@ -220,4 +238,5 @@ async def get_questionnaires() -> List[Dict[str, Any]]:
             ],
         },
     ]
+    await cache_set(cache_key, questionnaires, ttl_seconds=86400)
     return questionnaires

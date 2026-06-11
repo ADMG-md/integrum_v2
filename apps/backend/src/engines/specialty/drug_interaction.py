@@ -324,8 +324,12 @@ class DrugInteractionMotor(BaseClinicalMotor):
                             break
 
         # 4. Pregnancy Safety
-        pregnancy_status = encounter.metadata.get("pregnancy_status") if encounter.metadata else None
-        if pregnancy_status == "positive":
+        is_pregnant = False
+        if encounter.history and encounter.history.pregnancy_status in ("pregnant", "positive"):
+            is_pregnant = True
+        elif encounter.metadata and encounter.metadata.get("pregnancy_status") in ("positive", "pregnant"):
+            is_pregnant = True
+        if is_pregnant:
             for name, data in matched_meds:
                 if data.get("teratogenic"):
                     preg_cat = data.get("preg_cat", "unknown")

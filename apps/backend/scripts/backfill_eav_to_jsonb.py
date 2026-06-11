@@ -129,19 +129,22 @@ async def backfill_historical_encounters():
                         )
                         # Store raw payload even if warnings exist, fallback to unvalidated dictionary
                         encounter.metabolic_panel_payload = metabolic_data
+                else:
+                    encounter.metabolic_panel_payload = {}
                 
                 # Reconstruct Clinical History from clinical_notes
+                history_dict = {}
                 if encounter.clinical_notes and "History: " in encounter.clinical_notes:
                     try:
                         raw_json = encounter.clinical_notes.split("History: ", 1)[1]
                         history_dict = json.loads(raw_json)
-                        encounter.clinical_history_payload = history_dict
                     except Exception as history_err:
                         logger.warning(
                             "history_parsing_failed_for_encounter",
                             encounter_id=encounter.id,
                             error=str(history_err)
                         )
+                encounter.clinical_history_payload = history_dict
                 
                 processed_count += 1
                 

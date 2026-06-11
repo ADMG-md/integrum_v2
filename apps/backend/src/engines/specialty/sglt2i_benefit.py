@@ -45,6 +45,15 @@ class SGLT2iBenefitMotor(BaseClinicalMotor):
     }
 
     def validate(self, encounter: Encounter) -> Tuple[bool, str]:
+        # Pregnancy Safety Gate
+        is_pregnant = False
+        if encounter.history and encounter.history.pregnancy_status in ("pregnant", "positive"):
+            is_pregnant = True
+        elif encounter.metadata and encounter.metadata.get("pregnancy_status") in ("positive", "pregnant"):
+            is_pregnant = True
+        if is_pregnant:
+            return False, "SGLT2i contraindicado en gestación activa."
+
         has_t2dm = encounter.history.has_type2_diabetes if encounter.history else False
         has_ckd = encounter.history.has_ckd if encounter.history else False
         has_hf = encounter.has_condition("I50") or encounter.has_condition("I50.9")

@@ -20,11 +20,11 @@ from typing import Dict, Any, List
 MEDICATIONS: Dict[str, Dict[str, Any]] = {
     "semaglutide": {
         "id": 1, "class": "GLP-1 RA", "weight_effect": "loss", "avg_loss": -15.0, 
-        "renal_dosing": False, "teratogenic": True, "preg_cat": "N", "qt_risk": "low"
+        "renal_dosing": False, "teratogenic": True, "preg_cat": "X", "qt_risk": "low"
     },
     "tirzepatide": {
         "id": 2, "class": "GIP/GLP-1 RA", "weight_effect": "loss", "avg_loss": -20.0, 
-        "renal_dosing": False, "teratogenic": True, "preg_cat": "N", "qt_risk": "low"
+        "renal_dosing": False, "teratogenic": True, "preg_cat": "X", "qt_risk": "low"
     },
     "metformin": {
         "id": 9, "class": "Biguanide", "weight_effect": "neutral", "avg_loss": -1.0, 
@@ -32,7 +32,7 @@ MEDICATIONS: Dict[str, Dict[str, Any]] = {
     },
     "empagliflozin": {
         "id": 6, "class": "SGLT2i", "weight_effect": "loss", "avg_loss": -2.5, 
-        "renal_dosing": True, "teratogenic": True, "preg_cat": "N", "qt_risk": "none"
+        "renal_dosing": True, "teratogenic": True, "preg_cat": "X", "qt_risk": "none"
     },
     "bupropion": {
         "id": 41, "class": "Atypical AD", "weight_effect": "loss", "avg_loss": -2.5, 
@@ -84,6 +84,9 @@ CONTRAINDICATIONS: Dict[str, List[Dict[str, str]]] = {
     ],
     "Z33": [ # Pregnancy
         {"med_id": 10, "severity": "absolute", "rationale": "Teratogenic - Category X", "alt": "Discontinue immediately"},
+        {"med_id": 1, "severity": "absolute", "rationale": "GLP-1 receptor agonist contraindicated in pregnancy", "alt": "Consider insulin"},
+        {"med_id": 2, "severity": "absolute", "rationale": "GIP/GLP-1 receptor agonist contraindicated in pregnancy", "alt": "Consider insulin"},
+        {"med_id": 6, "severity": "absolute", "rationale": "SGLT2 inhibitor contraindicated in pregnancy", "alt": "Consider insulin"},
     ]
 }
 

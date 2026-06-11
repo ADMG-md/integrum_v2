@@ -160,6 +160,9 @@ async def create_encounter_record(
         reason_for_visit=payload.reason_for_visit,
         personal_history=payload.personal_history,
         family_history=payload.family_history,
+        metabolic_panel_payload=payload.metabolic.model_dump() if payload.metabolic else None,
+        clinical_history_payload=payload.history.model_dump() if payload.history else None,
+        adherence_self_report=payload.adherence_self_report.value if payload.adherence_self_report else None,
     )
     db.add(new_encounter)
     await db.flush()

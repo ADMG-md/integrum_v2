@@ -68,3 +68,39 @@ async def is_token_revoked(jti: str) -> bool:
     """Returns True if the token jti is in the blacklist."""
     async with _get_redis() as r:
         return bool(await r.exists(f"auth:blacklist:{jti}"))
+
+
+# ─── General Caching Helpers ──────────────────────────────────────────────────
+
+import json
+from typing import Any, Optional
+
+async def cache_set(key: str, val: Any, ttl_seconds: int = 3600) -> None:
+    """Safely store a serialized value in Redis cache."""
+    try:
+        async with _get_redis() as r:
+            serialized = json.dumps(val)
+            await r.set(f"cache:{key}", serialized, ex=ttl_seconds)
+    except Exception as e:
+        logger.warning("cache_set_failed", key=key, error=str(e))
+
+
+async def cache_get(key: str) -> Optional[Any]:
+    """Safely retrieve and deserialize a value from Redis cache."""
+    try:
+        async with _get_redis() as r:
+            data = await r.get(f"cache:{key}")
+            if data:
+                return json.loads(data)
+    except Exception as e:
+        logger.warning("cache_get_failed", key=key, error=str(e))
+    return None
+
+
+async def cache_invalidate(key: str) -> None:
+    """Safely delete a key from Redis cache."""
+    try:
+        async with _get_redis() as r:
+            await r.delete(f"cache:{key}")
+    except Exception as e:
+        logger.warning("cache_invalidate_failed", key=key, error=str(e))

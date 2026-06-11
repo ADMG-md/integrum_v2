@@ -12,6 +12,7 @@ Endpoints:
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import select
+from sqlalchemy.orm import selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import Optional
 
@@ -51,7 +52,15 @@ async def get_encounter_as_fhir(
     - Research networks using FHIR
     """
     # Get encounter from database
-    stmt = select(EncounterModel).where(EncounterModel.id == encounter_id)
+    stmt = (
+        select(EncounterModel)
+        .options(
+            selectinload(EncounterModel.patient),
+            selectinload(EncounterModel.observations),
+            selectinload(EncounterModel.conditions),
+        )
+        .where(EncounterModel.id == encounter_id)
+    )
     result = await db.execute(stmt)
     encounter = result.scalar_one_or_none()
 
@@ -96,6 +105,11 @@ async def get_patient_encounters_as_fhir(
     # Get encounters
     enc_stmt = (
         select(EncounterModel)
+        .options(
+            selectinload(EncounterModel.patient),
+            selectinload(EncounterModel.observations),
+            selectinload(EncounterModel.conditions),
+        )
         .where(EncounterModel.patient_id == patient_id)
         .order_by(EncounterModel.created_at.desc())
         .limit(limit)
@@ -163,7 +177,15 @@ async def export_encounter_as_fhir_json(
     """
     from fastapi.responses import JSONResponse
 
-    stmt = select(EncounterModel).where(EncounterModel.id == encounter_id)
+    stmt = (
+        select(EncounterModel)
+        .options(
+            selectinload(EncounterModel.patient),
+            selectinload(EncounterModel.observations),
+            selectinload(EncounterModel.conditions),
+        )
+        .where(EncounterModel.id == encounter_id)
+    )
     result = await db.execute(stmt)
     encounter = result.scalar_one_or_none()
 

@@ -38,6 +38,12 @@ class Settings(BaseSettings):
     DATABASE_URL: str = Field(default="postgresql+asyncpg://integrum_user:integrum_password@localhost:5432/integrum_v2")
     REDIS_URL: str = Field(default="redis://localhost:6379/0")
     
+    # Database Pool Settings
+    DB_POOL_SIZE: int = Field(default=20, description="SQLAlchemy connection pool size")
+    DB_MAX_OVERFLOW: int = Field(default=10, description="SQLAlchemy connection pool max overflow")
+    DB_POOL_RECYCLE: int = Field(default=3600, description="SQLAlchemy connection pool recycle lifetime in seconds")
+    DB_POOL_TIMEOUT: int = Field(default=30, description="SQLAlchemy connection pool timeout in seconds")
+    
     # CORS
     CORS_ORIGINS: str = Field(
         default="http://localhost:3000,http://127.0.0.1:3000,http://localhost:4000,http://127.0.0.1:4000",
