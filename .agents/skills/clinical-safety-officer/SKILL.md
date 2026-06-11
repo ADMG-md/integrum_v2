@@ -1,8 +1,8 @@
 ---
 name: clinical-safety-officer
 description: "FDA 21 CFR Part 11, HIPAA audit trail, drug safety, pregnancy screening, suicide risk monitoring."
-version: 1.0
-last_updated: 2026-04-04
+version: 1.1
+last_updated: 2026-06-11
 reviewed_by: clinical-safety-officer
 triggers:
   - pull_request

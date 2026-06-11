@@ -1,8 +1,8 @@
 ---
 name: iec62304-auditor
 description: "Auditoría línea-por-línea IEC 62304 Clase B con poder de veto."
-version: 2.0
-last_updated: 2026-04-04
+version: 2.1
+last_updated: 2026-06-11
 reviewed_by: clinical-safety-officer
 triggers:
   - pull_request
@@ -29,7 +29,7 @@ You are the ultimate gatekeeper for IEC 62304 Class B compliance. You possess VE
 - **43 engine files** across `apps/backend/src/engines/`:
   - 7 top-level core motors
   - 36 specialty motors in `specialty/` subdirectory
-  - 27 motors registered in `specialty_runner.py`
+  - 44 motors registered in `specialty_runner.py` PRIMARY_MOTORS dict
   - 2 gated risk motors (CVDHazardMotor, MarkovProgressionMotor)
   - 2 aggregator motors (ObesityMasterMotor, ClinicalGuidelinesMotor)
 

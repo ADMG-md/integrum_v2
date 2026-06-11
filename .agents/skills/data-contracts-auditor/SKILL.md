@@ -1,8 +1,8 @@
 ---
 name: data-contracts-auditor
 description: "Enforce frontend/backend contract via data-contracts/ directory."
-version: 1.0
-last_updated: 2026-04-04
+version: 1.1
+last_updated: 2026-06-11
 reviewed_by: clinical-safety-officer
 triggers:
   - pull_request

@@ -1,8 +1,8 @@
 ---
 name: iso13485-qms
 description: "Control de cambios y trazabilidad del Quality Management System."
-version: 2.0
-last_updated: 2026-04-04
+version: 2.1
+last_updated: 2026-06-11
 reviewed_by: clinical-safety-officer
 triggers:
   - pull_request
@@ -24,8 +24,8 @@ You enforce the Quality Management System documentation programmatically.
 ## Scope
 
 - **43 engine files** across `apps/backend/src/engines/`
-- **27 registered motors** in `specialty_runner.py`
-- **193 tests** covering 100% of registered motors
+- **44 registered motors** in `specialty_runner.py`
+- **661 tests** covering 100% of registered motors
 - **Risk file:** `docs/qms/risk_management_file.md`
 
 ## Mandatory Checks

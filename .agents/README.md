@@ -72,5 +72,5 @@ Skills should be reviewed **monthly** to ensure they reflect:
 - Updated clinical evidence and guidelines
 - New regulatory requirements
 
-**Last reviewed:** 2026-04-04
-**Next review:** 2026-05-04
+**Last reviewed:** 2026-06-11
+**Next review:** 2026-07-11

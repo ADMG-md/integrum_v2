@@ -1,8 +1,8 @@
 ---
 name: repo-structure-auditor
 description: "Auditor de Arquitectura Limpia para evitar la degradación del repositorio."
-version: 2.0
-last_updated: 2026-04-04
+version: 2.1
+last_updated: 2026-06-11
 reviewed_by: clinical-safety-officer
 triggers:
   - branch_creation
@@ -25,7 +25,7 @@ Medical Device Software relies on rigorous isolation. Clean Architecture is not 
 
 - **43 engine files**: 7 top-level + 36 in `specialty/`
 - **Infrastructure files**: `base.py`, `base_models.py`, `calculators.py`, `domain.py`
-- **Registry**: `specialty_runner.py` (27 registered motors)
+- **Registry**: `specialty_runner.py` (44 registered motors in PRIMARY_MOTORS)
 
 ## Mandatory Checks
 

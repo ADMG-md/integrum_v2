@@ -1,8 +1,8 @@
 ---
 name: test-coverage-auditor
 description: "Verifica 100% de cobertura de tests para todos los motores clínicos registrados."
-version: 1.0
-last_updated: 2026-04-04
+version: 1.1
+last_updated: 2026-06-11
 reviewed_by: clinical-safety-officer
 triggers:
   - pull_request
@@ -24,8 +24,8 @@ You enforce 100% test coverage for all clinical engines. In a SaMD Class B devic
 
 ## Scope
 
-- **27 registered motors** in `specialty_runner.py` PRIMARY_MOTORS dict
-- **193 tests** in `tests/unit/engines/`
+- **44 registered motors** in `specialty_runner.py` PRIMARY_MOTORS dict
+- **661 tests** in `tests/unit/engines/` and integration tests
 - **Minimum: 3 tests per motor** (validation, normal, abnormal)
 
 ## Mandatory Checks

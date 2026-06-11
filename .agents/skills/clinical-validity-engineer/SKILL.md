@@ -1,8 +1,8 @@
 ---
 name: clinical-validity-engineer
 description: "Traduce evidencia clínica (GRADE) a esquemas Pydantic y reglas algorítmicas."
-version: 2.0
-last_updated: 2026-04-04
+version: 2.1
+last_updated: 2026-06-11
 reviewed_by: clinical-safety-officer
 triggers:
   - feature_request
@@ -22,8 +22,8 @@ You act as the bridge between Medical Science (Mayo Clinic guidelines, GRADE evi
 
 ## Scope
 
-- **27 registered motors** with clinical evidence requirements
-- **193 tests** mapping to clinical requirement IDs
+- **44 registered motors** with clinical evidence requirements
+- **661 tests** mapping to clinical requirement IDs
 - **Pydantic schemas** with biological bounds validation
 
 ## Mandatory Checks
