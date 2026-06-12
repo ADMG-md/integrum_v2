@@ -10,7 +10,7 @@ HIPAA Safe Harbor + Colombia Ley 1581 compliant.
 Requires roles: SUPERADMIN, MEDICAL_DIRECTOR, AUDITOR
 """
 
-from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
@@ -18,7 +18,6 @@ from sqlalchemy.orm import selectinload
 from typing import Dict, Any, List, Optional, Literal
 from datetime import datetime
 import hashlib
-import asyncio
 
 from src.database import get_db
 from src.models.user import UserModel, UserRole
@@ -30,7 +29,6 @@ from src.services.ai_analysis_service import (
     AnalysisRequest,
     ExpertMedicalPrompt,
 )
-from src.services.sanitization_service import sanitization_service
 
 router = APIRouter()
 
@@ -141,10 +139,10 @@ def _build_clinical_context(
         )
 
     acosta = motors.get("AcostaPhenotypeMotor", {})
-    phenotype = acosta.get("calculated_value") if isinstance(acosta, dict) else None
+    acosta.get("calculated_value") if isinstance(acosta, dict) else None
 
     eoss = motors.get("EOSSStagingMotor", {})
-    eoss_stage = eoss.get("calculated_value") if isinstance(eoss, dict) else None
+    eoss.get("calculated_value") if isinstance(eoss, dict) else None
 
     return ClinicalContextExport(
         patient_id=_anonymize_id(patient.id),

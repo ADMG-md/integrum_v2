@@ -104,9 +104,9 @@ class MetabolicPrecisionMotor(BaseClinicalMotor):
         glucose = encounter.get_observation(self.CODES["GLUCOSE"])
         hba1c = encounter.get_observation(self.CODES["HBA1C"])
         trig = encounter.get_observation(self.CODES["TRIGLYCERIDES"])
-        hdl = encounter.get_observation(self.CODES["HDL"])
+        encounter.get_observation(self.CODES["HDL"])
         bmi = encounter.bmi
-        insulin = encounter.get_observation(self.CODES["INSULIN"])
+        encounter.get_observation(self.CODES["INSULIN"])
         c_peptide = encounter.get_observation(self.CODES["C_PEPTIDE"])
         gada = encounter.get_observation(self.CODES["GADA"])
         age = encounter.get_observation(self.CODES["AGE"])

@@ -9,7 +9,6 @@ from src.database import get_db
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
-from typing import List, Dict, Any
 import structlog
 
 from src.services.auth_service import check_role

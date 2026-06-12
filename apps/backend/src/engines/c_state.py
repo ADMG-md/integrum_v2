@@ -1,7 +1,5 @@
-from datetime import datetime
-from typing import Dict, Any, List, Optional
 from src.engines.base import BaseClinicalMotor
-from src.domain.models import Encounter, AdjudicationResult, ClinicalEvidence, LongitudinalEncounterEntry
+from src.domain.models import Encounter, AdjudicationResult, ClinicalEvidence
 from typing import Tuple
 
 class CStateMachineMotor(BaseClinicalMotor):

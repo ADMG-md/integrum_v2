@@ -1,6 +1,6 @@
 from src.engines.base import BaseClinicalMotor
 from src.engines.domain import Encounter, AdjudicationResult, ClinicalEvidence, ActionItem, MedicationGap
-from typing import Tuple, List, Optional
+from typing import Tuple
 
 from src.engines.confidence_standards import CONFIDENCE_VALUES, ConfidenceLevel
 

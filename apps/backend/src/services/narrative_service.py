@@ -1,4 +1,4 @@
-from typing import Dict, List
+from typing import Dict
 from src.engines.domain import AdjudicationResult, Encounter
 from src.services.sanitization_service import sanitization_service
 import structlog
@@ -15,7 +15,7 @@ class NarrativeService:
     def generate_technical_summary(self, results: Dict[str, AdjudicationResult], encounter: Encounter) -> str:
         # 1. PII Sanitization (HIPAA)
         # In a real hybrid LLM flow, we would send 'sanitized_context' to the model.
-        sanitized_context = sanitization_service.sanitize_encounter(encounter.model_dump())
+        sanitization_service.sanitize_encounter(encounter.model_dump())
         
         narrative_parts = []
         

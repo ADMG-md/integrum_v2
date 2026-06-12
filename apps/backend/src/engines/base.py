@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Tuple, List
+from typing import Tuple
 from src.engines.domain import Encounter, AdjudicationResult
 import inspect
 import hashlib

@@ -1,6 +1,6 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
-from src.models.encounter import EncounterModel, ObservationModel, Patient
+from src.models.encounter import EncounterModel, ObservationModel
 from src.models.audit import AdjudicationLog
 from typing import List, Dict, Any
 import structlog

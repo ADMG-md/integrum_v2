@@ -11,7 +11,6 @@ from src.engines.specialty.drug_knowledge import (
     INTERACTIONS,
     CONTRAINDICATIONS,
     RENAL_DOSING,
-    MED_NAME_TO_ID,
     ID_TO_MED_NAME,
 )
 from src.engines.base import BaseClinicalMotor

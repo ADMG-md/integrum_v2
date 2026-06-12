@@ -1,7 +1,6 @@
 from src.engines.base import BaseClinicalMotor
 from src.engines.domain import Encounter, AdjudicationResult, ClinicalEvidence
-from typing import Tuple, List
-import math
+from typing import Tuple
 
 from src.engines.confidence_standards import CONFIDENCE_VALUES, ConfidenceLevel
 
@@ -62,9 +61,8 @@ class LipidRiskPrecisionMotor(BaseClinicalMotor):
         # 3. Colesterol Remanente (Aterogénesis Oculta)
         if remnant and remnant > 30:
             findings.append(f"Elevado Colesterol Remanente ({round(remnant, 1)} mg/dL)")
-            explanation = "Riesgo cardiovascular residual por partículas ricas en triglicéridos."
         else:
-            explanation = "Perfil lipídico evaluado bajo estándares ACC/AHA 2026."
+            pass
 
         evidence.append(ClinicalEvidence(type="Observation", code="LDL", value=ldl, display="LDL-C", threshold=f"<{target}"))
         if remnant:

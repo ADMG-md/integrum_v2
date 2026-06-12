@@ -1,5 +1,5 @@
 import math
-from typing import Tuple, Dict, Any, Optional
+from typing import Tuple
 
 def calculate_tyg_bmi(tg_mg_dl: float, glu_mg_dl: float, bmi: float) -> Tuple[float, float]:
     """

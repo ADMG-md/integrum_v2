@@ -7,12 +7,10 @@ sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import sessionmaker
-from sqlalchemy import select
 from src.database import DATABASE_URL, Base
 from src.models.user import UserModel, UserRole
-from src.models.audit import AdjudicationLog, ClinicalRequirement
-from src.models.encounter import EncounterModel, Patient
-from src.models.tenant import Tenant
+from src.models.audit import ClinicalRequirement
+from src.models.encounter import Patient
 from src.models.consent import PatientConsent
 from src.services.auth_service import AuthService
 

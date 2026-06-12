@@ -1,9 +1,7 @@
 from fastapi import APIRouter
-from src.schemas.encounter import ObservationSchema
 from typing import Dict, Tuple, List, Any
 from src.engines.specialty_runner import PRIMARY_MOTORS, GATED_MOTORS, AGGREGATOR_MOTORS
 from src.services.redis_service import cache_get, cache_set
-import importlib
 
 router = APIRouter()
 

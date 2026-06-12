@@ -13,12 +13,12 @@ from pydantic import BaseModel, Field, field_validator, model_validator
 
 # --- Re-export domain types (single source of truth) ---
 from src.domain.models import (
-    ObesityOnsetTrigger,
-    DrugEntry,
-    TraumaHistory,
-    DemographicsSchema,
-    MetabolicPanelSchema,
-    ClinicalHistory,
+    ObesityOnsetTrigger as ObesityOnsetTrigger,
+    DrugEntry as DrugEntry,
+    TraumaHistory as TraumaHistory,
+    DemographicsSchema as DemographicsSchema,
+    MetabolicPanelSchema as MetabolicPanelSchema,
+    ClinicalHistory as ClinicalHistory,
 )
 
 

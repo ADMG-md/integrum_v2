@@ -14,7 +14,6 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
-from typing import Optional
 
 from src.database import get_db
 from src.models.encounter import EncounterModel, Patient
@@ -72,6 +71,7 @@ async def get_encounter_as_fhir(
     # Convert to FHIR Bundle
     # Note: Motor results would need to be fetched from adjudication_logs
     # For now, we pass None for results
+    _ = include_motors
     bundle = encounter_to_fhir_bundle(
         encounter,
         results=None,  # Would need to fetch from adjudication_logs

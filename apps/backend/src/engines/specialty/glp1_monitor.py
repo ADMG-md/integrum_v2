@@ -160,8 +160,6 @@ class GLP1MonitoringMotor(BaseClinicalMotor):
                 findings.append("Amilasa elevada")
 
         # 5. Gallbladder monitoring
-        alt = encounter.metabolic_panel.alt_u_l
-        ast = encounter.metabolic_panel.ast_u_l
         alkphos = encounter.metabolic_panel.alkaline_phosphatase_u_l
         if alkphos and alkphos > 120:
             findings.append("Fosfatasa alcalina elevada - evaluar colestasis")

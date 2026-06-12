@@ -23,7 +23,7 @@ from structlog.types import EventDict
 
 
 def sanitize_log_values(
-    logger: Any, method_name: str, event_dict: EventDict
+    _logger: Any, _method_name: str, event_dict: EventDict
 ) -> EventDict:
     sensitive_keys = {
         "full_name",

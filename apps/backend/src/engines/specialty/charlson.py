@@ -3,7 +3,6 @@ from src.engines.domain import (
     Encounter,
     AdjudicationResult,
     ClinicalEvidence,
-    ActionItem,
 )
 from typing import Tuple
 

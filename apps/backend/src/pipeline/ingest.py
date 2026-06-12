@@ -9,17 +9,14 @@ Usage:
 """
 
 import csv
-import json
 import uuid
 import sys
-import os
 from pathlib import Path
-from datetime import datetime
-from typing import List, Dict, Any, Optional
+from typing import Dict, Any
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-from src.pipeline.quality import validate_record, QualityReport
+from src.pipeline.quality import validate_record
 
 
 # Column mapping: CSV header → observation code

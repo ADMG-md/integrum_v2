@@ -2,7 +2,6 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from src.database import get_db
 from src.services.timeline_service import timeline_service
-from typing import Dict, List, Any
 import structlog
 
 from src.services.auth_service import check_role

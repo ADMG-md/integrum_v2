@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 from typing import List, Tuple, Any, Literal, Optional, TYPE_CHECKING, Dict
 import math
 from src.engines.base_models import AdjudicationResult, ClinicalEvidence

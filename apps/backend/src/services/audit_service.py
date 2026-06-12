@@ -1,13 +1,11 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from src.models.audit import AdjudicationLog
-from src.engines.domain import AdjudicationResult, Encounter
+from src.engines.domain import AdjudicationResult
 from typing import Dict, Any
 import structlog
 import uuid
 import hmac
 import hashlib
-import json
-import json
 from src.config import settings
 
 logger = structlog.get_logger()

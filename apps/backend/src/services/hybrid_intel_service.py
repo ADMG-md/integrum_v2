@@ -1,7 +1,6 @@
-from typing import Dict, Any, List
+from typing import Dict
 from src.engines.domain import AdjudicationResult, Encounter
 from src.services.sanitization_service import sanitization_service
-import json
 
 class HybridIntelligenceService:
     """

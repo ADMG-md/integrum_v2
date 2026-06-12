@@ -24,7 +24,7 @@ import sys
 import csv
 import json
 from pathlib import Path
-from datetime import date, datetime
+from datetime import date
 from typing import Optional, List, Dict, Any
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
@@ -38,7 +38,7 @@ except ImportError:
 
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload, Session
-from src.models.encounter import EncounterModel, ObservationModel, Patient
+from src.models.encounter import EncounterModel, ObservationModel
 
 
 # --- Observation code → ML column name ---

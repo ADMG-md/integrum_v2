@@ -11,18 +11,12 @@ document, ensuring data quality before export to external systems.
 
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Tuple
 
 from src.fhir.profile import (
     REQUIRED_OBSERVATIONS,
     RECOMMENDED_OBSERVATIONS,
     CALCULATED_INDICES,
-    PSYCHOMETRIC_QUESTIONNAIRES,
-)
-from src.fhir.concept_map import (
-    OBSERVATION_TO_LOINC,
-    CONDITION_TO_SNOMED,
-    MEDICATION_TO_ATC,
 )
 
 

@@ -65,7 +65,6 @@ class SGLT2iBenefitMotor(BaseClinicalMotor):
         return True, ""
 
     def compute(self, encounter: Encounter) -> AdjudicationResult:
-        from src.engines.domain import safe_float
 
         has_t2dm = encounter.history.has_type2_diabetes if encounter.history else False
         has_ckd = encounter.history.has_ckd if encounter.history else False

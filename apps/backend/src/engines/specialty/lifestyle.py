@@ -59,7 +59,7 @@ class Lifestyle360Motor(BaseClinicalMotor):
         hours = encounter.get_observation(self.CODES["SLEEP_HOURS"])
         ais = encounter.get_observation(self.CODES["ATHENS_INSOMNIA"])
         tfeq_emo = encounter.get_observation(self.CODES["TFEQ_EMOTIONAL"])
-        tfeq_unc = encounter.get_observation(self.CODES["TFEQ_UNCONTROLLED"])
+        encounter.get_observation(self.CODES["TFEQ_UNCONTROLLED"])
 
         findings = []
         evidence = []

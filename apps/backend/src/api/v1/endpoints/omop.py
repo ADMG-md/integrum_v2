@@ -7,10 +7,9 @@ Exposes OMOP CDM 5.4 ETL capabilities via REST API:
 - POST /api/v1/omop/cohorts/{name}/sql - Get SQL for a specific cohort
 """
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query
 from typing import Dict, Any
 
-from src.omop.etl import encounter_to_omop_sql
 from src.omop.cohorts import (
     COHORT_DEFINITIONS,
     OUTCOME_DEFINITIONS,

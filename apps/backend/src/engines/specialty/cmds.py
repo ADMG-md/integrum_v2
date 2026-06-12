@@ -6,7 +6,7 @@ REQUIREMENT_ID: CMDS-STAGING
 SOURCE: ALAD (Waist), ATP III / AHA (MetS adapted)
 """
 
-from typing import Tuple, Dict, Any, List, Optional
+from typing import Tuple, List, Optional
 from src.engines.base import BaseClinicalMotor
 from src.engines.domain import (
     Encounter,
@@ -15,7 +15,6 @@ from src.engines.domain import (
     safe_float,
 )
 from src.engines.confidence_standards import CONFIDENCE_VALUES, ConfidenceLevel
-import re
 
 # Simple fuzzy matchers for drug classes
 BP_DRUG_KEYWORDS = [

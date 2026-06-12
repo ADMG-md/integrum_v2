@@ -1,6 +1,6 @@
 from src.engines.base import BaseClinicalMotor
 from src.engines.domain import Encounter, AdjudicationResult, ClinicalEvidence, ActionItem
-from typing import Tuple, List, Dict
+from typing import Tuple
 
 from src.engines.confidence_standards import CONFIDENCE_VALUES, ConfidenceLevel
 
@@ -23,9 +23,7 @@ class PrecisionNutritionMotor(BaseClinicalMotor):
         
         # 1. Hungry Brain (Saciedad Tardía)
         tfeq_unc = encounter.get_observation("TFEQ-UNCONTROLLED")
-        is_hungry_brain = False
         if tfeq_unc and float(tfeq_unc.value) >= 2.5:
-            is_hungry_brain = True
             phenotypes_detected.append("Hungry Brain")
             evidence.append(ClinicalEvidence(type="Observation", code="TFEQ-UNC", value=tfeq_unc.value, display="Falta de Control (TFEQ)"))
             
@@ -37,9 +35,7 @@ class PrecisionNutritionMotor(BaseClinicalMotor):
 
         # 2. Hungry Gut (Saciedad Corta)
         st = encounter.get_observation("ST-001")
-        is_hungry_gut = False
         if st and float(st.value) > 0:
-            is_hungry_gut = True
             phenotypes_detected.append("Hungry Gut")
             evidence.append(ClinicalEvidence(type="Observation", code="ST-001", value=st.value, display="Vaciado Rápido/Hambre Prematura"))
             
@@ -52,9 +48,7 @@ class PrecisionNutritionMotor(BaseClinicalMotor):
         # 3. Emotional / Hedónico
         tfeq_emo = encounter.get_observation("TFEQ-EMOTIONAL")
         gad7 = encounter.get_observation("GAD7-SCORE")
-        is_emotional = False
         if (tfeq_emo and float(tfeq_emo.value) >= 2.5) or (gad7 and float(gad7.value) >= 8):
-            is_emotional = True
             phenotypes_detected.append("Hedónico / Emocional")
             evidence.append(ClinicalEvidence(type="Psychometric", code="TFEQ-EMO/GAD7", value="Presente", display="Conducta Alimentaria Emocional"))
             
@@ -69,7 +63,6 @@ class PrecisionNutritionMotor(BaseClinicalMotor):
         alt = encounter.metabolic_panel.alt_u_l if encounter.metabolic_panel else None
         waist_obs = encounter.get_observation("WAIST-001")
         waist = float(waist_obs.value) if waist_obs else 0.0
-        is_hepatic_ir = False
         
         hepatic_markers = 0
         if tg and tg >= 150: hepatic_markers += 1
@@ -77,7 +70,6 @@ class PrecisionNutritionMotor(BaseClinicalMotor):
         if waist and waist > 94: hepatic_markers += 1
         
         if hepatic_markers >= 2:
-            is_hepatic_ir = True
             phenotypes_detected.append("Insulino Resistencia Hepática")
             evidence.append(ClinicalEvidence(type="Metabolic", code="HEP-IR", value=f"{hepatic_markers} marcadores", display="Esteatosis / IR Hepática"))
             
@@ -90,7 +82,7 @@ class PrecisionNutritionMotor(BaseClinicalMotor):
         # 5. IR Muscular / Slow Burn
         # Proxy: Prediabetes/DM2 + Low Muscle Mass (Sarcopenia risk)
         hba1c = encounter.hba1c
-        weight_obs = encounter.get_observation("29463-7")
+        encounter.get_observation("29463-7")
         height_obs = encounter.get_observation("8302-2")
         muscle_obs = encounter.get_observation("BIA-MUSCLE-KG") or encounter.get_observation("MMA-001")
         
@@ -99,10 +91,8 @@ class PrecisionNutritionMotor(BaseClinicalMotor):
             h_m = float(height_obs.value) / 100
             smi = float(muscle_obs.value) / (h_m * h_m)
 
-        is_muscle_ir = False
         
         if (hba1c and hba1c >= 5.7) and (smi and smi < 7.0):
-            is_muscle_ir = True
             phenotypes_detected.append("IR Muscular / Slow Burn")
             evidence.append(ClinicalEvidence(type="Metabolic", code="MUSCLE-IR", value=smi, display="SMI Bajo + Disglucemia"))
             

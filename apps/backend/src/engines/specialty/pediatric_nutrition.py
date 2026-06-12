@@ -5,7 +5,7 @@ from src.engines.domain import (
     ClinicalEvidence,
     ActionItem,
 )
-from typing import Tuple, List, Optional
+from typing import Tuple, Optional
 import structlog
 
 from src.engines.confidence_standards import CONFIDENCE_VALUES, ConfidenceLevel

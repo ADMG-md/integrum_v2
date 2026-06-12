@@ -29,7 +29,6 @@ class PharmacogenomicProxyMotor(BaseClinicalMotor):
         confidence=CONFIDENCE_VALUES[ConfidenceLevel.PROXY_MARKER] # Inherently proxy-based, lower baseline confidence
 
         h = encounter.history
-        mp = encounter.metabolic_panel
 
         # --- 1. MTHFR (Methylation Proxy) ---
         hcy_obs = encounter.get_observation("HCY-001") # Homocysteine

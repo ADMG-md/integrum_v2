@@ -31,11 +31,6 @@ from src.fhir.resources import (
     FHIRCoding,
     FHIRReference,
 )
-from src.fhir.concept_map import (
-    LOINC_TO_OBSERVATION,
-    CONDITION_TO_SNOMED,
-    MEDICATION_TO_ATC,
-)
 from src.omop.concept_map import (
     LOINC_TO_OMOP_MEASUREMENT,
     ICD10_TO_OMOP_CONDITION,

@@ -301,7 +301,6 @@ class MetabolicPanelSchema(BaseModel):
     @model_validator(mode="after")
     def validate_metabolic_coherence(self) -> "MetabolicPanelSchema":
         tg = self.triglycerides_mg_dl
-        hdl = self.hdl_mg_dl
         ldl = self.ldl_mg_dl
         vldl = self.vldl_mg_dl
         total_chol = self.total_cholesterol_mg_dl

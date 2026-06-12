@@ -1,9 +1,8 @@
-from sqlalchemy import Column, String, DateTime, Boolean
-from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy import String, DateTime, Boolean
+from sqlalchemy.orm import Mapped, mapped_column
 from src.database import Base
 import uuid
 from datetime import datetime
-from typing import List
 
 class Tenant(Base):
     """

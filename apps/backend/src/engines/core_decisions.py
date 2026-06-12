@@ -1,7 +1,7 @@
 from src.engines.base import BaseClinicalMotor
-from src.engines.domain import Encounter, AdjudicationResult, ClinicalEvidence, ActionItem, DecisionContext, ClinicalRecommendation
+from src.engines.domain import Encounter, AdjudicationResult, ActionItem, DecisionContext, ClinicalRecommendation
 from src.engines.confidence_standards import CONFIDENCE_VALUES, ConfidenceLevel
-from typing import Tuple, Dict, Any, List
+from typing import Tuple, List
 
 
 class CoreClinicalDecisionEngine(BaseClinicalMotor):

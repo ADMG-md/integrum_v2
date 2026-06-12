@@ -8,7 +8,6 @@ import vault_service directly, preserving Clean Architecture boundaries.
 from sqlalchemy import TypeDecorator, String
 from cryptography.fernet import Fernet, InvalidToken
 import structlog
-from src.config import settings
 
 logger = structlog.get_logger()
 
@@ -38,13 +37,13 @@ class EncryptedString(TypeDecorator):
             cls._cipher = Fernet(vault_service.key)
         return cls._cipher
 
-    def process_bind_param(self, value, dialect):
+    def process_bind_param(self, value, _dialect):
         """Encrypt value before writing to database."""
         if value is None:
             return None
         return self._get_cipher().encrypt(value.encode()).decode()
 
-    def process_result_value(self, value, dialect):
+    def process_result_value(self, value, _dialect):
         """Decrypt value after reading from database."""
         if value is None:
             return None

@@ -19,17 +19,14 @@ References:
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Dict, List, Optional
 
 from src.omop.concept_map import (
     get_omop_measurement_concept,
     get_omop_condition_concept,
     get_omop_drug_concept,
-    LOINC_TO_OMOP_MEASUREMENT,
 )
 from src.fhir.concept_map import (
-    OBSERVATION_TO_LOINC,
-    MEDICATION_TO_ATC,
     get_loinc_for_code,
     get_atc_for_medication,
 )
@@ -135,7 +132,6 @@ def encounter_to_omop_sql(
             concept_id, concept_name = omop_meas
         else:
             concept_id = 0
-            concept_name = display
 
         try:
             value_num = float(obs.value)
@@ -206,7 +202,6 @@ def encounter_to_omop_sql(
         else:
             atc_code = ""
             display = med.name
-            atc_class = ""
 
         omop_drug = get_omop_drug_concept(atc_code) if atc_code else None
         if omop_drug:

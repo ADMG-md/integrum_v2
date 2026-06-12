@@ -36,7 +36,7 @@ from src.engines.domain import (
     Encounter, AdjudicationResult, ClinicalEvidence,
     ActionItem, MedicationGap,
 )
-from typing import Tuple, List, Optional
+from typing import Tuple, List
 
 from src.engines.confidence_standards import CONFIDENCE_VALUES, ConfidenceLevel
 
@@ -118,7 +118,6 @@ class PsychometabolicAxisMotor(BaseClinicalMotor):
         # ── 1. SAFETY GATE: SUICIDAL IDEATION (PHQ-9 Item 9) ────────────
         #    FDA Black Box, APA Practice Guidelines 2023
         if item9 is not None and item9 >= 1:
-            severity = "moderate" if item9 == 1 else "critical"
             if item9 >= 2:
                 safety_flags.append("RIESGO SUICIDA ACTIVO")
                 critical_omissions.append(MedicationGap(
@@ -243,10 +242,8 @@ class PsychometabolicAxisMotor(BaseClinicalMotor):
 
         # ── 3a. ANXIETY-DRIVEN HYPERPHAGIA ──────────────────────────────
         #    Cortisol → visceral fat deposition → insulin resistance loop
-        has_anxiety_eating = False
         if gad7 is not None and gad7 >= 10:
             if tfeq_unc and float(tfeq_unc.value) >= 2.5:
-                has_anxiety_eating = True
                 phenotypes_detected.append("Hiperfagia Ansiogénica")
                 evidence.append(ClinicalEvidence(
                     type="Behavioral", code="ANXIETY-HYPERPHAGIA",

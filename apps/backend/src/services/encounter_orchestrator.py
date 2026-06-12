@@ -15,7 +15,7 @@ This service is async and DB-aware (unlike pure engines).
 """
 
 from datetime import date as pydate
-from typing import Dict, Any, Tuple, Optional
+from typing import Dict, Any, Tuple
 from fastapi import HTTPException
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -25,11 +25,8 @@ from src.engines.domain import (
     Observation,
     Condition,
     MedicationStatement,
-    ClinicalHistory,
-    TraumaHistory,
-    DrugEntry,
 )
-from src.engines.specialty_runner import create_runner, PRIMARY_MOTORS
+from src.engines.specialty_runner import create_runner
 from src.services.clinical_engine_service import clinical_bridge
 from src.services.observation_mapper import build_flat_observations
 from src.domain.models import DemographicsSchema, MetabolicPanelSchema
@@ -361,7 +358,7 @@ async def process_encounter(
             )
 
     # 3.6 Extract longitudinal history (last 90 days) for Axis C (C_state)
-    from src.models.encounter import EncounterModel, ObservationModel
+    from src.models.encounter import EncounterModel
     from src.domain.models import LongitudinalEncounterEntry
     from datetime import timedelta
     from sqlalchemy.orm import selectinload

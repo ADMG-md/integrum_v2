@@ -10,7 +10,6 @@ AFTER:  Delega TODOS los cálculos a calculators.py (SSOT).
 """
 from src.engines.domain import Encounter, Observation
 from src.domain.calculators import MetabolicIndices, AnthropometricData, HepaticIndices
-from typing import Optional
 
 class ClinicalIntelligenceBridge:
     """

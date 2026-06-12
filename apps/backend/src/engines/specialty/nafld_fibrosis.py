@@ -6,7 +6,6 @@ from src.engines.domain import (
     safe_float,
 )
 from typing import Tuple
-import math
 
 from src.engines.confidence_standards import CONFIDENCE_VALUES, ConfidenceLevel
 

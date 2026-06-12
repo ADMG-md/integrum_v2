@@ -1,15 +1,6 @@
 import asyncio
 import structlog
 from src.database import engine, Base
-from src.models.encounter import (
-    Patient,
-    EncounterModel,
-    ObservationModel,
-    EncounterConditionModel,
-)
-from src.models.condition import Condition
-from src.models.user import UserModel
-from src.models.audit import AdjudicationLog
 
 logger = structlog.get_logger()
 
