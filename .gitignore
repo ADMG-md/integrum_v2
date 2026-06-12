@@ -10,7 +10,7 @@ build/
 *.whl
 .eggs/
 .pytest_cache/
-.coverage
+.coverage*
 coverage.xml
 htmlcov/
 .mypy_cache/
